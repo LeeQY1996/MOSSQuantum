@@ -1,6 +1,6 @@
 # MOSS
 
-MOSS (MOdular Simulation Stack) is a Julia framework for quantum circuit simulation, variational quantum algorithms, and quantum machine learning. It provides a differentiable programming interface for quantum circuits, enabling end-to-end gradient-based optimization with automatic differentiation.
+MOSS (550W) is a Julia framework for quantum circuit simulation, variational quantum algorithms, and quantum machine learning. It provides a differentiable programming interface for quantum circuits, enabling end-to-end gradient-based optimization with automatic differentiation.
 
 MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.com/guochu/QuantumCircuits.jl) and the simulation/differentiation capabilities of [VQC.jl](https://github.com/LeeQY1996/VQC.jl) into a single unified package.
 
