@@ -58,7 +58,7 @@ The CPU simulator implements the public execution interfaces while retaining exi
 
 ## Optional integrations
 
-Zygote, Plots, and LaTeXStrings are weak dependencies. On Julia 1.9 and later, package extensions activate after their trigger dependencies load. `MOSSZygoteExt` registers existing Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. Earlier supported Julia releases use a Requires bridge for the same integration modules. Requires remains available for that compatibility path.
+MOSS requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSZygoteExt` registers existing Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
 
 FiniteDifferences is a test dependency. The minimal simulator can load without installing an AD or plotting framework. Final version-specific loading results belong in the [verification record](roadmap.md#verification-record); a compatibility declaration alone does not establish a tested Julia version.
 

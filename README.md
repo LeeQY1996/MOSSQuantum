@@ -17,13 +17,15 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 
 ## Installation
 
+MOSS requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version; the minimum-version checks target Julia 1.10.
+
 ```julia
 using Pkg
 # Add this checkout to your active environment.
 Pkg.develop(path="/absolute/path/to/MOSS")
 ```
 
-From this checkout, `julia --project=. -e 'using Pkg; Pkg.instantiate()'` prepares the development environment. Install optional integrations in the environment that will use them:
+From this checkout, `julia --project=. -e 'using Pkg; Pkg.instantiate()'` prepares the Julia 1.13 development environment. The checked-in Manifest is generated with Julia 1.13; for Julia 1.10, develop the checkout into a fresh environment so its dependencies resolve for that version, as the minimum-version checks do. Install optional integrations in the environment that will use them:
 
 ```julia
 using Pkg
@@ -169,7 +171,7 @@ savefig(plt, "circuit.png")
 - [KrylovKit](https://github.com/Jutho/KrylovKit.jl) — Krylov subspace methods
 - [TensorOperations](https://github.com/Jutho/TensorOperations.jl) — tensor contractions
 
-Zygote is an optional AD dependency. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. Julia 1.9+ uses package extensions; earlier supported Julia releases use a Requires compatibility bridge. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.
+Zygote is an optional AD dependency. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. All supported Julia versions use native package extensions; the Requires bridge has been removed. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.
 
 ## Development
 

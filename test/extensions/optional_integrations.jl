@@ -1,15 +1,10 @@
 # Included after the regular gradient and plotting suites have loaded their
 # optional packages. Fresh-process loading checks live in load_order.jl.
 @testset "optional integrations" begin
-    if isdefined(Base, :get_extension)
-        @test Base.get_extension(MOSS, :MOSSZygoteExt) !== nothing
-        @test Base.get_extension(MOSS, :MOSSPlotsExt) !== nothing
-        @test !isdefined(MOSS, :Requires)
-    else
-        @test isdefined(MOSS, :MOSSZygoteExt)
-        @test isdefined(MOSS, :MOSSPlotsExt)
-    end
-    @test !isdefined(MOSS, :Zygote) || !isdefined(Base, :get_extension)
+    @test Base.get_extension(MOSS, :MOSSZygoteExt) !== nothing
+    @test Base.get_extension(MOSS, :MOSSPlotsExt) !== nothing
+    @test !isdefined(MOSS, :Requires)
+    @test !isdefined(MOSS, :Zygote)
 
     template = QCircuit()
     shared_gate = RyGate(1, 0.1; isparas=true)

@@ -4,6 +4,8 @@ This independent fixture package uses only public MOSS interfaces. It supplies
 an implicit product state, a custom instruction, an execution backend, and an
 observable implementation. Its state does not expose `storage` or `.data`.
 
+The fixture follows MOSS's Julia 1.10 minimum, with Julia 1.13 as the primary development and acceptance version. Optional MOSS integrations use native package extensions. Independent package tests passed on Julia 1.10.10 and Julia 1.13.1; see the [verification record](../../../docs/roadmap.md#verification-record).
+
 For a quick example from the active MOSS repository environment:
 
 ```julia

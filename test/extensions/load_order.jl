@@ -9,11 +9,9 @@ if scenario == "core"
     loaded = Set(package.name for package in keys(Base.loaded_modules))
     @test all(name -> !(name in loaded), ("Zygote", "Plots", "LaTeXStrings", "FiniteDifferences"))
     @test !isdefined(MOSS, :Zygote)
-    if isdefined(Base, :get_extension)
-        @test !isdefined(MOSS, :Requires)
-        @test Base.get_extension(MOSS, :MOSSZygoteExt) === nothing
-        @test Base.get_extension(MOSS, :MOSSPlotsExt) === nothing
-    end
+    @test !isdefined(MOSS, :Requires)
+    @test Base.get_extension(MOSS, :MOSSZygoteExt) === nothing
+    @test Base.get_extension(MOSS, :MOSSPlotsExt) === nothing
     circuit = QCircuit()
     push!(circuit, HGate(1))
     @test norm(circuit * qstate(1)) ≈ 1
@@ -33,11 +31,7 @@ elseif scenario in ("zygote_first", "moss_first_zygote")
     initial = qstate(1)
     loss(c) = real(expectation(observable, c * initial))
     @test Zygote.gradient(loss, circuit)[1] ≈ [-sin(theta)]
-    if isdefined(Base, :get_extension)
-        @test Base.get_extension(MOSS, :MOSSZygoteExt) !== nothing
-    else
-        @test isdefined(MOSS, :MOSSZygoteExt)
-    end
+    @test Base.get_extension(MOSS, :MOSSZygoteExt) !== nothing
 elseif scenario in ("plots_first", "moss_first_plots", "latex_then_moss_then_plots")
     if scenario == "plots_first"
         using Plots, LaTeXStrings
@@ -57,11 +51,7 @@ elseif scenario in ("plots_first", "moss_first_plots", "latex_then_moss_then_plo
     @test MOSS.QuantumCircuits.plot(circuit) isa Plots.Plot
     @test MOSS.QuantumCircuits.circuit_plot(circuit) isa Plots.Plot
     @test MOSS.QuantumCircuits.new_circuit_plot(1, 1) isa Plots.Plot
-    if isdefined(Base, :get_extension)
-        @test Base.get_extension(MOSS, :MOSSPlotsExt) !== nothing
-    else
-        @test isdefined(MOSS, :MOSSPlotsExt)
-    end
+    @test Base.get_extension(MOSS, :MOSSPlotsExt) !== nothing
 else
     throw(ArgumentError("unknown optional integration scenario: $scenario"))
 end

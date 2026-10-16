@@ -2,11 +2,7 @@ module MOSSPlotsExt
 
 import MOSS
 import MOSS.QuantumCircuits
-@static if isdefined(Base, :get_extension)
-    using Plots, LaTeXStrings
-else
-    using ..Plots, ..LaTeXStrings
-end
+using Plots, LaTeXStrings
 
 include("../src/quantum_circuits/plotting/QuantumCircuitsPlotting.jl")
 

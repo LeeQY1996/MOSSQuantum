@@ -84,7 +84,7 @@ The present extension uses Zygote adjoints. ChainRules integration, complete bat
 
 ## Optional package integrations
 
-Julia 1.9+ uses `[weakdeps]` and `[extensions]`: Zygote activates `MOSSZygoteExt`; Plots together with LaTeXStrings activates `MOSSPlotsExt`. Earlier supported Julia releases use a Requires bridge. Install and load trigger packages explicitly in the consumer environment:
+MOSS requires Julia 1.10 or later and uses native `[weakdeps]` and `[extensions]` on every supported version. Julia 1.13 is the primary development and acceptance version. Zygote activates `MOSSZygoteExt`; Plots together with LaTeXStrings activates `MOSSPlotsExt`. The Requires bridge has been removed. Install and load trigger packages explicitly in the consumer environment:
 
 ```julia
 using Pkg

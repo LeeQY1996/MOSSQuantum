@@ -4,6 +4,8 @@ This independent environment measures the existing dense CPU simulator. Benchmar
 
 ## Prepare the environment
 
+The package requires Julia 1.10 or later. Use Julia 1.13 for primary development and acceptance measurements; use Julia 1.10 when checking the minimum version. The `julia` commands below should select the intended runtime. Optional Zygote support uses native package extensions on both versions.
+
 From the repository root, run the following once. Package resolution may need network access.
 
 ```bash

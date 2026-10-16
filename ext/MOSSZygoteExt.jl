@@ -1,13 +1,8 @@
 module MOSSZygoteExt
 
 using MOSS
-@static if isdefined(Base, :get_extension)
-    using Zygote
-    using Zygote: @adjoint
-else
-    using ..Zygote
-    using ..Zygote: @adjoint
-end
+using Zygote
+using Zygote: @adjoint
 
 using MOSS: _circuit_adjoint, _qubit_encoding_adjoint, _qterm_expec_util, _qop_expec_util
 using MOSS: _density_to_state_cotangent, _to_sv
