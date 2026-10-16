@@ -31,7 +31,7 @@ state = qstate(2)
 circuit = QCircuit()
 push!(circuit, HGate(1))
 push!(circuit, CNOTGate(1, 2))
-apply!(circuit, state)
+state = apply!(circuit, state)
 println(amplitudes(state))
 ```
 
@@ -45,7 +45,7 @@ push!(circuit, RxGate(1, π/4))
 push!(circuit, CNOTGate(1, 2))
 
 state = qstate(2)
-apply!(circuit, state)
+state = apply!(circuit, state)
 
 h = QubitsTerm(1=>"Z", 2=>"Z")
 println("⟨ZZ⟩ = ", expectation(h, state))
@@ -57,15 +57,13 @@ println("⟨ZZ⟩ = ", expectation(h, state))
 using MOSS, Zygote
 
 circuit = variational_circuit_1d(3, 2)
-state = qstate(3)
+initial_state = qstate(3)
+observable = QubitsTerm(1=>"Z")
 
-loss(ps) = begin
-    reset_parameters!(circuit, ps)
-    real(expectation(QubitsTerm(1=>"Z"), apply!(circuit, state)))
-end
-
-ps = active_parameters(circuit)
-grad = Zygote.gradient(loss, ps)
+# Circuit multiplication preserves the initial state on every evaluation.
+loss(c) = real(expectation(observable, c * initial_state))
+grad = Zygote.gradient(loss, circuit)[1]
+# Entries follow active_parameters(circuit) order.
 ```
 
 ### Hamiltonian simulation
@@ -80,9 +78,9 @@ h = ising_1d(4, J=1.0, hz=0.5)
 E, gs = ground_state(h)
 println("Ground state energy: ", E)
 
-# Trotter evolution
-circuit = trotter_propagator(h, 0.1)
-apply!(circuit, qstate(4))
+# Real-time Trotter evolution for time 0.1 with ℏ = 1
+circuit = trotter_propagator(h, -0.1im)
+state = apply!(circuit, qstate(4))
 ```
 
 ### Circuit visualization
@@ -112,7 +110,7 @@ savefig(plt, "circuit.png")
 | Channels | `AmplitudeDamping`, `PhaseDamping`, `Depolarizing` |
 | Operations | `QMeasure`, `QSelect` |
 
-Convenience constructors: `H`, `X`, `Y`, `Z`, `S`, `T`, `CNOT`, `CZ`, `SWAP`, `Rx`, `Ry`, `Rz`.
+`MOSS.QuantumCircuits.Gates` supplies elementary matrices such as `H`, `X`, `Y`, `Z`, `CNOT`, `CZ`, and `SWAP`, and matrix functions `Rx`, `Ry`, and `Rz`. Use the corresponding `...Gate` types to place operations in a circuit.
 
 ## Utilities module
 
@@ -130,7 +128,23 @@ Convenience constructors: `H`, `X`, `Y`, `Z`, `S`, `T`, `CNOT`, `CZ`, `SWAP`, `R
 - [StaticArrays](https://github.com/JuliaArrays/StaticArrays.jl) — efficient small arrays
 - [KrylovKit](https://github.com/Jutho/KrylovKit.jl) — Krylov subspace methods
 - [TensorOperations](https://github.com/Jutho/TensorOperations.jl) — tensor contractions
-- [Plots](https://github.com/JuliaPlots/Plots.jl) — visualization (optional, loaded on demand)
+- [Plots](https://github.com/JuliaPlots/Plots.jl) — visualization (loaded on demand; currently a declared package dependency)
+
+## Development
+
+- [Architecture and package boundaries](docs/architecture.md)
+- [Numerical and API conventions](docs/conventions.md), including current fidelity and mixed-state evolution limitations
+- [Extension guide](docs/extending.md)
+- [Core foundation roadmap](docs/roadmap.md)
+- [Benchmark setup and workloads](benchmark/README.md)
+
+Run the test suite through the package entrypoint:
+
+```bash
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
+Retain the return value of `apply!`: execution can promote numeric storage or convert a state vector to a density matrix when applying noise. See the conventions for qubit ordering, parameter activation, and storage ownership.
 
 ## License
 

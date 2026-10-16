@@ -11,112 +11,73 @@ using Requires
 # QuantumCircuits 子模块
 # ============================================================================
 
-include("QuantumCircuits/QuantumCircuits.jl")
+include("quantum_circuits/QuantumCircuits.jl")
 
 # 导入 QuantumCircuits 子模块
 using .QuantumCircuits
 using .QuantumCircuits.Gates
 using .QuantumCircuits: permute, _kron_ops, _get_op, get_largest_pos, QOP_DATA_VALUE_TYPE
 
-# ============================================================================
-# Re-export QuantumCircuits 的公共 API
-# ============================================================================
+include("api/exports.jl")
 
-# gates
-export nqubits, positions, mat, ordered_positions, ordered_mat, change_positions, shift, differentiate
-export parameters, nparameters, active_parameters, activate_parameter!, activate_parameters!
-export deactivate_parameter!, deactivate_parameters!, reset_parameters!
-export Gate, ParametricGate, QuantumGate, AdjointQuantumGate, gate
-export XGate, YGate, ZGate, SGate, HGate, TGate, sqrtXGate, sqrtYGate
-export SWAPGate, iSWAPGate, CZGate, CNOTGate, CONTROLGate
-export TOFFOLIGate, FREDKINGate, CONTROLCONTROLGate
-# parametric gates
-export RxGate, RyGate, RzGate, PHASEGate
-export CRxGate, CRyGate, CRzGate, CPHASEGate, FSIMGate
-export CCPHASEGate
-# quantum channel
-export AbstractQuantumMap, QuantumMap, ordered_supermat, kraus_matrices, is_tp
-export AmplitudeDamping, PhaseDamping, Depolarizing
-# circuit
-export QMeasure, QSelect, QCircuit
-# hamiltonian
-export QubitsTerm, oplist, coeff, QubitsOperator, matrix, simplify
-# Gate 构造函数
-export H, X, Y, Z, S, T, CNOT, CZ, SWAP, Rx, Ry, Rz
+# Shared indexing, tensor and sampling helpers.
+include("utils/distance.jl")
+include("utils/parallel_for.jl")
+include("execution/sampling.jl")
+include("utils/tensor_ops.jl")
+include("utils/index_ops.jl")
 
-# ============================================================================
-# MOSS 特有功能（原 VQC）
-# ============================================================================
+# State representations.
+include("states/state_vector.jl")
+include("states/batch_state_vector.jl")
+include("states/density_matrix.jl")
 
-# state
-export StateVector, DensityMatrix, distance, distance2, onehot_encoding, qubit_encoding, qstate, amplitude_encoding
-export reset!, amplitude, amplitudes, rand_state, rand_densitymatrix, fidelity
-export tr, dot, norm, normalize!, normalize, ishermitian
-export reset_qubit!, reset_onehot!, storage
-export schmidt_numbers, renyi_entropy
-export permute
-# batch statevector
-export BatchStateVector, batch_size, batch_onehot_encoding, batch_qubit_encoding, batch_amplitude_encoding, rand_batch
+# CPU gate kernels and public execution methods.
+include("backends/cpu/gates/serial_short_range.jl")
+include("backends/cpu/gates/threaded_short_range.jl")
+include("backends/cpu/gates/threaded_long_range.jl")
+include("execution/gates.jl")
+include("backends/cpu/gates/generic.jl")
+include("backends/cpu/gates/specific.jl")
+include("execution/channels.jl")
+include("backends/cpu/gates/channels.jl")
+include("backends/cpu/gates/batch_threaded_short_range.jl")
+include("backends/cpu/gates/batch_threaded_long_range.jl")
+include("execution/batch_gates.jl")
+include("backends/cpu/gates/batch.jl")
 
-# utility functions
-export variational_circuit_1d, real_variational_circuit_1d
+# Measurement and postselection.
+include("execution/measurement.jl")
+include("execution/post_selection.jl")
 
-# gate operations
-export apply!
+# Operator execution and expectation values.
+include("backends/cpu/operators/utils.jl")
+include("backends/cpu/operators/short_range_serial.jl")
+include("backends/cpu/operators/short_range_threaded.jl")
+include("backends/cpu/operators/long_range_threaded.jl")
+include("execution/operators.jl")
+include("backends/cpu/operators/density_matrix.jl")
+include("backends/cpu/operators/generic.jl")
+include("backends/cpu/expectations/serial.jl")
+include("backends/cpu/expectations/threaded.jl")
+include("backends/cpu/expectations/threaded_2.jl")
+include("backends/cpu/expectations/high_qubit_terms.jl")
+include("backends/cpu/expectations/high_qubit_terms_2.jl")
+include("observables/expectation.jl")
+include("backends/cpu/expectations/state_vector.jl")
+include("backends/cpu/expectations/batch.jl")
+include("observables/batch_expectation.jl")
+include("backends/cpu/expectations/density_matrix_serial.jl")
+include("observables/density_matrix_expectation.jl")
 
-# measurement
-export measure, measure!
+# Differentiation and partial trace.
+include("differentiation/circuit.jl")
+include("differentiation/expectation.jl")
+include("differentiation/additional_adjoints.jl")
+include("observables/partial_trace.jl")
 
-# hamiltonian
-export expectation
-
-# AD for post selection may be removed in the future
-export post_select, post_select!
-
-# partial trace
-export partial_tr
-
-# ============================================================================
-# include 原 VQC 源文件
-# ============================================================================
-
-# auxiliary
-include("auxiliary/distance.jl")
-include("auxiliary/parallel_for.jl")
-include("auxiliary/sampling.jl")
-include("auxiliary/tensorops.jl")
-include("auxiliary/indexop.jl")
-
-# state representations
-include("statevector.jl")
-include("batchstatevector.jl")
-include("densitymatrix.jl")
-
-# quantum gate operations
-include("applygates/applygates.jl")
-
-# measurement and postselection
-include("measure.jl")
-include("postselect.jl")
-
-# hamiltonian expectation
-include("hamiltonian/util.jl")
-include("hamiltonian/apply_qterms/apply_qterms.jl")
-include("hamiltonian/expecs/expecs.jl")
-include("hamiltonian/expecs_dm/expecs_dm.jl")
-
-# differentiation
-include("circuitdiff.jl")
-include("expecdiff.jl")
-include("additional_adjoints.jl")
-
-# partial trace
-include("ptrace.jl")
-
-# utility functions
-include("utility/utility.jl")
-
-# Import functions from Utilities module after it's defined
+# Utilities retains its existing public module and import behavior.
+include("utilities/Utilities.jl")
 import .Utilities: variational_circuit_1d, real_variational_circuit_1d
 
 end
