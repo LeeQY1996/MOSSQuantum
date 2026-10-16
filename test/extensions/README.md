@@ -6,4 +6,6 @@ Plotting integration checks also run from `test/integration/plotting.jl`; Plots 
 
 Constructor-gradient checks cover explicit copy controls, nested state wrappers, and state copying. The `MOSSDemoGates` fixture supplies the shared trainable-extension checks used here and in its own independent package tests; they exercise public binding, immutable replacements, CPU gradients, and one parameter update.
 
+Shared-parameter gradient checks compare explicit maps with analytic and finite-difference results, including noncommuting gates, mixed inputs and fixed channels, value projections, and empty maps. The external fixture also trains shared values across its own immutable gate and a built-in gate.
+
 Julia 1.10/1.13 local validation results are recorded in [the roadmap](../../docs/roadmap.md#verification-record).

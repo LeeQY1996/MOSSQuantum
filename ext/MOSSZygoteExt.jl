@@ -23,6 +23,13 @@ using MOSS: _apply_throw_impl, _apply_keep_impl, _apply_impl
     return bound, gradient -> (nothing, Zygote.ProjectTo(values)(gradient))
 end
 
+@adjoint bind_parameters(template::QCircuit, values::AbstractVector{<:Real}, map::ParameterMap) = begin
+    bound = bind_parameters(template, values, map)
+    return bound, gradient -> (nothing,
+        isnothing(gradient) ? nothing : Zygote.ProjectTo(values)(accumulate_parameter_gradients(map, gradient)),
+        nothing)
+end
+
 include("zygote/state_rules.jl")
 include("zygote/post_selection_rules.jl")
 

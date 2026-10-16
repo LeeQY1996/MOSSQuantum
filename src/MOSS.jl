@@ -16,6 +16,7 @@ using .QuantumCircuits.Gates
 using .QuantumCircuits: permute, _kron_ops, _get_op, get_largest_pos, QOP_DATA_VALUE_TYPE
 
 include("api/exports.jl")
+include("api/parameter_map.jl")
 include("api/parameter_binding.jl")
 
 # Shared indexing, tensor and sampling helpers.

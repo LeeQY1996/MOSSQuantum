@@ -26,11 +26,26 @@ Source responsibilities now live in `api/`, `quantum_circuits/`, `states/`, `exe
 
 Physical corrections establish squared Uhlmann fidelity across pure and mixed representations and `exp(tH)ρexp(conj(t)H)` for mixed-state evolution. The existing exponential-coefficient convention is retained; physical time requires `t=-im*τ`. Real-coefficient imaginary-time evolution is explicitly unnormalized. Ownership of existing constructors remains documented rather than silently changed.
 
-The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, backend selection and capability queries, backend execution/observation, `bind_parameters`, terminal probabilities/samples/counts, explicit execution RNGs, and single-trajectory simulation results with intermediate records. The independent `MOSSDemoBackend` fixture demonstrates an implicit state and a custom instruction without dense storage assumptions.
+The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, backend selection and capability queries, backend execution/observation, `bind_parameters` with explicit `ParameterMap` sharing and gradient accumulation, terminal probabilities/samples/counts, explicit execution RNGs, and single-trajectory simulation results with intermediate records. The independent `MOSSDemoBackend` fixture demonstrates an implicit state and a custom instruction without dense storage assumptions.
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
-## Current milestone: API ownership and trainable extensions
+## Current milestone: shared parameter maps and gradient accumulation
+
+This milestone adds explicit shared-value semantics to the public parameter foundation. The implementation stays in the main package so companion packages can use the same slot ordering and gradient reduction. All four implementation and acceptance steps are complete:
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Parameter identity | An immutable `ParameterMap` assigns each active slot an explicit integer identity | Stable index order, independent input ownership, empty/identity maps, and clear invalid-identity errors | Verified locally |
+| 2 Shared binding | `bind_parameters(template, values, map)` expands independent values into active slots through existing public writers | Nested/frozen/adjoint/immutable instructions work; templates and inputs remain independent; legacy default binding and reset semantics pass unchanged | Verified locally |
+| 3 Gradient accumulation | Public slot-gradient reduction and optional Zygote binding rules sum each shared identity's contributions | Analytic, finite-difference, per-slot, mixed-state, fixed-channel, and input-projection checks agree | Verified locally |
+| 4 Independent extension acceptance | The external trainable-gate fixture performs a shared-parameter optimization update | Standalone fixture tests and full Julia 1.10/1.13 suites, including fresh-process loading checks, pass | Verified locally |
+
+Maps are separate metadata rather than changes to the circuit representation. `[1, 2, 1]` binds two independent values into three active slots; repeated identities share values while mutable gate storage stays independent. Map indices follow the current `active_parameters` traversal. Binding validates the slot count, but changes to activation or instruction order with the same count require the caller to rebuild or review the map.
+
+This milestone covers explicit integer identities and the existing deterministic dense CPU gradient path. Symbolic expressions, automatic identity tracking through circuit edits, new AD frameworks, batch gradients, trainable noise, and arbitrary-backend differentiation remain separate work. Final local acceptance results are recorded below.
+
+## Completed milestone: API ownership and trainable extensions
 
 This milestone makes the existing core contracts usable by a trainable companion package. Work proceeds through three independently reviewable steps:
 
@@ -52,14 +67,28 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 
 The following features remain distinct follow-up changes:
 
-1. Shared symbolic parameter identity and gradient accumulation for shared identities.
-2. ChainRules registration, complete batch gradients, parameterized noise, and explicit differentiation capabilities for external backends.
+1. ChainRules registration and explicit differentiation capabilities for external backends.
+2. Complete batch gradients and parameterized noise.
 3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
 4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
+5. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
 
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Shared parameter-map acceptance
+
+Local acceptance completed on 2026-10-16 with normal compiled-module loading and precompilation:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed all 2650 reported assertions across 39 testsets.
+- Julia 1.10.10, one thread: a new independent environment developed the checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with all 2650 reported assertions across 39 testsets. Dependencies were resolved without using the development Manifest.
+- The 247 added assertions cover parameter-map contracts (107), shared circuit gradients (40), and shared identities in the external immutable-gate fixture (100). Checks include noncommuting analytic circuits, finite differences, adjoint cancellation, pure/mixed inputs, fixed channels, Float32 values, views, empty maps, and source/input independence.
+- Each full run passed all six fresh-process native-extension loading scenarios. Existing default binding, mutable reset, execution, and numerical regressions also passed.
+- New independent fixture environments resolved against the actual checkout and passed standard `Pkg.test` on each of Julia 1.10.10 and 1.13.1: `MOSSDemoBackend` passed 9 assertions per version; `MOSSDemoGates` passed 181 per version, comprising its original 81 checks and 100 explicit-sharing checks.
+- The README mapping/gradient example and the extension guide's external-gate sharing example ran successfully in a separate Julia 1.13.1 environment. Local documentation links and package metadata were checked.
+
+The existing CI matrix covers the new main-suite and fixture checks on Julia 1.10 and 1.13. Remote CI was not run during this local acceptance. Runtime dependencies and the checked-in development Manifest remain unchanged.
 
 ### API ownership and trainable-extension acceptance
 

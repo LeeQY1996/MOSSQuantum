@@ -114,11 +114,13 @@ include("integration/public_api.jl")
 include("regression/quantum_semantics.jl")
 include("unit/parameter_binding.jl")
 include("unit/parameter_protocols.jl")
+include("unit/parameter_maps.jl")
 include("integration/execution_api.jl")
 include("extensions/backend_protocols.jl")
 include("extensions/optional_integrations.jl")
 include("extensions/adjoint_capabilities.jl")
 include("extensions/constructor_gradients.jl")
+include("extensions/shared_parameter_gradients.jl")
 include("extensions/trainable_instructions.jl")
 
 if "--load-orders" in ARGS

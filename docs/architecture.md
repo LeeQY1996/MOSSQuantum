@@ -9,7 +9,7 @@ Directories group responsibilities; they do not each introduce a Julia module.
 | Path | Responsibility | Owning namespace |
 | --- | --- | --- |
 | `src/MOSS.jl` | Dependency loading and package assembly | `MOSS` |
-| `src/api/` | Exports, state/backend contracts, independent parameter binding | `MOSS` |
+| `src/api/` | Exports, state/backend contracts, parameter binding and explicit sharing maps | `MOSS` |
 | `src/quantum_circuits/` | Instructions, gates, channels, circuits, and observable descriptions | `MOSS.QuantumCircuits` |
 | `src/quantum_circuits/gates/Gates.jl` | Elementary matrices and matrix constructors | `MOSS.QuantumCircuits.Gates` |
 | `src/states/` | Dense states, batches, initialization, and encoding | `MOSS` |
@@ -44,7 +44,7 @@ The CPU simulator implements the public execution interfaces while retaining exi
 | Capability | Representative entrypoints |
 | --- | --- |
 | Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions`, `copy_instruction` |
-| Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `differentiate` |
+| Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `ParameterMap`, `parameter_indices`, `accumulate_parameter_gradients`, `differentiate` |
 | Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
 | States | `AbstractQuantumState`, `nqubits`, `copy`, `StateVector`, `DensityMatrix`, `BatchStateVector`; optional dense `storage` |
@@ -57,6 +57,8 @@ The CPU simulator implements the public execution interfaces while retaining exi
 `supports(b, operation, state; action=:apply)` and `supports(b, observable, state; action=:expectation)` describe separate capabilities. Register bounds are checked through `validate_positions`. Declaring one capability does not imply noise, sampling, or differentiation support. The [extension guide](extending.md) gives implementation requirements and the [conventions](conventions.md) define ordering, ownership, and results.
 
 Public parameter writers may return replacement instructions. Circuit traversal and adjoint wrappers retain these results, so an immutable external gate can use its own fields. Independent binding uses `copy_instruction` per occurrence; ordinary circuit `copy` remains a shallow container copy. The copy hook is owned by `QuantumCircuits` and re-exported by MOSS; `bind_parameters` remains owned by MOSS.
+
+`ParameterMap` is owned by MOSS and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
 
 ## Optional integrations
 
@@ -80,4 +82,6 @@ The directory migration preserves existing namespaces, exported names, signature
 
 The ownership and parameter milestone preserves existing constructor-sharing defaults, adds explicit copy controls, and makes circuit `push!`, `append!`, and `empty!` return the circuit. Callers of parameter reset and activation retain the returned instruction when it may be replaced. The [ownership conventions](conventions.md#copying-and-storage-ownership) explain these changes.
 
-Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, shared symbolic parameter identity, and ChainRules integration remain future work. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.
+Explicit shared-value maps add reuse of independent parameter values and gradient accumulation on the existing supported dense CPU circuit path. They preserve two-argument binding and mutating reset, and introduce no symbolic algebra or general backend differentiation contract. The [parameter conventions](conventions.md#explicit-shared-parameter-maps) define their validation and lifecycle.
+
+Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, symbolic parameter expressions, and ChainRules integration remain future work. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.

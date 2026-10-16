@@ -35,3 +35,28 @@ function bind_parameters(circuit::QCircuit, values::AbstractVector{<:Real})
     end
     return _check_bound_instruction(QCircuit(instructions), expected)
 end
+
+"""
+    bind_parameters(template::AbstractInstruction, values::AbstractVector{<:Real}, map::ParameterMap)
+
+Bind independent `values` through an explicit active-slot map. For example,
+`ParameterMap([1, 2, 1])` binds `[θ, φ]` to the slots `[θ, φ, θ]`. The map must
+match `nparameters(template)` slots, and values must be finite and have length
+`nparameters(map)`. Frozen parameters retain their values.
+
+The result owns independent mutable storage for every instruction occurrence,
+including occurrences assigned the same value. The map is separate metadata;
+the returned instruction does not retain it. Keep the map alongside the
+template for future binding and gradient accumulation. Rebuild or review it
+after changing the template's active-slot layout.
+"""
+function bind_parameters(template::AbstractInstruction, values::AbstractVector{<:Real}, map::ParameterMap)
+    _check_parameter_map(template, map)
+    expected = nparameters(map)
+    length(values) == expected ||
+        throw(DimensionMismatch("expected $expected independent parameters, received $(length(values))."))
+    all(isfinite, values) || throw(ArgumentError("parameter values must be finite."))
+    Base.require_one_based_indexing(values)
+    expanded = [values[index] for index in map.indices]
+    return bind_parameters(template, expanded)
+end

@@ -89,7 +89,7 @@ An external trainable instruction implements these public methods; it does not n
 
 Retain the return value of parameter reset, activation, and deactivation. An immutable gate can return a new gate using its own field layout. Circuit traversal and `AdjointQuantumGate` retain that replacement. At circuit level, `activate_parameter!(circuit, j)` still activates all parameters of instruction `j`; it does not address flattened parameter slot `j`.
 
-`bind_parameters(instruction, values)` is the independent-binding entrypoint for a single instruction or a circuit. Circuit values follow recursive `active_parameters` traversal order; inactive values remain unchanged. Binding dispatches per instruction, copies parameterless instructions too, and provides owned parameter vectors to writers. Every occurrence is copied independently through `copy_instruction`, so repeated source references become separate parameter slots. The circuit copy hook follows the same per-occurrence rule. Immutable copies can remain `===`; mutable storage must be independent. Shared symbolic parameter identity is not implemented.
+`bind_parameters(instruction, values)` is the independent-binding entrypoint for a single instruction or a circuit. Circuit values follow recursive `active_parameters` traversal order; inactive values remain unchanged. Binding dispatches per instruction, copies parameterless instructions too, and provides owned parameter vectors to writers. Every occurrence is copied independently through `copy_instruction`, so repeated source references become separate parameter slots. The circuit copy hook follows the same per-occurrence rule. Immutable copies can remain `===`; mutable storage must be independent. Explicit parameter maps can coordinate the values of those slots without adding fields to an external instruction.
 
 The existing mutating `reset_parameters!` preserves aliases: a repeated mutable gate is updated once per occurrence, and the last supplied value wins. `copy(circuit)` and `QCircuit(circuit; copy=true)` remain shallow container copies. Use `copy_instruction(circuit)` for independent mutable instruction data, or `bind_parameters` to copy and bind it. Legacy gate reset helpers remain adapted internally for existing implementations; new packages use the public writer.
 
@@ -112,6 +112,28 @@ observable = QubitsTerm(1 => "Z")
 loss(values) = real(expectation(observable, bind_parameters(template, values) * initial))
 gradient = Zygote.gradient(loss, [0.1])[1]  # approximately [-sin(0.1)]
 ```
+
+### Share values across instruction occurrences
+
+`ParameterMap` uses the same public active-slot order for built-in and external instructions. A companion gate needs no additional parameter-identity interface:
+
+```julia
+using MOSS, MOSSDemoGates, Zygote
+
+template = QCircuit([DemoRotation(1, 0.0), DemoRotation(1, 0.0)])
+parameter_map = ParameterMap(template, [1, 1])
+initial = StateVector(1)
+observable = QubitsTerm(1 => "Z")
+loss(values) = real(expectation(observable,
+    bind_parameters(template, values, parameter_map) * initial))
+gradient = Zygote.gradient(loss, [0.1])[1] # approximately [-2sin(0.2)]
+```
+
+There are two active slots and one independent input value. Binding gathers that value into both slots; the existing CPU circuit reverse pass produces slot derivatives, and the map sums them back into the single input derivative. For a separately obtained slot gradient, call `accumulate_parameter_gradients(parameter_map, flat_gradient)` to perform the same sum. This path retains the existing gate and backend derivative requirements.
+
+Maps are immutable metadata kept separate from instructions and bound circuits. `ParameterMap(template)` creates an identity map; `ParameterMap(template, indices)` checks the current active-slot count. Each ID must be a positive non-Boolean integer, and all IDs in `1:k` must be used. `length(parameter_map)` counts slots, `nparameters(parameter_map)` counts independent values, and `parameter_indices(parameter_map)` returns a defensive `Vector{Int}`. Rebuild or review the map after changing activation or circuit order: matching slot counts do not establish matching slot meanings. See the [full mapping conventions](conventions.md#explicit-shared-parameter-maps).
+
+Sharing a value does not share mutable gate storage. Existing independent binding, mutating reset, and shallow circuit copies retain their documented ownership rules. Parameter maps do not provide symbolic parameter expressions or a general derivative rule for external backends.
 
 Zygote registrations are optional and loaded by `MOSSZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
 

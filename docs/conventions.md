@@ -34,9 +34,39 @@ Parameterized gate constructors default to inactive parameters unless `isparas` 
 
 At gate level, `activate_parameter!(g, j)` selects parameter index `j`. At circuit level, `activate_parameter!(circuit, j)` activates all parameters of instruction `j`; `j` remains an instruction index. Deactivation follows the same distinction. Activation and deactivation may also return replacement instructions, which circuits and adjoint wrappers retain.
 
-Binding copies every instruction occurrence independently through the public `copy_instruction` hook. If the source contains the same gate object twice, the result has two independent active slots; their supplied values may differ. Nested circuits and adjoint gate wrappers use the same rule, including parameterless instructions. The source and input parameter vector remain independent from the result. Immutable values may compare `===` when their contents are equal; independence concerns mutable storage, rather than distinct object identity. This is positional binding; symbolic shared-parameter identity and gradient accumulation across a shared identity are future work.
+Binding copies every instruction occurrence independently through the public `copy_instruction` hook. If the source contains the same gate object twice, the result has two independent active slots; their supplied values may differ. Nested circuits and adjoint gate wrappers use the same rule, including parameterless instructions. The source and input parameter vector remain independent from the result. Immutable values may compare `===` when their contents are equal; independence concerns mutable storage, rather than distinct object identity. Without a map, binding treats every active slot as an independent input value.
 
 Mutating reset retains its existing shared-object behavior. If a mutable gate occurs twice, `reset_parameters!(circuit, [0.2, 0.3])` visits it twice and both occurrences end with the last supplied value, `0.3`. `copy(circuit)` keeps that sharing. Use `bind_parameters` when the occurrences need independent parameter slots.
+
+### Explicit shared parameter maps
+
+`ParameterMap(indices)` assigns one positive integer ID to every active parameter slot. Slots follow recursive `active_parameters(template)` order. Equal IDs make those slots receive the same independent input value:
+
+```julia
+parameter_map = ParameterMap([1, 2, 1])
+parameter_indices(parameter_map) # a new Int vector: [1, 2, 1]
+length(parameter_map)            # 3 active slots
+nparameters(parameter_map)       # 2 independent values
+
+# For a template with three active slots:
+bound = bind_parameters(template, [0.2, -0.4], parameter_map)
+active_parameters(bound)         # [0.2, -0.4, 0.2]
+nparameters(bound)               # still 3 active slots
+```
+
+The constructor accepts an integer vector or tuple, snapshots its contents, and rejects Boolean IDs, nonpositive IDs, and gaps in `1:k`. Every ID in that range must be used: `[2, 1, 2]` is valid, while `[1, 3]` and `[2, 2]` are invalid. `ParameterMap(Int[])` has zero slots and zero independent values. `ParameterMap(template)` creates an identity map for the current active slots; `ParameterMap(template, indices)` also checks that the slot count matches the template.
+
+`bind_parameters(template, values, parameter_map)` checks that the map has exactly `nparameters(template)` slots and that `values` contains exactly `nparameters(parameter_map)` finite real values with one-based indexing. It gathers `values[parameter_indices(parameter_map)]`, then uses independent binding. Frozen values are preserved, and every instruction occurrence retains independent mutable storage even when several slots receive equal values. The existing two-argument binding and mutating reset keep their previous behavior.
+
+A map is an immutable value separate from the template and output circuit. Mutating its constructor input or the vector returned by `parameter_indices` cannot change it; `copy(parameter_map)` returns the map itself. The output circuit does not retain a map or shared identity. If activation, nesting, or instruction order changes, rebuild or review the map before reusing it. Validation checks only the number of active slots; a reorder with the same count cannot be detected automatically.
+
+Gradients use the reverse operation: add the contributions of all slots carrying each ID. If `flat_gradient` follows `active_parameters(template)` order, then
+
+```julia
+accumulate_parameter_gradients(parameter_map, [2.0, 3.0, 5.0]) # [7.0, 3.0]
+```
+
+computes `shared_gradient[j] = sum(flat_gradient[i] for i in eachindex(indices) if indices[i] == j)`. This helper requires one real gradient entry per slot and permits nonfinite gradients to propagate through the sums. For supported deterministic dense CPU circuits, differentiating a loss that calls the three-argument `bind_parameters` with Zygote performs this accumulation automatically. A map represents repeated values; symbolic expressions such as `2θ` or `θ + φ` are outside its contract.
 
 For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support the documented deterministic pure-state and density-matrix circuit workflows; arbitrary instructions, external backends, and batches require their own derivative support.
 

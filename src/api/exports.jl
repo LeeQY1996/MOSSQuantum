@@ -59,3 +59,4 @@ export AbstractInstruction, validate_positions, AbstractQuantumState
 export AbstractBackend, CPUBackend, backend, supports, UnsupportedOperation
 export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
 export bind_parameters, copy_instruction
+export ParameterMap, parameter_indices, accumulate_parameter_gradients

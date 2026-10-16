@@ -12,7 +12,7 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
 - **Readout and results**: Probabilities, seeded samples/counts, batch readout, and single-trajectory results retaining intermediate measurement records.
-- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, public parameter reset/copy hooks, and independent parameter binding.
+- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
 ## Installation
@@ -77,6 +77,41 @@ state = bound * StateVector(1)
 ```
 
 Binding accepts individual instructions as well as circuits. It follows `active_parameters(template)` order, preserves inactive values, and copies every instruction occurrence independently through `copy_instruction`. The source and parameter vector remain independent of the result. Public `reset_parameters!` writers may return replacement instructions, allowing external immutable gates with their own field layout.
+
+### Shared parameter values
+
+Use a separate map to bind several active slots to one independent value:
+
+```julia
+using MOSS
+
+template = QCircuit([RyGate(1, 0.0; isparas=true),
+                     RzGate(1, 0.0; isparas=true),
+                     RyGate(1, 0.0; isparas=true)])
+parameter_map = ParameterMap([1, 2, 1])
+values = [0.2, -0.4]
+bound = bind_parameters(template, values, parameter_map)
+active_parameters(bound) # [0.2, -0.4, 0.2]
+length(parameter_map)    # 3 active slots
+nparameters(parameter_map) # 2 independent values
+
+# Sum a gradient in active-slot order into independent-value order.
+accumulate_parameter_gradients(parameter_map, [2.0, 3.0, 5.0]) # [7.0, 3.0]
+```
+
+The map records positions in `active_parameters` order. It stays separate from the bound circuit, whose three slots retain independent storage. Rebuild or review the map after changing activation, circuit structure, or instruction order; matching slot counts cannot detect a reorder. IDs must use every integer in `1:k`; an empty map has no parameters. See the [parameter conventions](docs/conventions.md#explicit-shared-parameter-maps) for validation and ownership details.
+
+On the existing supported dense CPU circuit gradient path, Zygote sums the contributions of shared slots automatically:
+
+```julia
+using Zygote
+
+initial = StateVector(1)
+observable = QubitsTerm(1 => "Z")
+loss(values) = real(expectation(observable,
+    bind_parameters(template, values, parameter_map) * initial))
+gradient = Zygote.gradient(loss, values)[1] # 2 entries
+```
 
 ### State and circuit ownership
 
