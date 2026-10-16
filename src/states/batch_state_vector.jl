@@ -1,24 +1,36 @@
+"""
+    BatchStateVector(data; copy=false)
+    BatchStateVector(state::BatchStateVector; copy=true)
+    BatchStateVector(state::StateVector; copy=false)
+
+Construct a batch of dense pure states. Array inputs and single-state inputs
+reuse compatible storage by default. The batch-to-batch constructor retains its
+historical `copy=true` default. Explicit `copy=true` guarantees independent
+storage; `copy=false` permits reuse but conversions can still allocate.
+`storage(batch)` exposes the mutable backing matrix.
+"""
 struct BatchStateVector{T <: Number} <: AbstractQuantumState
     data::Matrix{T}
     nqubits::Int
     batch_size::Int
 
-    function BatchStateVector{T}(data::AbstractMatrix{<:Number}, nqubits::Int, batch_size::Int) where {T <: Number}
+    function BatchStateVector{T}(data::AbstractMatrix{<:Number}, nqubits::Int, batch_size::Int; copy::Bool=false) where {T <: Number}
         @assert size(data, 1) == 2^nqubits
         @assert size(data, 2) == batch_size
-        new{T}(convert(Matrix{T}, data), nqubits, batch_size)
+        converted = convert(Matrix{T}, data)
+        new{T}(copy ? Base.copy(converted) : converted, nqubits, batch_size)
     end
 end
 
 # Outer constructors
-BatchStateVector(data::AbstractMatrix{T}, nqubits::Int, batch_size::Int) where {T <: Number} =
-    BatchStateVector{T}(data, nqubits, batch_size)
+BatchStateVector(data::AbstractMatrix{T}, nqubits::Int, batch_size::Int; copy::Bool=false) where {T <: Number} =
+    BatchStateVector{T}(data, nqubits, batch_size; copy=copy)
 
-BatchStateVector(data::AbstractMatrix{T}, nqubits::Int) where {T <: Number} =
-    BatchStateVector{T}(data, nqubits, size(data, 2))
+BatchStateVector(data::AbstractMatrix{T}, nqubits::Int; copy::Bool=false) where {T <: Number} =
+    BatchStateVector{T}(data, nqubits, size(data, 2); copy=copy)
 
-BatchStateVector(data::AbstractMatrix{T}) where {T <: Number} =
-    BatchStateVector{T}(data, _nqubits(data), size(data, 2))
+BatchStateVector(data::AbstractMatrix{T}; copy::Bool=false) where {T <: Number} =
+    BatchStateVector{T}(data, _nqubits(data), size(data, 2); copy=copy)
 
 function BatchStateVector{T}(nqubits::Int, batch_size::Int) where {T <: Number}
     data = zeros(T, 2^nqubits, batch_size)
@@ -30,7 +42,7 @@ BatchStateVector(::Type{T}, nqubits::Int, batch_size::Int) where {T<:Number} = B
 BatchStateVector(nqubits::Int, batch_size::Int) = BatchStateVector(ComplexF64, nqubits, batch_size)
 
 # Copy constructor
-BatchStateVector(x::BatchStateVector) = BatchStateVector(copy(x.data), x.nqubits, x.batch_size)
+BatchStateVector(x::BatchStateVector; copy::Bool=true) = BatchStateVector(x.data, x.nqubits, x.batch_size; copy=copy)
 
 # Basic accessors
 storage(x::BatchStateVector) = x.data
@@ -50,20 +62,26 @@ Base.convert(::Type{BatchStateVector{T}}, x::BatchStateVector) where {T<:Number}
 Base.copy(x::BatchStateVector) = BatchStateVector(copy(storage(x)), nqubits(x), batch_size(x))
 
 # Convert from StateVector to BatchStateVector (single state batch)
-function BatchStateVector(sv::StateVector{T}) where {T <: Number}
+function BatchStateVector(sv::StateVector{T}; copy::Bool=false) where {T <: Number}
     data = reshape(storage(sv), :, 1)
-    return BatchStateVector(data, nqubits(sv), 1)
+    return BatchStateVector(data, nqubits(sv), 1; copy=copy)
 end
 
-# Extract a single StateVector from batch
-function StateVector(batch::BatchStateVector, i::Int)
+"""
+    StateVector(batch::BatchStateVector, i; copy=true)
+
+Extract a state with independent vector storage. The column view must be
+materialized for the current `StateVector` representation, including when
+`copy=false`; that option permits reuse but does not guarantee it.
+"""
+function StateVector(batch::BatchStateVector, i::Int; copy::Bool=true)
     @assert 1 <= i <= batch_size(batch)
     data = reshape(view(storage(batch), :, i), :)
     return StateVector(data, nqubits(batch))
 end
 
 # Convert a vector of StateVectors to BatchStateVector
-function BatchStateVector(vec::AbstractVector{<:StateVector})
+function BatchStateVector(vec::AbstractVector{<:StateVector}; copy::Bool=false)
     isempty(vec) && error("Vector of StateVectors is empty")
     nq = nqubits(vec[1])
     bs = length(vec)

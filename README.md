@@ -12,7 +12,7 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
 - **Readout and results**: Probabilities, seeded samples/counts, batch readout, and single-trajectory results retaining intermediate measurement records.
-- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, and independent parameter binding.
+- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, public parameter reset/copy hooks, and independent parameter binding.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
 ## Installation
@@ -76,7 +76,20 @@ bound = bind_parameters(template, [π / 4])
 state = bound * StateVector(1)
 ```
 
-Binding follows `active_parameters(template)` order, preserves inactive values, and copies every instruction occurrence independently. The source circuit and parameter vector remain independent of the result.
+Binding accepts individual instructions as well as circuits. It follows `active_parameters(template)` order, preserves inactive values, and copies every instruction occurrence independently through `copy_instruction`. The source and parameter vector remain independent of the result. Public `reset_parameters!` writers may return replacement instructions, allowing external immutable gates with their own field layout.
+
+### State and circuit ownership
+
+```julia
+data = ComplexF64[1, 0]
+state = StateVector(data; copy=true) # independent numeric storage
+shallow = copy(template)             # new container, shared instructions
+independent = copy_instruction(template) # independent mutable instruction data
+```
+
+Existing constructor defaults are preserved: compatible array inputs generally permit reuse, `StateVector(state)` and `DensityMatrix(rho)` permit reuse, and `BatchStateVector(batch)` copies. Explicit `copy=true` copies numeric state storage; the same keyword on `QCircuit` copies its container. Type or layout conversion may allocate even with `copy=false`. Immutable instruction copies may remain `===`. See [ownership conventions](docs/conventions.md#copying-and-storage-ownership) for the complete table.
+
+Retain the return value of `reset_parameters!`, activation, and deactivation when working with replacement instructions. Mutating reset keeps its historical alias behavior: a repeated mutable gate ends with the last supplied value. Circuit `activate_parameter!(circuit, j)` still selects instruction `j`. The container methods `push!`, `append!`, and `empty!` return the modified circuit.
 
 ### Expectation value
 
@@ -188,6 +201,8 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
 Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, and `expectation(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage.
+
+The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic pure-state and density-matrix circuits; arbitrary instructions, custom backends, stochastic execution, and complete batch gradients need their own derivative support.
 
 Retain the return value of `apply!`: execution can promote numeric storage or convert a state vector to a density matrix when applying noise. See the conventions for qubit ordering, parameter activation, and storage ownership.
 

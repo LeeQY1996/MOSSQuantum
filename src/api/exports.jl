@@ -58,4 +58,4 @@ export partial_tr
 export AbstractInstruction, validate_positions, AbstractQuantumState
 export AbstractBackend, CPUBackend, backend, supports, UnsupportedOperation
 export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
-export bind_parameters
+export bind_parameters, copy_instruction

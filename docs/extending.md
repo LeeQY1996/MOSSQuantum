@@ -16,7 +16,7 @@ state = apply!(circuit, qstate(2))
 
 The first gate position is the least significant local matrix bit. `QuantumGate` does not validate unitarity, so the caller is responsible for the intended operation. `QuantumMap` accepts Kraus matrices; applying it to a state vector returns a density matrix. Current CPU generic channels support at most two physical qubits because their superoperators act on twice as many density indices.
 
-A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, `MOSS.mat`, and `MOSS.change_positions`. It then uses the existing CPU gate dispatcher, subject to its arity limits. A fixed gate angle does not become trainable automatically. Existing trainable gates use activation flags and derivatives in active-parameter order; a fully field-independent trainable-instruction protocol remains further work.
+A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, `MOSS.mat`, and `MOSS.change_positions`. It then uses the existing CPU gate dispatcher, subject to its arity limits. A fixed gate angle does not become trainable automatically. Trainable gates add the public parameter and derivative methods described below, without adopting the built-in gate fields.
 
 ## Instruction and state contracts
 
@@ -76,7 +76,42 @@ Its tests also exercise unsupported H-gate execution, noise, and X observation. 
 
 ## Parameters and differentiation
 
-`bind_parameters(template, values)` is the public independent-binding entrypoint. Values follow `active_parameters` traversal order; inactive values remain unchanged. Every instruction occurrence is copied independently, so repeated source references become separate parameter slots. Shared symbolic parameter identity is not implemented.
+An external trainable instruction implements these public methods; it does not need `.paras`, `.isparas`, or `reset_parameters_util!`:
+
+| Method | Contract |
+| --- | --- |
+| `parameters(instruction)` | Return all stored real parameters, including frozen values |
+| `active_parameters(instruction)` | Return the active real parameter vector in local order; parameterless defaults return `nothing` |
+| `reset_parameters!(instruction, values::AbstractVector{<:Real})` | Validate length and finite values, preserve frozen parameters, and return the updated or replacement instruction |
+| `nparameters(instruction)` | Defaults to the length of `active_parameters`, with `nothing` giving zero; may be specialized |
+| `copy_instruction(instruction)` | Optional ownership hook; defaults to `deepcopy` |
+| Activation and deactivation methods | Implement when needed; return the updated or replacement instruction |
+
+Retain the return value of parameter reset, activation, and deactivation. An immutable gate can return a new gate using its own field layout. Circuit traversal and `AdjointQuantumGate` retain that replacement. At circuit level, `activate_parameter!(circuit, j)` still activates all parameters of instruction `j`; it does not address flattened parameter slot `j`.
+
+`bind_parameters(instruction, values)` is the independent-binding entrypoint for a single instruction or a circuit. Circuit values follow recursive `active_parameters` traversal order; inactive values remain unchanged. Binding dispatches per instruction, copies parameterless instructions too, and provides owned parameter vectors to writers. Every occurrence is copied independently through `copy_instruction`, so repeated source references become separate parameter slots. The circuit copy hook follows the same per-occurrence rule. Immutable copies can remain `===`; mutable storage must be independent. Shared symbolic parameter identity is not implemented.
+
+The existing mutating `reset_parameters!` preserves aliases: a repeated mutable gate is updated once per occurrence, and the last supplied value wins. `copy(circuit)` and `QCircuit(circuit; copy=true)` remain shallow container copies. Use `copy_instruction(circuit)` for independent mutable instruction data, or `bind_parameters` to copy and bind it. Legacy gate reset helpers remain adapted internally for existing implementations; new packages use the public writer.
+
+To use a custom unitary `Gate` with the existing dense CPU circuit reverse pass, implement `differentiate(gate)` as one derivative gate per active parameter in active-parameter order. For matrix `U`, each derivative gate must store
+
+```text
+Dⱼ = (∂U/∂θⱼ)' * U
+```
+
+on the same register positions as the original gate. This is the generator convention used by the reverse pass, rather than a list of raw `∂U/∂θⱼ` matrices. A gate with active parameters but no derivative implementation raises `ArgumentError`; a parameterless gate returns `nothing`. The reverse pass requires unitary gates and supports the existing fixed `QuantumMap` channels. Arbitrary `AbstractInstruction` subtypes, custom backends, complete batch gradients, and trainable noise parameters are outside that implementation. For the current Zygote training contract, bind the parameters of a `QCircuit` inside the loss; standalone instruction binding does not establish a general AD rule.
+
+[`test/fixtures/MOSSDemoGates`](../test/fixtures/MOSSDemoGates) is an independent package showing the complete path. Its immutable `DemoRotation <: ParametricGate{1}` stores `wire`, `angle`, and `trainable`, implements only public MOSS methods, and needs no special reset or execution code in MOSS. Its contract tests cover nested and repeated binding, frozen parameters, adjoint wrappers, analytic and finite-difference gradients, one optimization update, and fixed-channel gradients. After developing both packages into the consumer environment:
+
+```julia
+using MOSS, MOSSDemoGates, Zygote
+
+template = QCircuit([DemoRotation(1, 0.1)])
+initial = StateVector(1)
+observable = QubitsTerm(1 => "Z")
+loss(values) = real(expectation(observable, bind_parameters(template, values) * initial))
+gradient = Zygote.gradient(loss, [0.1])[1]  # approximately [-sin(0.1)]
+```
 
 Zygote registrations are optional and loaded by `MOSSZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
 

@@ -43,7 +43,7 @@ The CPU simulator implements the public execution interfaces while retaining exi
 
 | Capability | Representative entrypoints |
 | --- | --- |
-| Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions` |
+| Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions`, `copy_instruction` |
 | Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `differentiate` |
 | Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
@@ -55,6 +55,8 @@ The CPU simulator implements the public execution interfaces while retaining exi
 | Observables | `QubitsTerm`, `QubitsOperator`, `expectation(backend, observable, state)`, `fidelity`, `partial_tr`, entropy helpers |
 
 `supports(b, operation, state; action=:apply)` and `supports(b, observable, state; action=:expectation)` describe separate capabilities. Register bounds are checked through `validate_positions`. Declaring one capability does not imply noise, sampling, or differentiation support. The [extension guide](extending.md) gives implementation requirements and the [conventions](conventions.md) define ordering, ownership, and results.
+
+Public parameter writers may return replacement instructions. Circuit traversal and adjoint wrappers retain these results, so an immutable external gate can use its own fields. Independent binding uses `copy_instruction` per occurrence; ordinary circuit `copy` remains a shallow container copy. The copy hook is owned by `QuantumCircuits` and re-exported by MOSS; `bind_parameters` remains owned by MOSS.
 
 ## Optional integrations
 
@@ -68,10 +70,14 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/fixtures/MOSSDemoBackend` is a separate package with its own `Project.toml` and `import MOSS`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSS kernels. Independent package resolution and final suite results are recorded separately from its implementation.
 
+`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step and compare gradients with analytic and finite-difference results. CI resolves and tests both fixtures independently on Julia 1.10 and Julia 1.13.
+
 The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. Recorded warmed measurements remain necessary before making performance claims.
 
 ## Compatibility and remaining work
 
 The directory migration preserves existing namespaces, exported names, signatures, and execution order. Two intentional numerical changes follow it: squared Uhlmann fidelity replaces the former inconsistent mixed-state expression, and density-matrix evolution now applies the propagator on both sides. The [conventions](conventions.md#physical-quantities-and-migration-notes) describe the migration.
+
+The ownership and parameter milestone preserves existing constructor-sharing defaults, adds explicit copy controls, and makes circuit `push!`, `append!`, and `empty!` return the circuit. Callers of parameter reset and activation retain the returned instruction when it may be replaced. The [ownership conventions](conventions.md#copying-and-storage-ownership) explain these changes.
 
 Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, shared symbolic parameter identity, and ChainRules integration remain future work. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.

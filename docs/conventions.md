@@ -29,12 +29,16 @@ Parameterized gate constructors default to inactive parameters unless `isparas` 
 - `parameters(g)` returns all stored parameters, including inactive values.
 - `active_parameters(g)` selects active values in gate-local order; `nparameters(g)` counts them.
 - Circuit parameter access traverses instructions in execution order, recursively through nested circuits.
-- `reset_parameters!(circuit, values)` mutates active slots in that order and requires exactly `nparameters(circuit)` values.
-- `bind_parameters(circuit, values)` returns an independent circuit with active slots bound in the same order. It accepts a real abstract vector, checks length and finite values, and preserves inactive values.
+- `reset_parameters!(instruction, values)` updates active slots and returns the resulting instruction. Mutable implementations update in place; immutable implementations return a replacement. Retain the return value. Circuit traversal retains those replacements and requires exactly `nparameters(circuit)` finite values.
+- `bind_parameters(instruction, values)` returns an independent instruction with active slots bound in the same order. It accepts a real abstract vector, checks length and finite values, and preserves inactive values. Circuit binding visits each instruction separately.
 
-At gate level, `activate_parameter!(g, j)` selects parameter index `j`. At circuit level, `activate_parameter!(circuit, j)` activates all parameters of instruction `j`, rather than the flattened circuit parameter index. Deactivation follows the same distinction.
+At gate level, `activate_parameter!(g, j)` selects parameter index `j`. At circuit level, `activate_parameter!(circuit, j)` activates all parameters of instruction `j`; `j` remains an instruction index. Deactivation follows the same distinction. Activation and deactivation may also return replacement instructions, which circuits and adjoint wrappers retain.
 
-Binding copies every instruction occurrence independently. If the source contains the same gate object twice, the result has two independent active slots; their supplied values may differ. Nested circuits and adjoint gate wrappers are copied as well. The source and input parameter vector remain independent from the result. This is positional binding; symbolic shared-parameter identity and gradient accumulation across a shared identity are future work. The older mutating reset and shallow-copy behavior remain available.
+Binding copies every instruction occurrence independently through the public `copy_instruction` hook. If the source contains the same gate object twice, the result has two independent active slots; their supplied values may differ. Nested circuits and adjoint gate wrappers use the same rule, including parameterless instructions. The source and input parameter vector remain independent from the result. Immutable values may compare `===` when their contents are equal; independence concerns mutable storage, rather than distinct object identity. This is positional binding; symbolic shared-parameter identity and gradient accumulation across a shared identity are future work.
+
+Mutating reset retains its existing shared-object behavior. If a mutable gate occurs twice, `reset_parameters!(circuit, [0.2, 0.3])` visits it twice and both occurrences end with the last supplied value, `0.3`. `copy(circuit)` keeps that sharing. Use `bind_parameters` when the occurrences need independent parameter slots.
+
+For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support the documented deterministic pure-state and density-matrix circuit workflows; arbitrary instructions, external backends, and batches require their own derivative support.
 
 ## Mutation and returned objects
 
@@ -82,25 +86,32 @@ rng = MersenneTwister(42)
 results = [simulate(circuit, initial_state; rng=rng) for _ in 1:100]
 ```
 
-Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Equal seeds reproduce results within the same Julia environment. Random state constructors still use the default RNG; construct input arrays with a local RNG when deterministic initialization is required.
+Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, and `rand_batch(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
 
 `simulate`, `sample`, and `counts` have no automatic differentiation contract. Use supported deterministic circuit application and expectation APIs for analytic gradients.
 
 ## Copying and storage ownership
 
-`storage(state)` exposes mutable backing data. Dense constructors may reuse compatible input arrays, and same-element-type conversions can retain backing storage.
+`storage(state)` exposes mutable backing data. Dense constructors taking arrays or existing states, and circuit constructors, accept an explicit `copy` keyword while preserving their existing defaults. For dense states, `copy=true` guarantees independent numeric storage. `copy=false` permits reuse, but element-type or layout conversion may still allocate. Same-element-type `convert` can retain backing storage.
 
 | Expression | Ownership |
 | --- | --- |
-| `StateVector(existing_state_vector)` | Can reuse its vector |
-| `DensityMatrix(existing_density_matrix)` | Can reuse its backing vector |
-| `BatchStateVector(existing_batch)` | Copies its matrix |
+| `StateVector(data_or_state; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
+| `DensityMatrix(data_or_density_matrix; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
+| `DensityMatrix(pure_state; copy=...)` | Always creates independent density-matrix storage |
+| `BatchStateVector(data_or_single_state; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
+| `BatchStateVector(existing_batch; copy=true)` | Copies by default; `copy=false` permits reuse |
+| `StateVector(batch, i; copy=true)` | Copies the column; the current representation also materializes it with `copy=false` |
 | `copy(state)` for the three dense state types | Copies numeric storage |
-| `copy(circuit)` or `QCircuit(existing_circuit)` | Copies the container and retains instruction objects |
-| `bind_parameters(circuit, values)` | Independently copies every instruction occurrence and parameter storage |
+| `QCircuit(operations; copy=false)` | Reuses a `Vector{AbstractInstruction}`; converting other vector types allocates a container |
+| `copy(circuit)` or `QCircuit(existing_circuit; copy=true)` | Copies the container and retains instruction objects; `QCircuit(...; copy=false)` can share the container |
+| `copy_instruction(instruction_or_circuit)` | Independently copies mutable instruction data, recursively per occurrence for circuits |
+| `bind_parameters(instruction_or_circuit, values)` | Independently copies every occurrence and binds its active parameters |
 | `simulate(circuit, state; ...)` | Executes on an independent state copy |
 
-Independent containers alone do not imply independent parameter arrays. A future uniform constructor-ownership policy would require its own migration guidance.
+Independent circuit containers alone do not imply independent parameter arrays. `QCircuit(...; copy=true)` is shallow; use `copy_instruction(circuit)` for independent mutable instruction data without changing parameter values. The default hook uses `deepcopy`; extensions managing resources can specialize it while preserving storage independence. Immutable instructions may remain `===` after copying.
+
+`push!`, `append!`, and `empty!` return the modified `QCircuit`, matching their documented container API. Earlier versions returned its internal operation vector; code relying on that return value should now use `circuit.operations` explicitly.
 
 ## Physical quantities and migration notes
 

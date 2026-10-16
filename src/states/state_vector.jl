@@ -1,17 +1,27 @@
+"""
+    StateVector(data; copy=false)
+    StateVector(state::StateVector; copy=false)
+
+Construct a dense pure state. Compatible vector storage is reused by default.
+Use `copy=true` to obtain independent storage, or `Base.copy(state)` to copy an
+existing state. `copy=false` permits reuse; element-type or layout conversion can
+still allocate. `storage(state)` exposes the mutable backing array.
+"""
 struct StateVector{T <: Number} <: AbstractQuantumState
     data::Vector{T}
     nqubits::Int
 
-function StateVector{T}(data::AbstractVector{<:Number}, nqubits::Int) where {T <: Number}
+function StateVector{T}(data::AbstractVector{<:Number}, nqubits::Int; copy::Bool=false) where {T <: Number}
     @assert length(data) == 2^nqubits
-    new{T}(convert(Vector{T}, data), nqubits)
+    converted = convert(Vector{T}, data)
+    new{T}(copy ? Base.copy(converted) : converted, nqubits)
 end
 
 end
 
-StateVector(data::AbstractVector{T}, nqubits::Int) where {T <: Number} = StateVector{T}(data, nqubits)
-StateVector{T}(data::AbstractVector{<:Number}) where T = StateVector{T}(data, _nqubits(data))
-StateVector(data::AbstractVector{T}) where {T <: Number} = StateVector{T}(data)
+StateVector(data::AbstractVector{T}, nqubits::Int; copy::Bool=false) where {T <: Number} = StateVector{T}(data, nqubits; copy=copy)
+StateVector{T}(data::AbstractVector{<:Number}; copy::Bool=false) where T = StateVector{T}(data, _nqubits(data); copy=copy)
+StateVector(data::AbstractVector{T}; copy::Bool=false) where {T <: Number} = StateVector{T}(data; copy=copy)
 function StateVector{T}(nqubits::Int) where {T<:Number} 
     v = zeros(T, 2^nqubits)
     v[1] = 1
@@ -19,7 +29,7 @@ function StateVector{T}(nqubits::Int) where {T<:Number}
 end
 StateVector(::Type{T}, nqubits::Int) where {T<:Number} = StateVector{T}(nqubits)
 StateVector(nqubits::Int) = StateVector(ComplexF64, nqubits)
-StateVector(x::StateVector) = StateVector(x.data, nqubits(x))
+StateVector(x::StateVector; copy::Bool=false) = StateVector(x.data, nqubits(x); copy=copy)
 
 storage(x::StateVector) = x.data
 QuantumCircuits.nqubits(x::StateVector) = x.nqubits

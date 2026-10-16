@@ -30,21 +30,50 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
+## Current milestone: API ownership and trainable extensions
+
+This milestone makes the existing core contracts usable by a trainable companion package. Work proceeds through three independently reviewable steps:
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Ownership and containers | Add explicit constructor copy controls while retaining historical defaults; make circuit container mutators return the circuit | Aliasing and mutation-propagation checks across dense states and circuits; invalid appends leave the circuit unchanged; existing numerical behavior passes | Verified locally |
+| 2 Public parameter protocol | Public instruction reset and independent copy hooks; bind and recursively retain replacement instructions, including immutable instructions and adjoint wrappers | No private reset hooks required by an extension; nested/repeated/frozen parameters, finite-value and dimension validation, independent source and result | Verified locally |
+| 3 Trainable companion acceptance | An independent fixture defines its own parameterized unitary gate and completes a CPU training step through public methods | Binding, execution, expectation, and optional Zygote gradients agree with analytic and finite-difference results; standalone package tests and full Julia 1.10/1.13 tests pass | Verified locally |
+
+Legacy constructor sharing remains the default; explicit copy controls document when conversion can still allocate. Mutable built-in parameter reset continues to update existing gate objects. Reset, activation, and deactivation methods may return a replacement instruction; callers retain that result, as they already do for state execution. The independently bound result has separate mutable data for each instruction occurrence.
+
+The optional Zygote rules accept the new constructor keywords and preserve cotangents through state-to-state construction and `copy(state)`. Constructor gradients are checked across copy choices, real and complex domains, typed conversion, and vector/matrix density inputs. The external gate's `differentiate` implementation follows the existing `(∂U/∂θ)' * U` convention; no reverse-pass algorithm change is required.
+
+The first differentiable extension uses the existing dense CPU reverse pass for deterministic unitary circuits. Shared symbolic parameters, new AD frameworks, batch gradients, trainable noise, and gradients for arbitrary backends remain separate follow-up work.
+
+All three steps passed local acceptance. [Ownership and migration conventions](conventions.md#copying-and-storage-ownership) and the [extension guide](extending.md#parameters-and-differentiation) describe the completed contracts. Final assertion counts and independent-package results are recorded below.
+
 ## Follow-up work
 
 The following features remain distinct follow-up changes:
 
-1. Uniform constructor ownership and any additional mutation-return cleanup, with migration guidance.
-2. A field-independent custom trainable-instruction protocol, shared symbolic parameter identity, and gradient accumulation for shared identities.
-3. ChainRules registration, complete batch gradients, parameterized noise, and explicit differentiation capabilities for external backends.
-4. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
-5. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
+1. Shared symbolic parameter identity and gradient accumulation for shared identities.
+2. ChainRules registration, complete batch gradients, parameterized noise, and explicit differentiation capabilities for external backends.
+3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
+4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
 
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
 
-### Current version-policy migration
+### API ownership and trainable-extension acceptance
+
+Local acceptance completed on 2026-10-16 with normal compiled-module loading and precompilation:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed all 2403 reported assertions across 36 testsets.
+- Julia 1.10.10, one thread: an independent environment developed the checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with all 2403 reported assertions across 36 testsets. Dependencies were resolved independently of the development Manifest.
+- The 587 added assertions cover ownership/container behavior (154), public parameter protocols (76), constructor and state-copy gradients (276), and the external immutable trainable gate (81). Existing numerical, execution, public API, and optional-integration checks also passed.
+- Each full run passed the six fresh-process native-extension loading scenarios: the core alone, Zygote before/after MOSS, Plots before/after MOSS, and LaTeXStrings before MOSS and Plots.
+- Separate environments resolved each fixture against the real checkout and passed standard `Pkg.test` on both Julia versions: `MOSSDemoBackend` passed 9 assertions per version; `MOSSDemoGates` passed 81 per version. The latter validates analytic and finite-difference gradients, a loss-reducing parameter update, immutable replacements, and fixed-channel gradients without private MOSS hooks.
+
+CI now tests both independent fixtures on Julia 1.10 and 1.13, in addition to the main one-thread/four-thread matrix. Remote CI was configured but has not been run as part of this local acceptance. Runtime dependencies and the checked-in development Manifest did not change in this milestone.
+
+### Version-policy migration acceptance
 
 Local acceptance completed on 2026-10-16:
 

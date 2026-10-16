@@ -40,6 +40,8 @@ end
     include("unit/state_initialization.jl")
 end
 
+include("unit/ownership_and_containers.jl")
+
 @testset "test batch state vector" begin
     include("unit/batch_state_vector.jl")
 end
@@ -111,10 +113,13 @@ include("integration/plotting.jl")
 include("integration/public_api.jl")
 include("regression/quantum_semantics.jl")
 include("unit/parameter_binding.jl")
+include("unit/parameter_protocols.jl")
 include("integration/execution_api.jl")
 include("extensions/backend_protocols.jl")
 include("extensions/optional_integrations.jl")
 include("extensions/adjoint_capabilities.jl")
+include("extensions/constructor_gradients.jl")
+include("extensions/trainable_instructions.jl")
 
 if "--load-orders" in ARGS
     @testset "Fresh-process optional integration loading" begin

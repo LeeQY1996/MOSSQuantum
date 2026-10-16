@@ -1,27 +1,38 @@
+"""
+    DensityMatrix(data; copy=false)
+    DensityMatrix(state::DensityMatrix; copy=false)
+
+Construct a dense mixed state. Compatible vector or matrix storage is reused by
+default; `copy=true` guarantees independent backing storage. `copy=false` permits
+reuse but type or layout conversion can still allocate. Converting a pure state
+to a density matrix always creates new storage. `storage(state)` is a mutable
+matrix sharing the state's vectorized backing storage.
+"""
 struct DensityMatrix{T <: Number} <: AbstractQuantumState
 	data::Vector{T}
 	nqubits::Int
 
-function DensityMatrix{T}(data::AbstractVector{<:Number}, nqubits::Int) where {T <: Number}
+function DensityMatrix{T}(data::AbstractVector{<:Number}, nqubits::Int; copy::Bool=false) where {T <: Number}
 	(length(data) == 2^(2*nqubits)) || throw(DimensionMismatch())
-	new{T}(convert(Vector{T}, data), nqubits)
+	converted = convert(Vector{T}, data)
+	new{T}(copy ? Base.copy(converted) : converted, nqubits)
 end
 
 end
 
-function DensityMatrix{T}(m::AbstractMatrix{<:Number}, nqubits::Int) where {T <: Number}
+function DensityMatrix{T}(m::AbstractMatrix{<:Number}, nqubits::Int; copy::Bool=false) where {T <: Number}
 	(size(m, 1) == size(m, 2) == 2^nqubits) || throw(DimensionMismatch())
-	return DensityMatrix{T}(reshape(m, length(m)), nqubits)
+	return DensityMatrix{T}(reshape(m, length(m)), nqubits; copy=copy)
 end
-function DensityMatrix{T}(m::AbstractVector{<:Number}) where {T <: Number}
+function DensityMatrix{T}(m::AbstractVector{<:Number}; copy::Bool=false) where {T <: Number}
 	n = _nqubits(m)
-	return DensityMatrix{T}(m, div(n, 2))
+	return DensityMatrix{T}(m, div(n, 2); copy=copy)
 end
-DensityMatrix{T}(m::AbstractMatrix{<:Number}) where {T <: Number} = DensityMatrix{T}(reshape(m, length(m)))
+DensityMatrix{T}(m::AbstractMatrix{<:Number}; copy::Bool=false) where {T <: Number} = DensityMatrix{T}(reshape(m, length(m)); copy=copy)
 
-DensityMatrix(data::Union{AbstractVector, AbstractMatrix}, nqubits::Int) = DensityMatrix{eltype(data)}(data, nqubits)
-DensityMatrix(data::AbstractVector) = DensityMatrix(data, div(_nqubits(data), 2))
-DensityMatrix(data::AbstractMatrix) = DensityMatrix(reshape(data, length(data)))
+DensityMatrix(data::Union{AbstractVector, AbstractMatrix}, nqubits::Int; copy::Bool=false) = DensityMatrix{eltype(data)}(data, nqubits; copy=copy)
+DensityMatrix(data::AbstractVector; copy::Bool=false) = DensityMatrix(data, div(_nqubits(data), 2); copy=copy)
+DensityMatrix(data::AbstractMatrix; copy::Bool=false) = DensityMatrix(reshape(data, length(data)); copy=copy)
 function DensityMatrix{T}(nqubits::Int) where {T<:Number}
 	 v = zeros(T, 2^(2*nqubits))
 	 v[1,1] = 1
@@ -29,8 +40,8 @@ function DensityMatrix{T}(nqubits::Int) where {T<:Number}
 end
 DensityMatrix(::Type{T}, nqubits::Int) where {T<:Number} = DensityMatrix{T}(nqubits)
 DensityMatrix(nqubits::Int) = DensityMatrix(ComplexF64, nqubits)
-DensityMatrix(x::DensityMatrix) = DensityMatrix(x.data, nqubits(x))
-DensityMatrix(x::StateVector) = (x_data = storage(x); DensityMatrix(kron(conj(x_data), x_data), nqubits(x)))
+DensityMatrix(x::DensityMatrix; copy::Bool=false) = DensityMatrix(x.data, nqubits(x); copy=copy)
+DensityMatrix(x::StateVector; copy::Bool=false) = (x_data = storage(x); DensityMatrix(kron(conj(x_data), x_data), nqubits(x)))
 
 
 storage(x::DensityMatrix) = (L = 2^(nqubits(x)); reshape(x.data, L, L))

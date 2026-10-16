@@ -58,8 +58,8 @@ A quantum circuit representing a sequence of quantum operations (gates, channels
 # Constructors
 ```julia
 QCircuit()  # Create empty circuit
-QCircuit(ops)  # Create circuit from array of operations
-QCircuit(circuit::QCircuit)  # Copy constructor
+QCircuit(ops; copy=false)  # Reuse a compatible operation vector when possible
+QCircuit(circuit::QCircuit; copy=true)  # Shallow-copy its operation vector
 ```
 
 # Examples
@@ -82,19 +82,31 @@ circuit2 = QCircuit(ops)
 - [`append!`](@ref): Append operations to circuit.
 - [`QMeasure`](@ref): Measurement operation.
 - [`QSelect`](@ref): Post-selection operation.
+
+# Ownership
+`copy=true` copies the operation vector, not its instructions. With `copy=false`,
+a `Vector{AbstractInstruction}` is stored directly; other vector types are
+converted to that representation and therefore receive a new container.
+`QCircuit(existing)` and `copy(existing)` shallow-copy the container by default.
+Nested circuits and mutable instruction parameters remain shared. Use
+`copy_instruction` for an independent instruction tree.
 """
 struct QCircuit <: QuantumCircuit
 	operations::Vector{CircuitElement}
+
+	function QCircuit(operations::Vector{CircuitElement}; copy::Bool=false)
+		return new(copy ? Base.copy(operations) : operations)
+	end
 end
 
-function QCircuit(operations::AbstractVector)
+function QCircuit(operations::AbstractVector; copy::Bool=false)
 	all(operation -> operation isa AbstractInstruction, operations) ||
 		throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
 	return QCircuit(CircuitElement[operations...])
 end
 
 QCircuit() = QCircuit(Vector{CircuitElement}())
-QCircuit(x::QCircuit) = QCircuit(copy(x.operations))
+QCircuit(x::QCircuit; copy::Bool=true) = QCircuit(x.operations; copy=copy)
 Base.similar(circuit::QCircuit) = QCircuit()
 Base.copy(circuit::QCircuit) = QCircuit(copy(circuit.operations))
 Base.length(x::QCircuit) = length(x.operations)
@@ -106,7 +118,7 @@ end
 Base.iterate(x::QCircuit) = iterate(x.operations)
 Base.iterate(x::QCircuit, state) = iterate(x.operations, state)
 Base.eltype(x::QCircuit) = eltype(x.operations)
-Base.empty!(x::QCircuit) = empty!(x.operations)
+Base.empty!(x::QCircuit) = (empty!(x.operations); x)
 Base.isempty(x::QCircuit) = isempty(x.operations)
 Base.firstindex(x::QCircuit) = firstindex(x.operations)
 Base.lastindex(x::QCircuit) = lastindex(x.operations)
@@ -142,15 +154,16 @@ push!(circuit, QMeasure([1, 2]))  # Add measurement
 # See also
 - [`append!`](@ref): Append multiple operations.
 """
-Base.push!(x::QCircuit, s::CircuitElement) = push!(x.operations, s)
+Base.push!(x::QCircuit, s::CircuitElement) = (push!(x.operations, s); x)
 Base.push!(::QCircuit, ::QuantumOperation) =
 	throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
 # Base.push!(x::QCircuit, s::QCircuit) = push!(x.operations, s)
-Base.append!(x::QCircuit, s::Vector{<:CircuitElement}) = append!(x.operations, s)
+Base.append!(x::QCircuit, s::Vector{<:CircuitElement}) = (append!(x.operations, s); x)
 function Base.append!(x::QCircuit, operations::AbstractVector)
 	all(operation -> operation isa AbstractInstruction, operations) ||
 		throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
-	return append!(x.operations, operations)
+	append!(x.operations, operations)
+	return x
 end
 """
     append!(circuit::QCircuit, other::QCircuit) -> QCircuit
@@ -175,7 +188,7 @@ append!(circuit1, circuit2)  # circuit1 now contains all four operations
 - [`push!`](@ref): Add single operation.
 - [`append!(circuit::QCircuit, ops::Vector)`](@ref): Append array of operations.
 """
-Base.append!(x::QCircuit, s::QCircuit) = append!(x.operations, s.operations)
+Base.append!(x::QCircuit, s::QCircuit) = (append!(x.operations, s.operations); x)
 Base.push!(x::QCircuit, s::Tuple{Int, <:AbstractMatrix}) = push!(x, gate(s[1], s[2]))
 Base.push!(x::QCircuit, s::Tuple{NTuple{N, Int}, <:AbstractMatrix}) where N = push!(x, gate(s[1], s[2]))
 
@@ -202,61 +215,66 @@ function nparameters(x::QCircuit)
 	return n
 end
 
-function parameters(x::QCircuit)
-	paras = Float64[]
+function _circuit_parameter_values(read_parameters, x::QCircuit)
+	chunks = AbstractVector[]
 	for o in x
-		p = parameters(o)
-		if !isnothing(p)
-			append!(paras, p)
+		p = read_parameters(o)
+		if !isnothing(p) && !isempty(p)
+			push!(chunks, p)
 		end
+	end
+	isempty(chunks) && return Float64[]
+	T = reduce(promote_type, eltype.(chunks))
+	paras = T[]
+	for chunk in chunks
+		append!(paras, chunk)
 	end
 	return paras
 end
-function active_parameters(x::QCircuit)
-	paras = Float64[]
-	for o in x
-		p = active_parameters(o)
-		if !isnothing(p)
-			append!(paras, p)
-		end
-	end
-	return paras
-end
+parameters(x::QCircuit) = _circuit_parameter_values(parameters, x)
+active_parameters(x::QCircuit) = _circuit_parameter_values(active_parameters, x)
+
 function activate_parameter!(x::QCircuit, j::Int)
-	activate_parameters!(x[j])
+	x[j] = _checked_instruction_result(activate_parameters!(x[j]), :activate_parameters!)
 	return x
 end
 function activate_parameters!(x::QCircuit)
-	for o in x
-		activate_parameters!(o)
+	for j in eachindex(x.operations)
+		x[j] = _checked_instruction_result(activate_parameters!(x[j]), :activate_parameters!)
 	end
 	return x
 end
 function deactivate_parameter!(x::QCircuit, j::Int)
-	deactivate_parameters!(x[j])
+	x[j] = _checked_instruction_result(deactivate_parameters!(x[j]), :deactivate_parameters!)
 	return x
 end
 function deactivate_parameters!(x::QCircuit)
-	for o in x
-		deactivate_parameters!(o)
+	for j in eachindex(x.operations)
+		x[j] = _checked_instruction_result(deactivate_parameters!(x[j]), :deactivate_parameters!)
 	end
 	return x
 end
 
-function reset_parameters!(x::QCircuit, p::Vector{<:Real})
-	(nparameters(x) == length(p)) || throw("number of parameters mismatch.")
-	pos = reset_parameters_util!(x, p, 0)
-	@assert pos == length(p)
+function reset_parameters!(x::QCircuit, p::AbstractVector{<:Real})
+	_check_parameter_values(x, p)
+	pos = 0
+	for j in eachindex(x.operations)
+		n = nparameters(x[j])
+		x[j] = _checked_reset_result(reset_parameters!(x[j], view(p, pos+1:pos+n)), n)
+		pos += n
+	end
 	return x
 end
 
-
+# Preserve the legacy cursor adapter while using the public replacement-aware
+# instruction writer for the circuit traversal itself.
 function reset_parameters_util!(x::QCircuit, p::Vector{<:Real}, pos::Int)
-	for o in x
-		pos = reset_parameters_util!(o, p, pos)
-	end
-	return pos
+	n = nparameters(x)
+	reset_parameters!(x, view(p, pos+1:pos+n))
+	return pos + n
 end
+
+copy_instruction(x::QCircuit) = QCircuit([copy_instruction(instruction) for instruction in x])
 
 function _shift_gate_util!(x::QCircuit, j::Int, m::AbstractDict)
 	r = similar(x)
