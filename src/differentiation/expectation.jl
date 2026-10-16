@@ -25,8 +25,6 @@ _qterm_expec_util(m::QubitsTerm, state::DensityMatrix) = expectation(m, state), 
 			nothing,  (z * m') *  DensityMatrix(one(storage(state)), nqubits(state)))  
 
 
-@adjoint expectation(m::QubitsTerm, state::Union{StateVector, DensityMatrix}) = _qterm_expec_util(m, state)
-
 function _qop_expec_util(m::QubitsOperator, state_in::StateVector)
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		return expectation(m, state_in), z -> (nothing, (conj(z) * m + z * m') * state_in ) 
@@ -64,9 +62,4 @@ end
 # 	nothing, storage( (conj(z) * m + z * m') * DensityMatrix(one(storage(state)), nqubits(state)) ) )
 
 _qop_expec_util(m::QubitsOperator, state::DensityMatrix) = expectation(m, state), z -> (
-	nothing,  (z * m') * DensityMatrix(one(storage(state)), nqubits(state)) ) 
-
-
-@adjoint expectation(m::QubitsOperator, state::Union{StateVector, DensityMatrix}) = _qop_expec_util(m, state)
-
-
+	nothing,  (z * m') * DensityMatrix(one(storage(state)), nqubits(state)) )

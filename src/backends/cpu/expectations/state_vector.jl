@@ -27,9 +27,9 @@ expectation_value(pos::Tuple{Int, Int, Int}, m::AbstractArray{T, 6}, state::Abst
 
 
 expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractMatrix, state::AbstractVector) = expectation_value_threaded(
-	pos, m, state) 
+	pos, m, state)
 expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractMatrix, state::AbstractVector, state_c::AbstractVector) = expectation_value_threaded(
-	pos, m, state, state_c) 
+	pos, m, state, state_c)
 expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractArray{T, 8}, state::AbstractVector) where T = expectation_value(
 	pos, Matrix{eltype(state)}(reshape(m, 16, 16)), state)
 expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractArray{T, 8}, state::AbstractVector, state_c::AbstractVector) where T = expectation_value(
@@ -37,13 +37,10 @@ expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractArray{T, 8}, state:
 
 
 expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractMatrix, state::AbstractVector) = expectation_value_threaded(
-	pos, m, state) 
+	pos, m, state)
 expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractMatrix, state::AbstractVector, state_c::AbstractVector) = expectation_value_threaded(
-	pos, m, state, state_c) 
+	pos, m, state, state_c)
 expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractArray{T, 10}, state::AbstractVector) where T = expectation_value(
 	pos, Matrix{eltype(state)}(reshape(m, 32, 32)), state)
 expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractArray{T, 10}, state::AbstractVector, state_c::AbstractVector) where T = expectation_value(
 	pos, Matrix{eltype(state)}(reshape(m, 32, 32)), state, state_c)
-
-
-

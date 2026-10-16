@@ -1,4 +1,4 @@
-abstract type AbstractQuantumMap{N} <: QuantumOperation end
+abstract type AbstractQuantumMap{N} <: AbstractInstruction end
 
 
 # interfaces for Quantum Channel

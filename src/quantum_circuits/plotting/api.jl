@@ -1,7 +1,7 @@
 # 用户面向API
 # 提供简单易用的绘图接口
 
-import Plots: plot, savefig
+import .Plots: plot, savefig
 
 # 绘图函数已在同一模块中定义，直接可用
 

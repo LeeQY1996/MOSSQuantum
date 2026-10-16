@@ -1,4 +1,4 @@
-function apply!(x::Gate, state::StateVector) 
+function apply!(x::Gate, state::StateVector)
 	@assert _check_pos_range(x, nqubits(state))
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
@@ -8,7 +8,7 @@ function apply!(x::Gate, state::StateVector)
 	return state
 end
 
-function apply!(x::Gate, state::DensityMatrix) 
+function apply!(x::Gate, state::DensityMatrix)
 	@assert _check_pos_range(x, nqubits(state))
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
@@ -37,6 +37,3 @@ function _check_pos_range(x, n::Int)
 	(length(pos) > 5) && throw("only implement 5-qubit gates and less currently.")
 	return (pos[1] >= 1) && (pos[end] <= n)
 end
-
-
-

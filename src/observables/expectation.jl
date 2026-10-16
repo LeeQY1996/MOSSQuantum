@@ -1,4 +1,4 @@
-function expectation(m::QubitsTerm, state::StateVector) 
+function expectation(m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 	    return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state))
@@ -13,8 +13,8 @@ function expectation(m::QubitsOperator, state::StateVector)
 		r = zero(eltype(state))
 		for (k, v) in m.data
 			r += expectation_value(k, _get_mat(length(k), v), storage(state))
-		end 
-		return r   
+		end
+		return r
 	else
 		# state = storage(state)
 		# workspace = similar(state)
@@ -31,13 +31,13 @@ function expectation(m::QubitsOperator, state::StateVector)
 end
 
 
-function expectation(state_c::StateVector, m::QubitsTerm, state::StateVector) 
+function expectation(state_c::StateVector, m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state_c, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 		return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state), storage(state_c))
 	else
 		return dot(state_c, m * state)
-	end	
+	end
 end
 
 function expectation(state_c::StateVector, m::QubitsOperator, state::StateVector)
@@ -68,6 +68,3 @@ expectation(state_c::StateVector, m::Gate, state::StateVector) = expectation_val
 
 expectation(state_c::StateVector, m::AbstractMatrix, state::StateVector) = dot(storage(state_c), m, storage(state))
 expectation(m::AbstractMatrix, state::StateVector) = dot(state, m, state)
-
-
-

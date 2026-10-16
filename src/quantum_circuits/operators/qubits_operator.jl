@@ -1,4 +1,4 @@
-const QOP_DATA_TYPE = Dict{Tuple{Int, Vararg{Int, N} where N}, Vector{Tuple{Vector{AbstractMatrix}, Number}}}
+const QOP_DATA_TYPE = Dict{Tuple{Int, Vararg{Int}}, Vector{Tuple{Vector{AbstractMatrix}, Number}}}
 const QOP_DATA_VALUE_TYPE = Vector{Tuple{Vector{AbstractMatrix}, Number}}
 
 struct QubitsOperator <: QuantumOperation

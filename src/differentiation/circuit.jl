@@ -2,14 +2,6 @@
 _to_sv(x::StateVector, Δ) = Δ isa StateVector ? Δ : StateVector(Δ, nqubits(x))
 _to_sv(x::DensityMatrix, Δ) = Δ isa DensityMatrix ? Δ : DensityMatrix(Δ, nqubits(x))
 
-@adjoint *(circuit::QCircuit, x::Union{StateVector, DensityMatrix}) = begin
-    _circuit_adjoint(circuit, x)
-end
-
-@adjoint function apply!(circuit::QCircuit, x::Union{StateVector, DensityMatrix})
-    _circuit_adjoint(circuit, x)
-end
-
 _has_quantum_map(circuit::QCircuit) = any(item -> item isa QuantumMap ||
     (item isa QCircuit && _has_quantum_map(item)), circuit)
 
@@ -31,7 +23,23 @@ function _density_to_state_cotangent(x::StateVector, Δ::DensityMatrix)
     return StateVector((d + d') * storage(x), nqubits(x))
 end
 
+function _check_circuit_adjoint(circuit::QCircuit)
+    for operation in circuit
+        if operation isa QCircuit
+            _check_circuit_adjoint(operation)
+        elseif operation isa Gate
+            matrix = mat(operation)
+            isapprox(matrix' * matrix, I) ||
+                throw(ArgumentError("Circuit differentiation requires unitary gates; $(typeof(operation)) is not unitary."))
+        elseif !(operation isa QuantumMap)
+            throw(ArgumentError("Circuit differentiation does not support $(typeof(operation)); supported instructions are unitary gates and QuantumMap channels."))
+        end
+    end
+    return nothing
+end
+
 function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix})
+    _check_circuit_adjoint(circuit)
     if !_has_quantum_map(circuit)
         # Unitary circuits reconstruct their inputs backwards, so the memory
         # needed for differentiation does not grow with circuit depth.
@@ -73,7 +81,7 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
     end
 end
 
-@adjoint qubit_encoding(::Type{T}, mpsstr::Vector{<:Real}) where {T<:Number} = begin
+function _qubit_encoding_adjoint(::Type{T}, mpsstr::Vector{<:Real}) where {T<:Number}
     y = qubit_encoding(T, mpsstr)
     return y, Δ -> begin
         circuit = QCircuit([RyGate(i, theta*pi, isparas=true) for (i, theta) in enumerate(mpsstr)])
@@ -81,10 +89,6 @@ end
         return nothing, grads .* pi
     end
 end
-
-# @adjoint amplitude_encoding(::Type{T}, v::AbstractVector{<:Number}; kwargs...) where {T <: Number} = amplitude_encoding(
-#     T, v; kwargs...), z -> (nothing, z[1:length(v)])
-
 
 function back_propagate(Δ::StateVector, m::Gate, y::StateVector)
     Δ = apply!(m', Δ)

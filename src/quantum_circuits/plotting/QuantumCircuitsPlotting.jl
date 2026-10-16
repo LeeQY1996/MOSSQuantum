@@ -3,7 +3,7 @@
 
 module QuantumCircuitsPlotting
 
-using Plots, LaTeXStrings
+using ..Plots, ..LaTeXStrings
 import ..QuantumCircuits
 import ..QuantumCircuits: Gate, ParametricGate, QuantumGate, AdjointQuantumGate
 import ..QuantumCircuits: QCircuit, QMeasure, QSelect, AbstractQuantumMap

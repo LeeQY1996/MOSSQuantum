@@ -1,18 +1,20 @@
 
-function discrete_sample(l::Vector{Float64})
-	isempty(l) && error("no results.")
-	s = sum(l)
-	L = length(l)
-	l1 = Vector{Float64}(undef, L+1)
-	l1[1] = 0
-	for i=1:L
-	    l1[i+1] = l1[i] + l[i]/s
-	end
-	s = rand(Float64)
-	for i = 1:L
-	    if (s >= l1[i] && s < l1[i+1])
-	        return i
-	    end
-	end
-	return L
+"""Draw an index from finite, nonnegative weights using the supplied RNG."""
+function discrete_sample(rng::Random.AbstractRNG, weights::AbstractVector{<:Real})
+    isempty(weights) && throw(ArgumentError("cannot sample an empty distribution"))
+    all(x -> isfinite(x) && x >= 0, weights) ||
+        throw(ArgumentError("sampling weights must be finite and nonnegative"))
+    total = sum(weights)
+    isfinite(total) && total > 0 || throw(ArgumentError("sampling weights must have positive finite sum"))
+    threshold = rand(rng) * total
+    cumulative = zero(total)
+    last_positive = firstindex(weights)
+    for i in eachindex(weights)
+        weights[i] > 0 && (last_positive = i)
+        cumulative += weights[i]
+        threshold < cumulative && return i
+    end
+    return last_positive
 end
+
+discrete_sample(weights::AbstractVector{<:Real}) = discrete_sample(Random.default_rng(), weights)

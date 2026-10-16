@@ -37,7 +37,7 @@ function (m::QubitsTerm)(vr::StateVector)
 	return StateVector(vout, nqubits(vr))
 end
 
-function (m::QubitsOperator)(vr::StateVector) 
+function (m::QubitsOperator)(vr::StateVector)
 	v = storage(vr)
 	vout = zeros(eltype(v), length(v))
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
@@ -46,7 +46,7 @@ function (m::QubitsOperator)(vr::StateVector)
 		workspace = similar(v)
 		for (k, dd) in m.data
 			for item in dd
-			   _apply_qterm_util!(QubitsTerm(k, item[1], item[2]), v, workspace) 
+			   _apply_qterm_util!(QubitsTerm(k, item[1], item[2]), v, workspace)
 			   vout .+= workspace
 			end
 		end
@@ -57,6 +57,3 @@ end
 
 Base.:*(m::QubitsOperator, v::StateVector) = m(v)
 Base.:*(m::QubitsTerm, v::StateVector) = m(v)
-
-
-

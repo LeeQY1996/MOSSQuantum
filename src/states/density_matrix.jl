@@ -1,4 +1,4 @@
-struct DensityMatrix{T <: Number}
+struct DensityMatrix{T <: Number} <: AbstractQuantumState
 	data::Vector{T}
 	nqubits::Int
 
@@ -68,7 +68,21 @@ LinearAlgebra.normalize(x::DensityMatrix) = normalize!(copy(x))
 LinearAlgebra.ishermitian(x::DensityMatrix) = ishermitian(storage(x))
 LinearAlgebra.isposdef(x::DensityMatrix) = isposdef(storage(x))
 
-fidelity(x::DensityMatrix, y::DensityMatrix) = real(tr(sqrt(storage(x)) * sqrt(storage(y))))
+function _fidelity_psd_sqrt(matrix::AbstractMatrix)
+    values, vectors = eigen(Hermitian(matrix))
+    tolerance = length(values) * eps(eltype(values)) * maximum(abs, values)
+    minimum(values) >= -tolerance || throw(DomainError(minimum(values), "density matrix must be positive semidefinite."))
+    # Rank-deficient states can acquire eigenvalues of either sign from rounding.
+    roots = map(value -> value > tolerance ? sqrt(value) : zero(value), values)
+    return vectors * Diagonal(roots) * vectors'
+end
+
+function fidelity(x::DensityMatrix, y::DensityMatrix)
+    nqubits(x) == nqubits(y) || throw(DimensionMismatch("states must have the same number of qubits."))
+    # The trace norm gives Uhlmann fidelity for noncommuting states as well.
+    product = _fidelity_psd_sqrt(storage(x)) * _fidelity_psd_sqrt(storage(y))
+    return sum(svdvals(product))^2
+end
 fidelity(x::DensityMatrix, y::StateVector) = real(dot(storage(y), storage(x), storage(y)))
 fidelity(x::StateVector, y::DensityMatrix) = fidelity(y, x)
 distance2(x::DensityMatrix, y::DensityMatrix) = _distance2(x, y)
@@ -76,13 +90,15 @@ distance(x::DensityMatrix, y::DensityMatrix) = _distance(x, y)
 schmidt_numbers(x::DensityMatrix) = eigvals(Hermitian(storage(x)))
 renyi_entropy(x::DensityMatrix; kwargs...) = renyi_entropy(schmidt_numbers(x); kwargs...)
 
-function rand_densitymatrix(::Type{T}, n::Int) where {T <: Number}
+function rand_densitymatrix(rng::Random.AbstractRNG, ::Type{T}, n::Int) where {T <: Number}
     (n >= 1) || error("number of qubits must be positive.")
     L = 2^n
-    v = randn(T, L, L)
+    v = randn(rng, T, L, L)
     v = v' * v
     return normalize!(DensityMatrix(v' * v, n))
 end
+rand_densitymatrix(::Type{T}, n::Int) where {T<:Number} = rand_densitymatrix(Random.default_rng(), T, n)
+rand_densitymatrix(rng::Random.AbstractRNG, n::Int) = rand_densitymatrix(rng, ComplexF64, n)
 rand_densitymatrix(n::Int) = rand_densitymatrix(ComplexF64, n)
 
 function QuantumCircuits.permute(x::DensityMatrix, newindex::Vector{Int})

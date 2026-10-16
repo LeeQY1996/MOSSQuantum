@@ -266,4 +266,3 @@ function expectation_value(pos::Union{NTuple{4,Int}, NTuple{5,Int}}, m::Abstract
     end
     return results
 end
-

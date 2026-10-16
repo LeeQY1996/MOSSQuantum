@@ -1,60 +1,55 @@
 # MOSS core foundation roadmap
 
-The core foundation work makes MOSS easier to maintain and prepares public interfaces for additional simulators and application packages. Changes proceed in reviewable stages: directory moves preserve behavior, numerical fixes establish physical contracts, and extension protocols are added only when independent implementations can exercise them.
+The foundation work establishes maintainable source ownership, consistent physical definitions, and public interfaces for companion packages. Directory migration, numerical changes, optional integrations, and external-package verification are reviewed independently.
 
 ## Stages and acceptance criteria
 
-| Stage | Scope | Status | Acceptance criteria |
+| Stage | Scope | Current status | Acceptance criteria |
 | --- | --- | --- | --- |
-| 1 Baseline | Public namespaces, API conventions, existing tests, and benchmark workloads | Verified | Normal package loading passes the existing suite; compatibility checks cover namespace identity and representative entrypoints; conventions and repeatable benchmark instructions exist |
-| 2 Directories | Source and test folders, filenames, and include entrypoints | Verified | All includes resolve; existing tests pass after moves; signatures, algorithms, and dependencies retain their existing behavior |
-| 3 Responsibilities | Description, execution, CPU kernels, observables, differentiation, and explicit utility imports | In progress | Function ownership is clear; operation descriptions do not require state or backend types; lower layers do not depend on Utilities; remaining coupling is recorded |
-| 4 Numerical semantics | Fidelity, mixed-state evolution, ownership, parameter ordering, and mutation returns | Planned | Analytic examples and physical invariants pass; intentional behavior changes have migration notes |
-| 5 Extension contracts | Executable operations, states, backend capabilities, parameter binding, results, and RNG | Planned | An external type executes through public entrypoints; unsupported capabilities fail clearly; protocol behavior is documented and tested |
-| 6 Optional integrations | Plotting and AD integration boundaries; test-only dependencies | Planned | Minimum Julia version is decided explicitly; minimal and extension environments each load and pass their checks |
-| 7 Independent extension and release | An external fixture package, reusable protocol checks, CI, and migration documentation | Planned | The fixture has its own `Project.toml`, imports MOSS normally, and executes and computes expectations without modifying MOSS sources or calling private kernels |
+| 1 Baseline | Namespaces, exports, conventions, tests, benchmarks | Verified | Standard package loading; compatibility snapshot; documented conventions and repeatable benchmark entrypoints |
+| 2 Directories | Source/test layout, filenames, include entrypoints | Verified | Includes resolve; all existing assertions pass; namespace and binding identity are preserved |
+| 3 Responsibilities | Descriptions, execution, kernels, observables, reverse passes, utility imports | Verified locally | Explicit dependency direction; a single owner for public functions; Utilities and optional AD registrations separated |
+| 4 Numerical semantics | Squared Uhlmann fidelity and two-sided mixed-state evolution | Verified locally | Analytic, representation-equivalence, noncommuting, rank-deficient, trace, Hermiticity, and positivity checks |
+| 5 Extension contracts | Instructions, states, backend capabilities, binding, results, RNG | Verified locally | External types use public entrypoints; unsupported capabilities fail clearly; ownership, parameter order, readout axes, and RNG are tested |
+| 6 Optional integrations | AD/plotting extensions, legacy bridge, test-only dependencies | Native path verified; legacy bridge simulated | Minimal and optional-integration environments load; both native extensions and the older Requires path are exercised on recorded Julia versions |
+| 7 Independent extension and release preparation | Separate fixture package, CI, documentation, migration notes | Local acceptance verified; CI configured | Fixture resolves independently, imports MOSS normally, executes and observes without private kernels; final test results are recorded |
 
-Completion status is updated after verification. A benchmark harness is not a recorded performance baseline until it has run on a documented environment. Existing Julia compatibility declarations are not evidence that every listed version has been tested.
+No release or publication is implied by these statuses. A benchmark harness is not a measured performance baseline. Julia compatibility declarations do not substitute for testing the declared versions.
 
-## Current implementation scope
+## Implemented foundation
 
-The first implementation batch covers stages 1 and 2 and the mechanical parts of stage 3: compatibility checks, source and test directory organization, package assembly, explicit dependency ownership, architecture documentation, and benchmark entrypoints.
+Source responsibilities now live in `api/`, `quantum_circuits/`, `states/`, `execution/`, `backends/cpu/`, `observables/`, `differentiation/`, `utilities/`, and `utils/`. Existing module names and re-exported function identities remain intact. Tests are grouped by purpose and use normal package loading.
 
-The reorganization preserves the `MOSS`, `MOSS.QuantumCircuits`, `MOSS.QuantumCircuits.Gates`, and `MOSS.Utilities` namespaces. It does not introduce new simulation backends or change physical definitions.
+Physical corrections establish squared Uhlmann fidelity across pure and mixed representations and `exp(tH)ρexp(conj(t)H)` for mixed-state evolution. The existing exponential-coefficient convention is retained; physical time requires `t=-im*τ`. Real-coefficient imaginary-time evolution is explicitly unnormalized. Ownership of existing constructors remains documented rather than silently changed.
 
-## Numerical semantics work
+The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, backend selection and capability queries, backend execution/observation, `bind_parameters`, terminal probabilities/samples/counts, explicit execution RNGs, and single-trajectory simulation results with intermediate records. The independent `MOSSDemoBackend` fixture demonstrates an implicit state and a custom instruction without dense storage assumptions.
 
-The next stage prioritizes two known correctness problems:
+Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. Julia releases with native extensions use them; earlier supported releases use a Requires bridge. FiniteDifferences remains test-only.
 
-1. Define fidelity consistently across pure and mixed representations, including noncommuting mixed states and rank-deficient inputs.
-2. Define the time-evolution coefficient and physical-time convention, and implement physical density-matrix evolution on both sides.
+## Follow-up work
 
-Follow with explicit ownership rules, consistent mutation returns, parameter ordering tests, and normalization and dimension validation. Trace preservation, Hermiticity, positive semidefiniteness, state norm, and equivalent-representation checks belong in these tests when they are physical invariants of the operation.
+The following features remain distinct follow-up changes:
 
-## Extension contract work
+1. Uniform constructor ownership and any additional mutation-return cleanup, with migration guidance.
+2. A field-independent custom trainable-instruction protocol, shared symbolic parameter identity, and gradient accumulation for shared identities.
+3. ChainRules registration, complete batch gradients, parameterized noise, and explicit differentiation capabilities for external backends.
+4. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
+5. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
 
-Extension contracts should be small enough for an external implementation to satisfy without inheriting dense storage assumptions. The [extension guide](extending.md) separates current customization options from the planned protocols.
-
-Implementation order:
-
-1. Separate valid circuit instructions from the broader operation hierarchy and replace the closed instruction set with a tested extensibility mechanism.
-2. Specify the minimum state and execution contracts, including ownership of returned states and backend capability errors.
-3. Add independent parameter binding and define shared parameter identity and gradient accumulation.
-4. Add an execution result, explicit RNG routing, probabilities, sampling, and counts with clear bit ordering.
-5. Expose reverse-pass algorithms independently of AD registration, then add reusable protocol checks and the external fixture.
-
-Batch gradients, trainable noise, quantum trajectories, GPU kernels, and execution-plan reuse can build on those contracts in subsequent scoped changes. They should not delay establishing the first usable extension boundary.
-
-## Package boundaries
-
-The main package retains operation descriptions, core state and execution contracts, the existing dense CPU implementation, observables, and core parameter and differentiation interfaces. GPU array support and plotting or training integrations can use optional integrations once the supported Julia version and loading mechanism are settled.
-
-MPS, stabilizer simulation, continuous open-system solvers, specialized algorithm workflows, error correction, chemistry, and external framework formats have independent dependencies and semantics. They should consume MOSS interfaces from companion packages when concrete implementations justify the split. Creating empty companion packages is not a prerequisite for the core foundation work.
+The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
 
-Run functional checks through the package entrypoint, keep plotting checks headless, and record the Julia version, thread count, test totals, and any environment restrictions with each implementation batch. Compare performance using the same Julia version, dependency environment, hardware, thread count, and benchmark inputs.
+The directory baseline passed `Pkg.test(; allow_reresolve=false)` on Julia 1.12.5 with four threads: 1169 existing assertions plus 349 public API compatibility assertions. The 1020 top-level source expressions were checked for equivalence across the move.
 
-The benchmark harness deliberately has a separate environment. Package resolution, downloads, and first invocation latency must not be reported as warmed execution time. A performance regression should trigger investigation of a concrete workload before changing numerical kernels.
+Foundation acceptance completed locally on 2026-10-16:
 
-The directory baseline passed `Pkg.test(; allow_reresolve=false)` on Julia 1.12.5 with four threads: 1169 existing assertions and 349 public API compatibility assertions. The 1020 top-level source expressions were also checked for equivalence across the move. BenchmarkTools workloads are provided; warmed performance measurements have not yet been recorded.
+- Julia 1.12.5, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed all 1816 reported assertions across 30 testsets. This includes the existing suite and API snapshot, 64 physical-semantics assertions, 33 binding assertions, 104 RNG/readout/simulation assertions, 70 backend/independent-state assertions, 21 optional-integration/AD-capability assertions, and six fresh-process loading checks.
+- The six loading scenarios cover the core alone, Zygote before/after MOSS, Plots before/after MOSS, and LaTeXStrings before MOSS and Plots. The core-only check confirms that AD, plotting, and finite-difference frameworks are not loaded.
+- Julia 1.12.5, one thread: 266 focused physical-semantics, binding, readout/simulation, and backend assertions passed. The five additional accumulated-drift assertions were added afterward and passed in the final four-thread suite.
+- The independent `MOSSDemoBackend` package resolved against the checkout and passed standard `Pkg.test` with 9 assertions each on Julia 1.10.10 and 1.12.5. On Julia 1.13.1 it resolved and passed the same 9 assertions with `--compiled-modules=no`; normal native precompilation could not complete because LLVM reported `No space left on device` in the local environment.
+- The Requires bridge was exercised in a compatibility snapshot with the legacy branch explicitly enabled under Julia 1.12.5, including optional loading orders and AD/plotting behavior. This is a bridge check, not an execution on Julia 1.6.
+
+CI is configured for Julia 1.6 with one thread, Julia 1.10 and the latest stable Julia with four threads, core-only loading, optional loading orders, and independent extension resolution. Julia 1.6 has not been run locally, and the remote CI workflow has not been executed as part of this local acceptance.
+
+BenchmarkTools workloads are supplied in a separate environment. Warmed performance measurements have not yet been recorded. Compare concrete workloads with the same Julia version, dependencies, hardware, thread count, and inputs; do not count dependency downloads or package precompilation as warmed execution time.

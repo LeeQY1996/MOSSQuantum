@@ -1,4 +1,4 @@
-struct StateVector{T <: Number} 
+struct StateVector{T <: Number} <: AbstractQuantumState
     data::Vector{T}
     nqubits::Int
 
@@ -57,9 +57,12 @@ LinearAlgebra.normalize!(x::StateVector) = (normalize!(storage(x)); x)
 LinearAlgebra.normalize(x::StateVector) = StateVector(normalize(storage(x)), nqubits(x))
 
 """
-    fidelity(x, y) 
-    tr(√x * √y) if x and y are density matrices
-    ⟨x|y⟩^2 if x and y are pure states
+    fidelity(x, y)
+
+Return the squared Uhlmann fidelity of normalized quantum states. For density
+matrices this is `(tr(sqrt(sqrt(x) * y * sqrt(x))))^2`; for pure states it is
+`abs2(dot(x, y))`, and for a pure state and a density matrix it is `⟨ψ|ρ|ψ⟩`.
+Converting a pure state to a density matrix preserves the result.
 """
 fidelity(x::StateVector, y::StateVector) = abs2(dot(x, y))
 distance2(x::StateVector, y::StateVector) = _distance2(x, y)
@@ -181,12 +184,14 @@ function amplitude(s::StateVector, i::AbstractVector{Int}; scaling::Real=√2)
 end
 amplitudes(s::StateVector) = storage(s)
 
-function rand_state(::Type{T}, n::Int) where {T <: Number}
+function rand_state(rng::Random.AbstractRNG, ::Type{T}, n::Int) where {T <: Number}
     (n >= 1) || error("number of qubits must be positive.")
-    v = randn(T, 2^n)
+    v = randn(rng, T, 2^n)
     v ./= norm(v)
     return StateVector(v, n)
 end
+rand_state(::Type{T}, n::Int) where {T<:Number} = rand_state(Random.default_rng(), T, n)
+rand_state(rng::Random.AbstractRNG, n::Int) = rand_state(rng, ComplexF64, n)
 rand_state(n::Int) = rand_state(ComplexF64, n)
 
 function QuantumCircuits.permute(x::StateVector, newindex::Vector{Int})

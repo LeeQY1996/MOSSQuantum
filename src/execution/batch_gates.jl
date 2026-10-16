@@ -16,4 +16,3 @@ function apply!(circuit::QCircuit, batch::BatchStateVector)
 end
 
 Base.:*(circuit::QCircuit, batch::BatchStateVector) = apply!(circuit, copy(batch))
-

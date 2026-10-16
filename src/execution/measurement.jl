@@ -1,10 +1,10 @@
 """
 	apply!(x::QMeasure, qstate)
 """
-function apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix})
+function apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix}; rng::Random.AbstractRNG=Random.default_rng())
 	x.keep || error("only keep mode is implemented.")
 	_check_measurement_position(x.position, nqubits(qstate))
-	probability, istate = _local_measure(storage(qstate), x.position)
+	probability, istate = _local_measure(storage(qstate), x.position, rng)
 	op = I₂
 	if x.auto_reset
 		m = kron(op[:, istate], QuantumCircuits.Gates.ZERO)/sqrt(probability)
@@ -23,12 +23,12 @@ Measure the i-th qubit of the quantum state, and return a 2-tuple including the 
 and the probability with which we get the outcome. The quantum state is updated inplace. \n 
 If auto_reset=true,the measured qubit is reset to 0, otherwise it will be the same as the measurement outcome.
 """
-measure!(qstate::Union{StateVector, DensityMatrix}, pos::Int; auto_reset::Bool=true) = apply!(QMeasure(pos, auto_reset=auto_reset), qstate)
+measure!(qstate::Union{StateVector, DensityMatrix}, pos::Int; auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng()) = apply!(QMeasure(pos, auto_reset=auto_reset), qstate; rng=rng)
 
 
-function apply(s::QMeasure, qstater::StateVector)
+function apply(s::QMeasure, qstater::StateVector; rng::Random.AbstractRNG=Random.default_rng())
 	_check_measurement_position(s.position, nqubits(qstater))
-	probability, istate = _local_measure(storage(qstater), s.position)
+	probability, istate = _local_measure(storage(qstater), s.position, rng)
 	r = vec(copy(_qubit_slice(qstater, s.position, istate-1))) / sqrt(probability)
 	return StateVector(r, nqubits(qstater)-1), istate-1, probability
 end
@@ -52,7 +52,7 @@ Measure the i-th qubit of the quantum state, and return a 3-tuple including the 
 the measurement outcome, and the probability with which we get the outcome.
 The measured qubit is removed; the remaining qubits retain their relative order.
 """
-measure(qstate::StateVector, pos::Int) = apply(QMeasure(pos), qstate)
+measure(qstate::StateVector, pos::Int; rng::Random.AbstractRNG=Random.default_rng()) = apply(QMeasure(pos), qstate; rng=rng)
 
 function compute_probability_zero(v::AbstractVector, key::Int)
 	L = length(v)
@@ -69,10 +69,11 @@ function compute_probability_zero(v::AbstractVector, key::Int)
 end
 
 
-function _local_measure(v::AbstractVector, key::Int)
+function _local_measure(v::AbstractVector, key::Int, rng::Random.AbstractRNG=Random.default_rng())
 	p0 = compute_probability_zero(v, key)
 	l = [p0, 1-p0]
-	i = discrete_sample(l)
+	_normalize_probabilities!(l, _probability_tolerance(eltype(v)))
+	i = discrete_sample(rng, l)
 	return l[i], i
 end
 
@@ -92,9 +93,10 @@ function compute_probability_zero(v::AbstractMatrix, key::Int)
 end
 
 
-function _local_measure(v::AbstractMatrix, key::Int)
+function _local_measure(v::AbstractMatrix, key::Int, rng::Random.AbstractRNG=Random.default_rng())
 	p0 = compute_probability_zero(v, key)
 	l = [p0, 1-p0]
-	i = discrete_sample(l)
+	_normalize_probabilities!(l, _probability_tolerance(eltype(v)))
+	i = discrete_sample(rng, l)
 	return l[i], i
 end

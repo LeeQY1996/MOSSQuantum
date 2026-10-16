@@ -1,10 +1,10 @@
-abstract type QuantumCircuit <: QuantumOperation end
+abstract type QuantumCircuit <: AbstractInstruction end
 
 """
-	struct QMeasure <: QuantumOperation
+	struct QMeasure <: AbstractInstruction
 	Quantum Measurement
 """
-struct QMeasure <: QuantumOperation
+struct QMeasure <: AbstractInstruction
 	position::Int
 	auto_reset::Bool
 	keep::Bool
@@ -21,7 +21,7 @@ change_positions(x::QMeasure, m::AbstractDict) = QMeasure(m[x.position]; auto_re
 	struct QSelect <: QuantumOperation
 	post selection, do we need it?
 """
-struct QSelect <: QuantumOperation
+struct QSelect <: AbstractInstruction
 	position::Int
 	state::Int
 
@@ -44,7 +44,7 @@ reset_parameters_util!(x::Union{QMeasure, QSelect}, p::Vector{<:Real}, pos::Int)
 shift(x::Union{QMeasure, QSelect}, j::Int) = _shift_gate_util!(x, j, Dict{Int, Int}())
 
 
-const CircuitElement = Union{QuantumCircuit, Gate, AbstractQuantumMap, QMeasure, QSelect}
+const CircuitElement = AbstractInstruction
 
 
 """
@@ -86,13 +86,23 @@ circuit2 = QCircuit(ops)
 struct QCircuit <: QuantumCircuit
 	operations::Vector{CircuitElement}
 end
+
+function QCircuit(operations::AbstractVector)
+	all(operation -> operation isa AbstractInstruction, operations) ||
+		throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
+	return QCircuit(CircuitElement[operations...])
+end
+
 QCircuit() = QCircuit(Vector{CircuitElement}())
 QCircuit(x::QCircuit) = QCircuit(copy(x.operations))
 Base.similar(circuit::QCircuit) = QCircuit()
 Base.copy(circuit::QCircuit) = QCircuit(copy(circuit.operations))
 Base.length(x::QCircuit) = length(x.operations)
 Base.getindex(x::QCircuit, j::Int) = x.operations[j]
-Base.setindex!(x::QCircuit, v, j::Int) = setindex!(x.operations, v, j)
+function Base.setindex!(x::QCircuit, v, j::Int)
+	v isa AbstractInstruction || throw(ArgumentError("a circuit accepts only AbstractInstruction values"))
+	return setindex!(x.operations, v, j)
+end
 Base.iterate(x::QCircuit) = iterate(x.operations)
 Base.iterate(x::QCircuit, state) = iterate(x.operations, state)
 Base.eltype(x::QCircuit) = eltype(x.operations)
@@ -133,8 +143,15 @@ push!(circuit, QMeasure([1, 2]))  # Add measurement
 - [`append!`](@ref): Append multiple operations.
 """
 Base.push!(x::QCircuit, s::CircuitElement) = push!(x.operations, s)
+Base.push!(::QCircuit, ::QuantumOperation) =
+	throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
 # Base.push!(x::QCircuit, s::QCircuit) = push!(x.operations, s)
 Base.append!(x::QCircuit, s::Vector{<:CircuitElement}) = append!(x.operations, s)
+function Base.append!(x::QCircuit, operations::AbstractVector)
+	all(operation -> operation isa AbstractInstruction, operations) ||
+		throw(ArgumentError("a circuit accepts only AbstractInstruction values; observables are not instructions"))
+	return append!(x.operations, operations)
+end
 """
     append!(circuit::QCircuit, other::QCircuit) -> QCircuit
 

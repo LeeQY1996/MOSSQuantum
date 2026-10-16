@@ -1,77 +1,77 @@
 # MOSS architecture
 
-MOSS provides dense quantum circuit simulation and differentiation. The core package owns operation descriptions, dense states, CPU execution, observables, and the interfaces that future simulation and application packages will use. The directory reorganization preserves existing namespaces and public behavior; changes to numerical semantics and extension protocols are tracked separately in the [roadmap](roadmap.md).
+MOSS owns circuit descriptions, dense quantum states, the CPU simulator, observables, and public interfaces for companion simulators and application packages. These interfaces now allow an external instruction and an implicit state to execute without exposing dense amplitudes. The existing `MOSS`, `MOSS.QuantumCircuits`, `MOSS.QuantumCircuits.Gates`, and `MOSS.Utilities` namespaces remain the compatibility boundary.
 
-## Namespaces and source layout
+## Source ownership
 
-Directories group responsibilities. They do not each introduce a Julia module. The existing `MOSS`, `MOSS.QuantumCircuits`, `MOSS.QuantumCircuits.Gates`, and `MOSS.Utilities` namespaces remain the compatibility boundary.
+Directories group responsibilities; they do not each introduce a Julia module.
 
-| Path | Responsibility | Julia namespace |
+| Path | Responsibility | Owning namespace |
 | --- | --- | --- |
-| `src/MOSS.jl` | Load dependencies and assemble the package | `MOSS` |
-| `src/api/` | Public exports | `MOSS` |
-| `src/quantum_circuits/` | Gates, channels, circuit descriptions, and qubit operators | `MOSS.QuantumCircuits` |
-| `src/quantum_circuits/gates/` | Gate types, matrices, parameters, and matrix derivatives | `MOSS.QuantumCircuits` and its existing `Gates` matrix module |
-| `src/states/` | State vectors, density matrices, batches, initialization, and encoding | `MOSS` |
-| `src/execution/` | Circuit execution, measurement, and post-selection entrypoints | `MOSS` |
+| `src/MOSS.jl` | Dependency loading and package assembly | `MOSS` |
+| `src/api/` | Exports, state/backend contracts, independent parameter binding | `MOSS` |
+| `src/quantum_circuits/` | Instructions, gates, channels, circuits, and observable descriptions | `MOSS.QuantumCircuits` |
+| `src/quantum_circuits/gates/Gates.jl` | Elementary matrices and matrix constructors | `MOSS.QuantumCircuits.Gates` |
+| `src/states/` | Dense states, batches, initialization, and encoding | `MOSS` |
+| `src/execution/` | Execution, measurement, post-selection, probabilities, sampling, and results | `MOSS` |
 | `src/backends/cpu/` | Dense gate, channel, operator, and expectation kernels | `MOSS` |
 | `src/observables/` | Expectation interfaces, partial trace, and state diagnostics | `MOSS` |
-| `src/differentiation/` | Circuit reverse passes, expectation derivatives, and AD registrations | `MOSS` |
-| `src/utilities/` | Existing model builders, evolution helpers, and algorithms | `MOSS.Utilities` |
+| `src/differentiation/` | Existing circuit reverse passes and expectation derivatives | `MOSS` |
+| `src/utilities/` | Model builders, evolution helpers, and algorithms | `MOSS.Utilities` |
 | `src/utils/` | Internal indexing, tensor, distance, and parallel helpers | `MOSS` |
+| `ext/` | Optional Zygote registrations and plotting integration | Extension modules |
 
-Circuit plotting remains associated with `QuantumCircuits`; its implementation is loaded through the existing `Requires` integration. Its eventual dependency split is a separate task.
-
-Each type and generic function has one owning module. Re-exports, including `MOSS.nqubits` and `MOSS.QuantumCircuits.nqubits`, must refer to the same function object. Moving a file must not redefine a type under a new module.
+Each type and generic function has one owning module. Re-exports such as `MOSS.nqubits` and `MOSS.QuantumCircuits.nqubits` refer to the same function object. File relocation does not redefine a type under a new module.
 
 ## Dependency direction
 
-The intended dependency direction is:
-
 ```text
-operation descriptions and internal helpers
+instruction and observable descriptions
                   ↓
-          states and execution
+      state contracts and CPU execution
                   ↓
-      observables and differentiation
+       observables and reverse passes
                   ↓
-       Utilities and external packages
+       Utilities and companion packages
 ```
 
-Operation descriptions should be usable without depending on a concrete state, CPU kernel, or AD framework. CPU kernels implement execution for dense states. Observables expose physical quantities while selecting the appropriate implementation. Differentiation uses execution and observables; AD framework registration should be separable from the reverse-pass algorithm.
+Operation descriptions do not depend on concrete state types, CPU kernels, or AD frameworks. `AbstractInstruction` distinguishes executable circuit elements from the broader operation hierarchy: Hamiltonian terms are observables and cannot be inserted as circuit instructions. `AbstractQuantumState` imposes no dense storage requirement. Backend methods connect these descriptions to a representation.
 
-These boundaries describe ownership and the direction of subsequent work. File moves alone do not establish a backend protocol or remove the current hard dependency on Zygote. Remaining coupling must be removed in focused changes with compatibility tests.
+The CPU simulator implements the public execution interfaces while retaining existing dense entrypoints. Utilities imports the MOSS functions it uses explicitly. The core retains reverse-pass algorithms; Zygote method registration lives in its optional extension. Companion packages use documented public methods rather than files under `src/backends/`, `.data` fields, or private helper functions.
 
-## Current public entrypoints
-
-The existing API falls into these groups:
+## Public interfaces
 
 | Capability | Representative entrypoints |
 | --- | --- |
-| Operation structure | `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `nqubits`, `mat`, `ordered_positions`, `ordered_mat` |
-| Parameters | `parameters`, `nparameters`, `active_parameters`, `activate_parameter!`, `deactivate_parameter!`, `reset_parameters!`, `differentiate` |
-| Circuit construction | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint and circuit multiplication |
+| Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions` |
+| Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `differentiate` |
+| Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
-| State representation | `StateVector`, `DensityMatrix`, `BatchStateVector`, `storage`, `copy`, `qstate`, encoding and reset functions |
-| Execution | `apply!`, `circuit * state`, `measure`, `measure!`, `post_select`, `post_select!` |
-| Observables | `QubitsTerm`, `QubitsOperator`, `expectation`, `fidelity`, `partial_tr`, entropy helpers |
-| Existing utilities | `MOSS.Utilities` model, evolution, ansatz, and algorithm builders |
+| States | `AbstractQuantumState`, `nqubits`, `copy`, `StateVector`, `DensityMatrix`, `BatchStateVector`; optional dense `storage` |
+| Backend selection | `AbstractBackend`, `CPUBackend`, `backend`, `supports`, `UnsupportedOperation` |
+| Execution | `apply!(backend, instruction, state)`, `apply!`, `circuit * state`, `simulate` |
+| Readout | `probabilities`, `sample`, `counts`, `measure`, `measure!`, `post_select`, `post_select!` |
+| Results | `SimulationResult.state`, `SimulationResult.measurements`, `MeasurementRecord` |
+| Observables | `QubitsTerm`, `QubitsOperator`, `expectation(backend, observable, state)`, `fidelity`, `partial_tr`, entropy helpers |
 
-The complete export surface is assembled in `src/api/`. A public name does not imply every operation supports every state representation. In particular, batch gate execution does not imply batch noise, measurement, or reverse-mode support.
+`supports(b, operation, state; action=:apply)` and `supports(b, observable, state; action=:expectation)` describe separate capabilities. Register bounds are checked through `validate_positions`. Declaring one capability does not imply noise, sampling, or differentiation support. The [extension guide](extending.md) gives implementation requirements and the [conventions](conventions.md) define ordering, ownership, and results.
+
+## Optional integrations
+
+Zygote, Plots, and LaTeXStrings are weak dependencies. On Julia 1.9 and later, package extensions activate after their trigger dependencies load. `MOSSZygoteExt` registers existing Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. Earlier supported Julia releases use a Requires bridge for the same integration modules. Requires remains available for that compatibility path.
+
+FiniteDifferences is a test dependency. The minimal simulator can load without installing an AD or plotting framework. Final version-specific loading results belong in the [verification record](roadmap.md#verification-record); a compatibility declaration alone does not establish a tested Julia version.
 
 ## Tests and performance
 
-`test/runtests.jl` loads MOSS with `using MOSS` and assembles the suite. Tests are grouped by purpose:
+`test/runtests.jl` uses normal package loading. Test groups are `unit/`, `integration/`, `regression/`, `extensions/`, and `support/`. Public API snapshots protect existing exports and namespace identities while allowing new exports.
 
-- `unit/` checks local behavior of states, operations, parameters, and kernels.
-- `integration/` checks circuit workflows, differentiation, utilities, plotting, and public imports.
-- `regression/` preserves concrete correctness fixes.
-- `support/` contains test-only helpers.
+`test/fixtures/MOSSDemoBackend` is a separate package with its own `Project.toml` and `import MOSS`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSS kernels. Independent package resolution and final suite results are recorded separately from its implementation.
 
-The independent `benchmark/` environment measures performance without making BenchmarkTools a runtime dependency. [Benchmark instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution.
+The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. Recorded warmed measurements remain necessary before making performance claims.
 
-## Compatibility policy for this work
+## Compatibility and remaining work
 
-Directory moves preserve module identities, exports, signatures, parameter ordering, execution order, and numerical behavior. Existing internal file paths are implementation details and change during the move. Downstream code should load the package rather than `include` its source files.
+The directory migration preserves existing namespaces, exported names, signatures, and execution order. Two intentional numerical changes follow it: squared Uhlmann fidelity replaces the former inconsistent mixed-state expression, and density-matrix evolution now applies the propagator on both sides. The [conventions](conventions.md#physical-quantities-and-migration-notes) describe the migration.
 
-Behavior fixes require their own tests and release notes. The [conventions](conventions.md) record current semantics and distinguish the known fidelity and mixed-state evolution problems from intended physical definitions.
+Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, shared symbolic parameter identity, and ChainRules integration remain future work. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.

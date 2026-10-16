@@ -1,0 +1,6 @@
+/benchmark/Manifest.toml
+/benchmark/results/
+/test/fixtures/*/Manifest.toml
+/docs/build/
+*.cov
+*.mem

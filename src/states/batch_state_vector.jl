@@ -1,4 +1,4 @@
-struct BatchStateVector{T <: Number}
+struct BatchStateVector{T <: Number} <: AbstractQuantumState
     data::Matrix{T}
     nqubits::Int
     batch_size::Int
@@ -270,9 +270,9 @@ amplitudes(batch::BatchStateVector) = storage(batch)
 
 # Random batch generation
 
-function rand_batch(::Type{T}, n::Int, batch_size::Int) where {T <: Number}
+function rand_batch(rng::Random.AbstractRNG, ::Type{T}, n::Int, batch_size::Int) where {T <: Number}
     (n >= 1) || error("number of qubits must be positive.")
-    data = randn(T, 2^n, batch_size)
+    data = randn(rng, T, 2^n, batch_size)
     for i in 1:batch_size
         col = view(data, :, i)
         col ./= norm(col)
@@ -280,6 +280,8 @@ function rand_batch(::Type{T}, n::Int, batch_size::Int) where {T <: Number}
     return BatchStateVector(data, n, batch_size)
 end
 
+rand_batch(::Type{T}, n::Int, batch_size::Int) where {T<:Number} = rand_batch(Random.default_rng(), T, n, batch_size)
+rand_batch(rng::Random.AbstractRNG, n::Int, batch_size::Int) = rand_batch(rng, ComplexF64, n, batch_size)
 rand_batch(n::Int, batch_size::Int) = rand_batch(ComplexF64, n, batch_size)
 
 # Permutation (reuses existing permute function from QuantumCircuits)

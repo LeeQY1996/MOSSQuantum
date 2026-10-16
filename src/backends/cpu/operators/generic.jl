@@ -15,15 +15,14 @@ function _apply_qterm_util!(m::QubitsTerm, v::AbstractVector, vout::AbstractVect
 	if length(v) >= 32
 		for (pos, mat) in zip(positions(m), oplist(m))
 			_apply_gate_threaded2!(pos, mat, vout)
-		end	
-	else    
+		end
+	else
 		for (pos, mat) in zip(positions(m), oplist(m))
 			_apply_gate_2!(pos, mat, vout)
-		end			
+		end
 	end
 end
 
 
 _apply_util!(m::QubitsOperator, v::AbstractVector, vout::AbstractVector) = (length(v) >= 32) ? _apply_threaded_util!(
     m, v, vout) : _apply_serial_util!(m, v, vout)
-

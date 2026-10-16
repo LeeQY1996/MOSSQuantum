@@ -1,6 +1,6 @@
 # MOSS
 
-MOSS (550W) is a Julia framework for quantum circuit simulation, variational quantum algorithms, and quantum machine learning. It provides a differentiable programming interface for quantum circuits, enabling end-to-end gradient-based optimization with automatic differentiation.
+MOSS (550W) is a Julia framework for quantum circuit simulation, variational quantum algorithms, and quantum machine learning. It provides a dense CPU simulator, explicit readout and experiment results, and public state/backend interfaces for companion packages. Optional Zygote integration supports analytic gradients for supported deterministic circuit workflows.
 
 MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.com/guochu/QuantumCircuits.jl) and the simulation/differentiation capabilities of [VQC.jl](https://github.com/LeeQY1996/VQC.jl) into a single unified package.
 
@@ -8,16 +8,27 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).
 - **State simulation**: Dense state vectors, density matrices, and batch state vectors with serial/threaded gate application.
-- **Differentiable**: Both quantum circuits and quantum states are differentiable via Zygote. Gradients flow through circuit application, expectation values, and post-selection.
+- **Differentiation**: Optional Zygote integration for supported circuit, state, expectation, and post-selection derivatives. Stochastic execution and complete batch gradients are outside this contract.
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
-- **Algorithms**: QFT, Shor's order finding, VQE/QAOA ansatze, ground state solvers, and time evolution.
-- **Visualization**: Circuit diagram rendering via Plots.jl (loaded on demand).
+- **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
+- **Readout and results**: Probabilities, seeded samples/counts, batch readout, and single-trajectory results retaining intermediate measurement records.
+- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, and independent parameter binding.
+- **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
 ## Installation
 
 ```julia
 using Pkg
-Pkg.add("MOSS")
+# Add this checkout to your active environment.
+Pkg.develop(path="/absolute/path/to/MOSS")
+```
+
+From this checkout, `julia --project=. -e 'using Pkg; Pkg.instantiate()'` prepares the development environment. Install optional integrations in the environment that will use them:
+
+```julia
+using Pkg
+Pkg.add("Zygote")
+Pkg.add(["Plots", "LaTeXStrings"])
 ```
 
 ## Quick Start
@@ -34,6 +45,36 @@ push!(circuit, CNOTGate(1, 2))
 state = apply!(circuit, state)
 println(amplitudes(state))
 ```
+
+### Readout and recorded execution
+
+```julia
+using MOSS, Random
+
+bell = QCircuit([HGate(1), CNOTGate(1, 2)])
+result = simulate(bell, StateVector(2); rng=MersenneTwister(42))
+probabilities(result.state) # approximately [0.5, 0, 0, 0.5]
+sample(MersenneTwister(42), result.state, 100) # 100 × 2, qubits in column order
+counts(MersenneTwister(42), result.state, 100)
+
+measured = simulate(QCircuit([bell, QMeasure(1; auto_reset=false)]),
+    StateVector(2); rng=MersenneTwister(42))
+measured.measurements # outcome and probability, including nested circuits
+```
+
+`simulate` describes one trajectory and copies its input state. Sampling its final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
+
+### Independent parameter binding
+
+```julia
+using MOSS
+
+template = QCircuit([RyGate(1, 0.0; isparas=true)])
+bound = bind_parameters(template, [π / 4])
+state = bound * StateVector(1)
+```
+
+Binding follows `active_parameters(template)` order, preserves inactive values, and copies every instruction occurrence independently. The source circuit and parameter vector remain independent of the result.
 
 ### Expectation value
 
@@ -86,7 +127,7 @@ state = apply!(circuit, qstate(4))
 ### Circuit visualization
 
 ```julia
-using MOSS, Plots
+using MOSS, Plots, LaTeXStrings
 
 circuit = QCircuit()
 push!(circuit, HGate(1))
@@ -124,16 +165,16 @@ savefig(plt, "circuit.png")
 
 ## Dependencies
 
-- [Zygote](https://github.com/FluxML/Zygote.jl) — automatic differentiation
 - [StaticArrays](https://github.com/JuliaArrays/StaticArrays.jl) — efficient small arrays
 - [KrylovKit](https://github.com/Jutho/KrylovKit.jl) — Krylov subspace methods
 - [TensorOperations](https://github.com/Jutho/TensorOperations.jl) — tensor contractions
-- [Plots](https://github.com/JuliaPlots/Plots.jl) — visualization (loaded on demand; currently a declared package dependency)
+
+Zygote is an optional AD dependency. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. Julia 1.9+ uses package extensions; earlier supported Julia releases use a Requires compatibility bridge. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.
 
 ## Development
 
 - [Architecture and package boundaries](docs/architecture.md)
-- [Numerical and API conventions](docs/conventions.md), including current fidelity and mixed-state evolution limitations
+- [Numerical and API conventions](docs/conventions.md), including squared Uhlmann fidelity, two-sided density evolution, qubit order, RNGs, and ownership
 - [Extension guide](docs/extending.md)
 - [Core foundation roadmap](docs/roadmap.md)
 - [Benchmark setup and workloads](benchmark/README.md)
@@ -143,6 +184,8 @@ Run the test suite through the package entrypoint:
 ```bash
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
+
+Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, and `expectation(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage.
 
 Retain the return value of `apply!`: execution can promote numeric storage or convert a state vector to a density matrix when applying noise. See the conventions for qubit ordering, parameter activation, and storage ownership.
 

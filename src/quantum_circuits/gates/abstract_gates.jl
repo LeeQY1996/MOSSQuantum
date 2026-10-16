@@ -1,5 +1,5 @@
 
-abstract type Gate{N} <: QuantumOperation end
+abstract type Gate{N} <: AbstractInstruction end
 
 
 # interfaces for Quantum Gates
