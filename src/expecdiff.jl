@@ -32,8 +32,9 @@ function _qop_expec_util(m::QubitsOperator, state_in::StateVector)
 		return expectation(m, state_in), z -> (nothing, (conj(z) * m + z * m') * state_in ) 
 	else
 		state = storage(state_in)
-		workspace = similar(state)
-		state_2 = zeros(eltype(state), length(state))
+		T = promote_type(eltype(m), eltype(state))
+		workspace = similar(state, T)
+		state_2 = zeros(T, length(state))
 		for (k, v) in m.data
 		    for item in v
 		    	_apply_qterm_util!(QubitsTerm(k, item[1], item[2]), state, workspace)
@@ -43,18 +44,19 @@ function _qop_expec_util(m::QubitsOperator, state_in::StateVector)
 		r = dot(state, state_2)
 		return r, z -> begin
 			if ishermitian(m)
-			    state_2 .*= (conj(z) + z)
+			    grad = (conj(z) + z) .* state_2
 			else
-				state_2 .*= conj(z)
+				grad = conj(z) .* state_2
+				back_workspace = similar(grad)
 				md = m'
 				for (k, v) in md.data
 					for item in v
-						_apply_qterm_util!(QubitsTerm(k, item[1], item[2]), state, workspace)
-						@. state_2 += z * workspace
+						_apply_qterm_util!(QubitsTerm(k, item[1], item[2]), state, back_workspace)
+						@. grad += z * back_workspace
 		    		end
 		    	end
 			end
-		    return (nothing, StateVector(state_2, nqubits(state_in)))
+		    return (nothing, StateVector(grad, nqubits(state_in)))
 		end
 	end	
 end

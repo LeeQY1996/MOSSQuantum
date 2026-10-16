@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "../src")
+push!(LOAD_PATH, joinpath(@__DIR__, "..", "src"))
 
 include("util.jl")
 
@@ -96,12 +96,19 @@ end
 
 
 @testset "test density matrix operations" begin
-    include("stategrad.jl")
+    include("check_dm.jl")
 end
 
-# @testset "test noisy quantum circuit" begin
-#     include("check_noisy_grad.jl")
-# end
+@testset "test noisy quantum circuit" begin
+    include("check_noisy_grad.jl")
+end
+
+@testset "correctness regressions" begin
+    include("regression_measurements.jl")
+    include("regression_kernels.jl")
+    include("regression_operators.jl")
+    include("regression_gradients.jl")
+end
 
 
 # ============================================================================

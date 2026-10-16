@@ -7,7 +7,7 @@ end
 
 QubitsOperator() = QubitsOperator(QOP_DATA_TYPE())
 
-Base.copy(x::QubitsOperator) = QubitsOperator(copy(x.data))
+Base.copy(x::QubitsOperator) = QubitsOperator(QOP_DATA_TYPE(k => copy(v) for (k, v) in x.data))
 Base.keys(x::QubitsOperator) = keys(x.data)
 
 function QubitsOperator(x::QubitsTerm, v::QubitsTerm...)
@@ -26,14 +26,21 @@ function absorb_one_bodies(ham::QubitsOperator)
 	for (key, value) in ham.data
 		if length(key)==1
 			i = key[1]
+			absorbed = false
 			for (k2, v2) in ham.data
 			    if ((length(k2) > 1) && (i in k2))
 			    	for item in value
 			    		ops = [ (kk == i) ? item[1][1] : iden for kk in k2]
 			    		add!(r, QubitsTerm([k2...], ops, item[2]))
 			        end
+			        absorbed = true
 			        break
 			    end
+			end
+			if !absorbed
+				for item in value
+					add!(r, QubitsTerm([key...], item[1], item[2]))
+				end
 			end
 		else
 			for item in value

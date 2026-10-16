@@ -18,7 +18,7 @@ function expectation_value(pos::Int, m::AbstractMatrix, batch::BatchStateVector)
     nq = nqubits(batch)
     bs = batch_size(batch)
     L = 2^nq
-    results = zeros(eltype(batch), bs)
+    results = zeros(promote_type(eltype(batch), eltype(m)), bs)
     data = storage(batch)
 
     sj = 2
@@ -49,7 +49,7 @@ function expectation_value(pos::Tuple{Int, Int}, m::AbstractMatrix, batch::Batch
     nq = nqubits(batch)
     bs = batch_size(batch)
     L = 2^nq
-    results = zeros(eltype(batch), bs)
+    results = zeros(promote_type(eltype(batch), eltype(m)), bs)
     data = storage(batch)
 
     q1, q2 = pos
@@ -78,7 +78,7 @@ function expectation_value(pos::Tuple{Int, Int, Int}, m::AbstractMatrix, batch::
     nq = nqubits(batch)
     bs = batch_size(batch)
     L = 2^nq
-    results = zeros(eltype(batch), bs)
+    results = zeros(promote_type(eltype(batch), eltype(m)), bs)
     data = storage(batch)
 
     q1, q2, q3 = pos
@@ -123,7 +123,7 @@ function expectation_value(pos::Int, m::AbstractMatrix, batch1::BatchStateVector
     nq = nqubits(batch1)
     bs = batch_size(batch1)
     L = 2^nq
-    results = zeros(eltype(batch1), bs)
+    results = zeros(promote_type(eltype(batch1), eltype(batch2), eltype(m)), bs)
     data1 = storage(batch1)
     data2 = storage(batch2)
 
@@ -160,7 +160,7 @@ function expectation_value(pos::Tuple{Int, Int}, m::AbstractMatrix, batch1::Batc
     nq = nqubits(batch1)
     bs = batch_size(batch1)
     L = 2^nq
-    results = zeros(eltype(batch1), bs)
+    results = zeros(promote_type(eltype(batch1), eltype(batch2), eltype(m)), bs)
     data1 = storage(batch1)
     data2 = storage(batch2)
 
@@ -195,7 +195,7 @@ function expectation_value(pos::Tuple{Int, Int, Int}, m::AbstractMatrix, batch1:
     nq = nqubits(batch1)
     bs = batch_size(batch1)
     L = 2^nq
-    results = zeros(eltype(batch1), bs)
+    results = zeros(promote_type(eltype(batch1), eltype(batch2), eltype(m)), bs)
     data1 = storage(batch1)
     data2 = storage(batch2)
 
@@ -236,48 +236,33 @@ function expectation_value(pos::Tuple{Int, Int, Int}, m::AbstractMatrix, batch1:
     return results
 end
 
-# For higher qubit terms (4,5), we can reuse the threaded versions with a batch loop
-# This is not optimized but works correctly
-function expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractMatrix, batch::BatchStateVector)
-    bs = batch_size(batch)
-    results = zeros(eltype(batch), bs)
-    for i in 1:bs
-        sv = StateVector(batch, i)
-        results[i] = expectation_value(pos, m, sv)
+# The single-state kernels take amplitude vectors, not StateVector wrappers.
+# Promote real amplitudes when a complex operator or bra requires it.
+function _batch_expectation_column(batch::BatchStateVector, i::Int, ::Type{T}) where T
+    column = view(storage(batch), :, i)
+    return eltype(batch) == T ? column : T.(column)
+end
+
+function expectation_value(pos::Union{NTuple{4,Int}, NTuple{5,Int}}, m::AbstractMatrix,
+                           batch::BatchStateVector)
+    T = promote_type(eltype(batch), eltype(m))
+    results = zeros(T, batch_size(batch))
+    for i in eachindex(results)
+        results[i] = expectation_value(pos, m, _batch_expectation_column(batch, i, T))
     end
     return results
 end
 
-function expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractMatrix, batch::BatchStateVector)
-    bs = batch_size(batch)
-    results = zeros(eltype(batch), bs)
-    for i in 1:bs
-        sv = StateVector(batch, i)
-        results[i] = expectation_value(pos, m, sv)
-    end
-    return results
-end
-
-function expectation_value(pos::Tuple{Int, Int, Int, Int}, m::AbstractMatrix, batch1::BatchStateVector, batch2::BatchStateVector)
-    @assert batch_size(batch1) == batch_size(batch2)
-    bs = batch_size(batch1)
-    results = zeros(eltype(batch1), bs)
-    for i in 1:bs
-        sv1 = StateVector(batch1, i)
-        sv2 = StateVector(batch2, i)
-        results[i] = expectation_value(pos, m, sv1, sv2)
-    end
-    return results
-end
-
-function expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractMatrix, batch1::BatchStateVector, batch2::BatchStateVector)
-    @assert batch_size(batch1) == batch_size(batch2)
-    bs = batch_size(batch1)
-    results = zeros(eltype(batch1), bs)
-    for i in 1:bs
-        sv1 = StateVector(batch1, i)
-        sv2 = StateVector(batch2, i)
-        results[i] = expectation_value(pos, m, sv1, sv2)
+function expectation_value(pos::Union{NTuple{4,Int}, NTuple{5,Int}}, m::AbstractMatrix,
+                           batch1::BatchStateVector, batch2::BatchStateVector)
+    @assert nqubits(batch1) == nqubits(batch2) "Number of qubits must match"
+    @assert batch_size(batch1) == batch_size(batch2) "Batch sizes must match"
+    T = promote_type(eltype(batch1), eltype(batch2), eltype(m))
+    results = zeros(T, batch_size(batch1))
+    for i in eachindex(results)
+        ket = _batch_expectation_column(batch1, i, T)
+        bra = _batch_expectation_column(batch2, i, T)
+        results[i] = expectation_value(pos, m, ket, bra)
     end
     return results
 end
@@ -285,7 +270,7 @@ end
 # Main expectation functions for BatchStateVector
 
 function expectation(m::QubitsTerm, batch::BatchStateVector)
-    isempty(m) && return dot(batch, batch)  # Returns vector for batch
+    isempty(m) && return coeff(m) .* dot(batch, batch)
 
     pos = positions(m)
     if length(pos) <= LARGEST_SUPPORTED_NTERMS_BATCH
@@ -296,9 +281,9 @@ function expectation(m::QubitsTerm, batch::BatchStateVector)
     else
         # Fallback for large terms
         bs = batch_size(batch)
-        results = Vector{eltype(batch)}(undef, bs)
+        results = Vector{promote_type(eltype(batch), eltype(m))}(undef, bs)
         for i in 1:bs
-            sv = StateVector(batch, i)
+            sv = StateVector(_batch_expectation_column(batch, i, eltype(results)), nqubits(batch))
             results[i] = dot(sv, m * sv)
         end
         return results
@@ -308,7 +293,7 @@ end
 function expectation(m::QubitsOperator, batch::BatchStateVector)
     if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS_BATCH
         bs = batch_size(batch)
-        results = zeros(eltype(batch), bs)
+        results = zeros(promote_type(eltype(batch), eltype(m)), bs)
         for (k, v) in m.data
             mat = _get_mat(length(k), v)
             term_results = expectation_value(k, mat, batch)
@@ -318,9 +303,9 @@ function expectation(m::QubitsOperator, batch::BatchStateVector)
     else
         # Fallback for large terms
         bs = batch_size(batch)
-        results = zeros(eltype(batch), bs)
+        results = zeros(promote_type(eltype(batch), eltype(m)), bs)
         for i in 1:bs
-            sv = StateVector(batch, i)
+            sv = StateVector(_batch_expectation_column(batch, i, eltype(results)), nqubits(batch))
             results[i] = expectation(m, sv)
         end
         return results
@@ -335,7 +320,7 @@ end
 
 function expectation(m::AbstractMatrix, batch::BatchStateVector)
     bs = batch_size(batch)
-    results = Vector{eltype(batch)}(undef, bs)
+    results = Vector{promote_type(eltype(batch), eltype(m))}(undef, bs)
     data = storage(batch)
     for i in 1:bs
         col = view(data, :, i)
@@ -347,7 +332,7 @@ end
 # Two-state batch expectation
 function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchStateVector)
     @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
-    isempty(m) && return dot(state_c, state)
+    isempty(m) && return coeff(m) .* dot(state_c, state)
 
     pos = positions(m)
     if length(pos) <= LARGEST_SUPPORTED_NTERMS_BATCH
@@ -357,10 +342,10 @@ function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchState
         return expectation_value(pos_tuple, mat, state, state_c)
     else
         bs = batch_size(state)
-        results = Vector{eltype(state)}(undef, bs)
+        results = Vector{promote_type(eltype(state), eltype(state_c), eltype(m))}(undef, bs)
         for i in 1:bs
-            sv_c = StateVector(state_c, i)
-            sv = StateVector(state, i)
+            sv_c = StateVector(_batch_expectation_column(state_c, i, eltype(results)), nqubits(state_c))
+            sv = StateVector(_batch_expectation_column(state, i, eltype(results)), nqubits(state))
             results[i] = expectation(sv_c, m, sv)
         end
         return results
@@ -372,7 +357,7 @@ function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchS
 
     if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS_BATCH
         bs = batch_size(state)
-        results = zeros(eltype(state), bs)
+        results = zeros(promote_type(eltype(state), eltype(state_c), eltype(m)), bs)
         for (k, v) in m.data
             mat = _get_mat(length(k), v)
             term_results = expectation_value(k, mat, state, state_c)
@@ -381,10 +366,10 @@ function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchS
         return results
     else
         bs = batch_size(state)
-        results = zeros(eltype(state), bs)
+        results = zeros(promote_type(eltype(state), eltype(state_c), eltype(m)), bs)
         for i in 1:bs
-            sv_c = StateVector(state_c, i)
-            sv = StateVector(state, i)
+            sv_c = StateVector(_batch_expectation_column(state_c, i, eltype(results)), nqubits(state_c))
+            sv = StateVector(_batch_expectation_column(state, i, eltype(results)), nqubits(state))
             results[i] = expectation(sv_c, m, sv)
         end
         return results
@@ -401,7 +386,7 @@ end
 function expectation(state_c::BatchStateVector, m::AbstractMatrix, state::BatchStateVector)
     @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
     bs = batch_size(state)
-    results = Vector{eltype(state)}(undef, bs)
+    results = Vector{promote_type(eltype(state), eltype(state_c), eltype(m))}(undef, bs)
     data_c = storage(state_c)
     data = storage(state)
     for i in 1:bs

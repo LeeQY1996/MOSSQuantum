@@ -30,7 +30,7 @@ function apply_serial!(x::Gate, batch::BatchStateVector)
     # Simple loop over batch, applying gate to each state
     for i in 1:bs
         state_vec = view(data, :, i)
-        _apply_gate_2!(positions, mat, state_vec)
+        _apply_gate_batch_column!(positions, mat, state_vec)
     end
     return batch
 end
@@ -69,14 +69,20 @@ function apply_threaded!(x::Gate, batch::BatchStateVector)
     return batch
 end
 
-# These functions will be implemented in batch_threaded_short_range.jl and batch_threaded_long_range.jl
-# These functions are defined in batch_threaded_short_range.jl and batch_threaded_long_range.jl
-# We need to include those files first
+# The serial kernels cover up to four qubits. Five-qubit gates require the
+# general dispatcher, including when parallelism is over batch columns.
+function _apply_gate_batch_column!(positions, mat, state_vec)
+    if length(positions) == 5
+        _apply_gate_threaded2!(positions, mat, state_vec)
+    else
+        _apply_gate_2!(positions, mat, state_vec)
+    end
+end
 
 function _apply_gate_batch_threaded_over_batch!(positions, mat, data, nq, bs)
     # Simple threading over batch, applying serial gate to each state
     Threads.@threads for i in 1:bs
         state_vec = view(data, :, i)
-        _apply_gate_2!(positions, mat, state_vec)
+        _apply_gate_batch_column!(positions, mat, state_vec)
     end
 end

@@ -3,6 +3,7 @@
 """
 function apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix})
 	x.keep || error("only keep mode is implemented.")
+	_check_measurement_position(x.position, nqubits(qstate))
 	probability, istate = _local_measure(storage(qstate), x.position)
 	op = I₂
 	if x.auto_reset
@@ -26,20 +27,30 @@ measure!(qstate::Union{StateVector, DensityMatrix}, pos::Int; auto_reset::Bool=t
 
 
 function apply(s::QMeasure, qstater::StateVector)
-	qstate = storage(qstater)
-	swap!(qstate, 1, s.position)
-	probability, istate = _local_measure(qstate, 1)
-	# println("with probability $probability to get $(istate-1)")
-	ss = div(length(qstate), 2)
-	r = (transpose(I₂[:, istate])*reshape(qstate, (2, ss)))/sqrt(probability) 
-	swap!(qstate, 1, s.position)
-	return StateVector(reshape(r, length(r)), nqubits(qstater)-1), istate-1, probability	
+	_check_measurement_position(s.position, nqubits(qstater))
+	probability, istate = _local_measure(storage(qstater), s.position)
+	r = vec(copy(_qubit_slice(qstater, s.position, istate-1))) / sqrt(probability)
+	return StateVector(r, nqubits(qstater)-1), istate-1, probability
+end
+
+function _check_measurement_position(pos::Int, n::Int)
+	1 <= pos <= n || throw(ArgumentError("qubit position must be between 1 and $n"))
+	return nothing
+end
+
+# Keeping the axes before and after the selected qubit in place preserves the
+# relative order of every remaining qubit, including when pos > 2.
+function _qubit_slice(state::StateVector, pos::Int, outcome::Int)
+	_check_measurement_position(pos, nqubits(state))
+	tensor = reshape(storage(state), 2^(pos-1), 2, :)
+	return view(tensor, :, outcome+1, :)
 end
 
 """
 	measure(qstate::StateVector, i::Int)
 Measure the i-th qubit of the quantum state, and return a 3-tuple including the collapsed quantum state, \n 
 the measurement outcome, and the probability with which we get the outcome.
+The measured qubit is removed; the remaining qubits retain their relative order.
 """
 measure(qstate::StateVector, pos::Int) = apply(QMeasure(pos), qstate)
 

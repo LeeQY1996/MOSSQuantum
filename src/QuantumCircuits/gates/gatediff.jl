@@ -4,8 +4,10 @@
 function differentiate(x::AdjointQuantumGate)
 	r = differentiate(x.parent)
 	isnothing(r) && return r
-	# otherwise r should be a list of gates
-	return adjoint.(r)
+	# differentiate(U) stores (dU)'U. For U' the corresponding generator is
+	# (dU)U', which requires conjugation by U, not just an adjoint.
+	u = mat(x.parent)
+	return [QuantumGate(positions(x), u * mat(item)' * u') for item in r]
 end
 
 # one body parametric gates
@@ -65,6 +67,14 @@ function differentiate(x::CPHASEGate)
 	if is_parameters(x)[1]
 		mm = rkron(Gates.DOWN, phase_mat_diff(parameters(x)[1]))
 		return [QuantumGate(positions(x), mm' * mat(x) )]
+	end
+	return nothing
+end
+
+function differentiate(x::CCPHASEGate)
+	if is_parameters(x)[1]
+		mm = rkron(rkron(Gates.DOWN, Gates.DOWN), phase_mat_diff(parameters(x)[1]))
+		return [QuantumGate(positions(x), mm' * mat(x))]
 	end
 	return nothing
 end

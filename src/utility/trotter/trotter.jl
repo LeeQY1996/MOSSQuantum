@@ -9,7 +9,7 @@ function is_lower_than(ks, L::Int)
 end
 
 function _is_nn_single(key)
-	(length(key) != 2) && error("input should be a tuple of 2.")
+	(length(key) != 2) && return false
 	return key[1]+1 == key[2]
 end
 
@@ -69,7 +69,7 @@ function _join_ops(s::QubitsTerm)
     # m = _kron_chain_ops(op(s))
     # return reshape(m * value(coeff(s)) , Tuple(repeat(ds, 2)))
     ops = oplist(s)
-	m = kron(reverse(ops)...) .* coeff(s)
+	m = QuantumCircuits._kron_ops(reverse(ops)) .* coeff(s)
 	# N = length(ops)
 	# return reshape(m, [2 for i in 1:2N])
 	return m
@@ -155,16 +155,7 @@ function propagator_2order(ham::QubitsOperator, tf::Number, ti::Number)
 	return _propagator_generic_2order(ham, tf, ti)
 end
 
-function propagator_2order(ham::QubitsOperator, dt::Number)
-	ks = keys(ham)
-	if is_lower_than(ks, 2)
-		if is_nn(ks)
-		    ham_A, ham_B = split_nn_ham(ham)
-		    return _propagator_AB_2order(ham_A, ham_B, dt)
-		end
-	end
-	return _propagator_generic_2order(ham, dt)
-end
+propagator_2order(ham::QubitsOperator, dt::Number) = propagator_2order(ham, dt, zero(dt))
 
 
 function _propagator_impl(ham::QubitsOperator, tf::Number, ti::Number, order::Int=1)

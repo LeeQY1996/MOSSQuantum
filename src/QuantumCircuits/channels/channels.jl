@@ -27,7 +27,13 @@ is_tp(x::AbstractQuantumMap) = _is_tp(kraus_matrices(x))
 
 # QuantumMap can not contain parameters
 nparameters(x::AbstractQuantumMap) = 0
+parameters(x::AbstractQuantumMap) = nothing
 active_parameters(x::AbstractQuantumMap) = nothing
+activate_parameter!(x::AbstractQuantumMap, j::Int) = x
+activate_parameters!(x::AbstractQuantumMap) = x
+deactivate_parameter!(x::AbstractQuantumMap, j::Int) = x
+deactivate_parameters!(x::AbstractQuantumMap) = x
+reset_parameters_util!(x::AbstractQuantumMap, p::Vector{<:Real}, pos::Int) = pos
 
 function _is_tp(m::Vector{<:AbstractMatrix})
 	isempty(m) && error("no kraus operators.")

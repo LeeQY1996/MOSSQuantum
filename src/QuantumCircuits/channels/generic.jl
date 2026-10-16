@@ -12,10 +12,11 @@ end
 function QuantumMap(pos::NTuple{N, Int}, mr::Vector{<:AbstractMatrix{T}}) where {N, T}
 	shapes = ntuple(i->2, 2*N)
 	m = [reshape(mj, shapes) for mj in mr]
-	ordered_pos, ordered_data = _get_norm_order_list(pos, m)
+	ordered_pos, ordered_ops = _get_norm_order_list(pos, m)
 	L = 2^N
 	kraus = [convert(Matrix{T}, reshape(mj, L, L)) for mj in m]
-	ordered_data = convert(Matrix{T}, _compute_supermat(kraus)) 
+	ordered_kraus = [convert(Matrix{T}, reshape(mj, L, L)) for mj in ordered_ops]
+	ordered_data = convert(Matrix{T}, _compute_supermat(ordered_kraus))
 	QuantumMap(pos, kraus, ordered_pos, ordered_data)
 end
 
@@ -24,6 +25,8 @@ QuantumMap(pos::Vector{Int}, m::Vector{<:AbstractMatrix}) = QuantumMap(Tuple(pos
 QuantumMap(pos::Int, m::Vector{<:AbstractMatrix}) = QuantumMap((pos,), m)
 
 positions(x::QuantumMap) = x.pos
+Base.eltype(::Type{QuantumMap{N, T}}) where {N, T} = T
+Base.eltype(x::QuantumMap) = eltype(typeof(x))
 kraus_matrices(x::QuantumMap) = x.kraus
 ordered_positions(x::QuantumMap) = x.ordered_pos
 ordered_supermat(x::QuantumMap) = x.ordered_data

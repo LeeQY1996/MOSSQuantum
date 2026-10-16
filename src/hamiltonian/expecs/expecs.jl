@@ -10,7 +10,7 @@ include("expec_high_qubit_terms_2.jl")
 
 
 function expectation(m::QubitsTerm, state::StateVector) 
-	isempty(m) && return dot(state, state)
+	isempty(m) && return coeff(m) * dot(state, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 	    return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state))
 	else
@@ -43,7 +43,7 @@ end
 
 
 function expectation(state_c::StateVector, m::QubitsTerm, state::StateVector) 
-	isempty(m) && return dot(state_c, state)
+	isempty(m) && return coeff(m) * dot(state_c, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 		return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state), storage(state_c))
 	else

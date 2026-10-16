@@ -3,18 +3,73 @@ _to_sv(x::StateVector, Δ) = Δ isa StateVector ? Δ : StateVector(Δ, nqubits(x
 _to_sv(x::DensityMatrix, Δ) = Δ isa DensityMatrix ? Δ : DensityMatrix(Δ, nqubits(x))
 
 @adjoint *(circuit::QCircuit, x::Union{StateVector, DensityMatrix}) = begin
-    y = circuit * x
-    return y, Δ -> begin
-        Δ, grads, y = back_propagate(_to_sv(x, Δ), circuit, copy(y))
-        return grads, Δ
-    end
+    _circuit_adjoint(circuit, x)
 end
 
 @adjoint function apply!(circuit::QCircuit, x::Union{StateVector, DensityMatrix})
-    y = apply!(circuit, copy(x))
+    _circuit_adjoint(circuit, x)
+end
+
+_has_quantum_map(circuit::QCircuit) = any(item -> item isa QuantumMap ||
+    (item isa QCircuit && _has_quantum_map(item)), circuit)
+
+function _circuit_operations!(operations, circuit::QCircuit)
+    for item in circuit
+        if item isa QCircuit
+            _circuit_operations!(operations, item)
+        else
+            push!(operations, item)
+        end
+    end
+    return operations
+end
+
+# The pullback of psi -> psi * psi' for an arbitrary (not necessarily
+# Hermitian) density-matrix cotangent.
+function _density_to_state_cotangent(x::StateVector, Δ::DensityMatrix)
+    d = storage(Δ)
+    return StateVector((d + d') * storage(x), nqubits(x))
+end
+
+function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix})
+    if !_has_quantum_map(circuit)
+        # Unitary circuits reconstruct their inputs backwards, so the memory
+        # needed for differentiation does not grow with circuit depth.
+        y = circuit * x
+        return y, Δ -> begin
+            Δ, grads, _ = back_propagate(copy(_to_sv(y, Δ)), circuit, copy(y))
+            return grads, Δ
+        end
+    end
+
+    operations = _circuit_operations!(Any[], circuit)
+    checkpoints = Dict{Int, Union{StateVector, DensityMatrix}}()
+    y = copy(x)
+    for (i, item) in enumerate(operations)
+        # Channels can be singular. Save their inputs rather than requiring
+        # an inverse, while still reconstructing all intervening unitary gates.
+        item isa QuantumMap && (checkpoints[i] = copy(y))
+        y = apply!(item, y)
+    end
     return y, Δ -> begin
-        Δ, grads, y = back_propagate(_to_sv(x, Δ), circuit, copy(y))
-        return grads, Δ
+        Δ = copy(_to_sv(y, Δ))
+        state = copy(y)
+        RT = real(eltype(y))
+        grads = Vector{RT}[]
+        for i in reverse(eachindex(operations))
+            item = operations[i]
+            if item isa QuantumMap
+                Δ = apply_dagger!(item, Δ)
+                state = copy(checkpoints[i])
+                if state isa StateVector
+                    Δ = _density_to_state_cotangent(state, Δ)
+                end
+            else
+                Δ, ∇θs, state = back_propagate(Δ, item, state)
+                !isnothing(∇θs) && push!(grads, ∇θs)
+            end
+        end
+        return _flatten_gradients(grads, RT), Δ
     end
 end
 
@@ -22,7 +77,7 @@ end
     y = qubit_encoding(T, mpsstr)
     return y, Δ -> begin
         circuit = QCircuit([RyGate(i, theta*pi, isparas=true) for (i, theta) in enumerate(mpsstr)])
-        Δ, grads, y = back_propagate(StateVector(Δ), circuit, copy(y))
+        Δ, grads, y = back_propagate(copy(StateVector(Δ)), circuit, copy(y))
         return nothing, grads .* pi
     end
 end
@@ -41,29 +96,47 @@ function back_propagate(Δ::StateVector, m::Gate, y::StateVector)
     return Δ, ∇θs, y
 end
 
-# a temporary solution, which requires an additional copy of the density matrix
-# we can not assume x or y to be positive or hermitian here, since they may not be physical density matrix
+# This contraction is tr(x * m * y), so m acts only on the row indices.
 function expectation(x::DensityMatrix, m::Gate, y::DensityMatrix)
-    yc = copy(y)
-    _dm_apply_threaded!(m, yc.data, nqubits(yc))
+    yc = convert(DensityMatrix{promote_type(eltype(m), eltype(y))}, copy(y))
+    apply_threaded!(m, yc.data)
     return dot(storage(x)', storage(yc))
 end 
+
+function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix)
+    nparameters(m) == 0 && return nothing
+    return map(differentiate(m)) do item
+        # D = (dU)'U, hence d(U*x*U') in the input frame is D'*x + x*D.
+        T = promote_type(eltype(item), eltype(x))
+        left = convert(Vector{T}, copy(x.data))
+        right = copy(left)
+        pos = ordered_positions(item)
+        bra_pos = ntuple(i -> pos[i] + nqubits(x), length(pos))
+        d = ordered_mat(item)
+        if length(left) >= 32
+            _apply_gate_threaded2!(pos, d', left)
+            _apply_gate_threaded2!(bra_pos, transpose(d), right)
+        else
+            _apply_gate_2!(pos, d', left)
+            _apply_gate_2!(bra_pos, transpose(d), right)
+        end
+        return real(dot(Δ.data, left) + dot(Δ.data, right))
+    end
+end
 
 function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix)
     Δ = apply!(m', Δ)
     y = apply!(m', y)
-    ∇θs = nothing
-    if nparameters(m) > 0
-        ∇θs = [real(expectation(y, item, Δ) + expectation(Δ, item', y)) for item in differentiate(m)]
-    end
+    ∇θs = _density_gate_gradients(Δ, m, y)
     return Δ, ∇θs, y
 end
 
-function back_propagate(Δ::DensityMatrix, m::QuantumMap, y::DensityMatrix)
-    Δ = apply_dagger!(m, Δ)
-    y = apply_inverse!(m, y)
-    ∇θs = nothing
-    return Δ, ∇θs, y
+function _flatten_gradients(grads, ::Type{RT}) where RT
+    all_grads = RT[]
+    for item in Iterators.reverse(grads)
+        append!(all_grads, item)
+    end
+    return all_grads
 end
 
 function back_propagate_util(Δ, circuit::QCircuit, y)
@@ -74,28 +147,8 @@ function back_propagate_util(Δ, circuit::QCircuit, y)
         !isnothing(∇θs) && push!(grads, ∇θs)
     end
 
-    ∇θs_all = RT[]
-    for item in Iterators.reverse(grads)
-        append!(∇θs_all, item)
-    end
-
-    return Δ, ∇θs_all, y
+    return Δ, _flatten_gradients(grads, RT), y
 end
 
 back_propagate(Δ::StateVector, circuit::QCircuit, y::StateVector) = back_propagate_util(Δ, circuit, y)
 back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix) = back_propagate_util(Δ, circuit, y)
- 
- 
-
-
-# function back_propagate(Δ::AbstractMatrix, m::Gate, y::DensityMatrix)
-#     Δ = StateVector(Δ, nqubits(y))
-#     Δ = apply!(m', Δ)
-#     y = apply!(m', y)
-#     ∇θs = nothing
-#     if nparameters(m) > 0
-#         ∇θs = [real(expectation(y, item, Δ)) for item in differentiate(m)]
-#     end
-#     return storage(Δ), ∇θs, y
-# end
-

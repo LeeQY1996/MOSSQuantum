@@ -25,7 +25,12 @@ end
 
 function apply!(circuit::QCircuit, state::Union{StateVector, DensityMatrix})
 	for gate in circuit
-		state = apply!(gate, state)
+		if gate isa Union{QMeasure, QSelect}
+			# These operations mutate the state and return measurement metadata.
+			apply!(gate, state)
+		else
+			state = apply!(gate, state)
+		end
 	end
 	return state
 end

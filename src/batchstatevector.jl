@@ -209,14 +209,17 @@ Each column of `inputs` is a vector to encode as a quantum state.
 """
 function batch_amplitude_encoding(::Type{T}, inputs::Matrix{<:Number}; nqubits::Int=ceil(Int, log2(size(inputs,1)))) where {T<:Number}
     d, bs = size(inputs)
+    nqubits >= 0 || throw(ArgumentError("number of qubits must be nonnegative"))
+    d <= 2^nqubits || throw(DimensionMismatch("input has more amplitudes than the target Hilbert space"))
     data = zeros(T, 2^nqubits, bs)
     for i in 1:bs
-        v = inputs[:, i]
+        v = view(inputs, :, i)
         vn = norm(v)
+        isfinite(vn) && vn > 0 || throw(ArgumentError("each input column must have finite, nonzero norm"))
         if !(vn ≈ 1.)
             println("input vector is not normalized, it will be renormalized as a quantum state.")
         end
-        for j in 1:min(d, 2^nqubits)
+        for j in 1:d
             data[j, i] = v[j] / vn
         end
     end

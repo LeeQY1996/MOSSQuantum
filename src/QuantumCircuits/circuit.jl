@@ -14,6 +14,7 @@ end
 positions(x::QMeasure) = [x.position]
 nparameters(x::QMeasure) = 0
 parameters(x::QMeasure) = nothing
+change_positions(x::QMeasure, m::AbstractDict) = QMeasure(m[x.position]; auto_reset=x.auto_reset, keep=x.keep)
 
 
 """
@@ -32,6 +33,15 @@ end
 positions(x::QSelect) = [x.position]
 nparameters(x::QSelect) = 0
 parameters(x::QSelect) = nothing
+change_positions(x::QSelect, m::AbstractDict) = QSelect(m[x.position], x.state)
+
+active_parameters(x::Union{QMeasure, QSelect}) = nothing
+activate_parameter!(x::Union{QMeasure, QSelect}, j::Int) = x
+activate_parameters!(x::Union{QMeasure, QSelect}) = x
+deactivate_parameter!(x::Union{QMeasure, QSelect}, j::Int) = x
+deactivate_parameters!(x::Union{QMeasure, QSelect}) = x
+reset_parameters_util!(x::Union{QMeasure, QSelect}, p::Vector{<:Real}, pos::Int) = pos
+shift(x::Union{QMeasure, QSelect}, j::Int) = _shift_gate_util!(x, j, Dict{Int, Int}())
 
 
 const CircuitElement = Union{QuantumCircuit, Gate, AbstractQuantumMap, QMeasure, QSelect}

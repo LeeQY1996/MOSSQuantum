@@ -39,7 +39,7 @@ QuantumCircuits.nqubits(x::DensityMatrix) = x.nqubits
 Base.eltype(::Type{DensityMatrix{T}}) where T = T
 Base.eltype(x::DensityMatrix) = eltype(typeof(x))
 Base.getindex(x::DensityMatrix, j::Int...) = getindex(storage(x), j...)
-Base.setindex!(x::StateVector, v, j::Int...) = setindex!(storage(x), v, j...)
+Base.setindex!(x::DensityMatrix, v, j::Int...) = setindex!(storage(x), v, j...)
 
 Base.convert(::Type{DensityMatrix{T}}, x::DensityMatrix) where {T<:Number} = DensityMatrix(convert(Vector{T}, x.data), nqubits(x))
 Base.copy(x::DensityMatrix) = DensityMatrix(copy(x.data), nqubits(x))

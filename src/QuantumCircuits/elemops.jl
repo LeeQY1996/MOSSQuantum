@@ -1,6 +1,6 @@
 module Gates
 
-using ..QuantumCircuits: rkron, n_qubits_mat_from_external
+using ..QuantumCircuits: rkron, n_qubits_mat_from_external, permute
 
 export ZERO, ONE, PHASE, X, Y, Z, I₂, S, H, T, R, Rx, Ry, Rz, CZ, CNOT, SWAP, iSWAP, TOFFOLI, FREDKIN, FSIM, sqrtX, sqrtY, CONTROL, CONTROLCONTROL
 
