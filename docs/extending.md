@@ -137,7 +137,45 @@ Sharing a value does not share mutable gate storage. Existing independent bindin
 
 Zygote registrations are optional and loaded by `MOSSZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
 
-The present extension uses Zygote adjoints. ChainRules integration, complete batch gradients, trainable noise parameters, and a general differentiation capability protocol remain planned. Avoid claiming AD support for a custom backend until its derivative behavior and error paths are tested.
+The legacy circuit/state integration uses Zygote adjoints. The explicit parameter-vector interface below uses a separate optional ChainRulesCore extension. Complete batch gradients, trainable noise parameters, and broader migration of legacy derivative entrypoints remain planned. Avoid claiming AD support for a custom backend until its derivative behavior and error paths are tested.
+
+## Execution and replaceable differentiation
+
+Execution and the selected gradient method are separate public interfaces. An external objective can be any Julia type; it does not need to inherit from MOSS or provide `storage`, `backend`, or a quantum state. `ExpectationObjective` is the built-in adapter for a circuit, observable, and initial state:
+
+```julia
+objective = ExpectationObjective(template, observable, initial;
+    parameter_map=ParameterMap(template), backend=MOSS.backend(initial))
+value = evaluate(objective, values)
+method = AdjointGradient()
+supports_gradient(method, objective)
+value, gradient = value_and_gradient(method, objective, values)
+```
+
+The constructor snapshots the instruction tree, observable, and initial state. The execution backend is retained as a resource. `evaluate` independently binds each occurrence, executes on a copy of the initial state, and returns the real part of the scalar expectation. It does not select a gradient method, and execution support does not imply differentiation support.
+
+| Public hook | External implementation contract |
+| --- | --- |
+| `evaluate(objective, values)` | Return a scalar value without invoking a gradient method; preserve the caller's values |
+| `AbstractGradientMethod` | Subtype it for a numerical differentiation strategy |
+| `supports_gradient(method, objective)` | Declare support for gradients of the explicit parameter vector; unknown combinations default to `false` |
+| `value_and_gradient(method, objective, values)` | Return `(value::Real, gradient::AbstractVector{<:Real})` in independent input order; preserve inputs |
+| `value_and_pullback(method, objective, values)` | Optional specialized `(value, back)`; `back(seed::Real)` returns only the scaled parameter gradient and supports independent repeated calls |
+| `differentiable_value(method, objective, values)` | Scalar AD entrypoint retaining the chosen method; ordinary calls invoke only `evaluate` |
+
+The generic pullback fallback calls `value_and_gradient` once and caches a private copy of the gradient. This fallback is eager. Strategies can override the pullback to reuse a forward execution and defer their reverse work. The default gradient hook throws `UnsupportedGradient`; the two defaults never call each other recursively and never silently select another algorithm. Inputs use finite real values with one-based vector indexing. The value must be real and scalar; the gradient is a real vector with the same length. Nonfinite output gradients may propagate. Numerical gradient precision is chosen by the method; AD adapters project to the input domain.
+
+`AdjointGradient` specializes the numerical pullback using the existing dense CPU reverse pass, without invoking Zygote. Its supported objectives use pure or mixed dense states, supported Hermitian `QubitsTerm`/`QubitsOperator` observables, unitary gates with implemented derivatives for active parameters, and fixed `QuantumMap` channels. Shared slots are reduced through the objective's `ParameterMap`. Batch states, stochastic instructions, trainable channels, arbitrary backends, and missing derivative rules are not supported by this method. Querying another method is independent of the execution backend's `supports` queries.
+
+Loading ChainRulesCore activates `MOSSChainRulesCoreExt`. Its `rrule` is limited to `differentiable_value(method, objective, values)` and dispatches through the public numerical pullback. Only `values` receives a cotangent; the method and objective (including its template, observable, map, and initial state) are fixed configuration for this entrypoint. Zero cotangents skip the numerical pullback, thunks are unpacked, real scalar seeds are projected, and parameter cotangents are projected to the original vector domain. No rule is installed on the generic `evaluate` entrypoint. Existing Zygote circuit and state rules remain separate compatibility paths.
+
+```julia
+using Zygote
+loss(values) = differentiable_value(method, objective, values)
+gradient = Zygote.gradient(loss, values)[1]
+```
+
+The [`MOSSDemoDifferentiation` fixture](../test/fixtures/MOSSDemoDifferentiation) imports MOSS normally and defines its own scalar objective, two replaceable executors, and two public gradient methods without any quantum-state fields. It validates core-only numerical calls, direct ChainRules use without Zygote, and Zygote dispatch to the selected external method. This fixture proves the extension contract; it is not a hardware driver or a new finite-difference/stochastic gradient implementation. Those algorithms can later implement the same public hooks without changing execution or AD adapters.
 
 ## Optional package integrations
 

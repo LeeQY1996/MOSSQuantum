@@ -113,6 +113,30 @@ loss(values) = real(expectation(observable,
 gradient = Zygote.gradient(loss, values)[1] # 2 entries
 ```
 
+### Execution and selectable differentiation
+
+```julia
+template = QCircuit([RyGate(1, 0.0; isparas=true), RyGate(1, 0.0; isparas=true)])
+objective = ExpectationObjective(template, QubitsTerm(1 => "Z"), StateVector(1);
+    parameter_map=ParameterMap([1, 1]))
+values = [0.2]
+value = evaluate(objective, values) # forward execution only
+method = AdjointGradient()
+value, gradient = value_and_gradient(method, objective, values) # no AD package needed
+```
+
+Pass a `parameter_map` keyword when creating the objective to use shared values. Its constructor snapshots the template, observable, and initial state while retaining the selected execution backend. Forward execution carries no gradient method. Query `supports_gradient(method, objective)` before requesting derivatives; the current CPU method supports deterministic unitary circuits and fixed channels with supported Hermitian observables.
+
+An optional ChainRulesCore extension connects an explicitly chosen method to AD:
+
+```julia
+using Zygote
+loss(values) = differentiable_value(method, objective, values)
+gradient = Zygote.gradient(loss, values)[1]
+```
+
+External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Additional numerical gradient algorithms are separate future work; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines the current contracts.
+
 ### State and circuit ownership
 
 ```julia
@@ -219,7 +243,7 @@ savefig(plt, "circuit.png")
 - [KrylovKit](https://github.com/Jutho/KrylovKit.jl) — Krylov subspace methods
 - [TensorOperations](https://github.com/Jutho/TensorOperations.jl) — tensor contractions
 
-Zygote is an optional AD dependency. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. All supported Julia versions use native package extensions; the Requires bridge has been removed. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.
+ChainRulesCore is an optional rule dependency for the explicit-method scalar interface; Zygote is an optional AD consumer and also supports the legacy circuit/state interfaces. Neither is required for forward execution or explicit numerical `value_and_gradient` calls. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. All supported Julia versions use native package extensions; the Requires bridge has been removed. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.
 
 ## Development
 

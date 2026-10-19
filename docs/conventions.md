@@ -72,6 +72,12 @@ For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns o
 
 ## Mutation and returned objects
 
+`evaluate(objective, values)` and `differentiable_value(method, objective, values)` have the same ordinary forward meaning; the latter carries the chosen differentiation policy for optional AD adapters. A forward call never requires a gradient capability. `supports_gradient(method, objective)` separately reports support for parameter differentiation, and unknown combinations are unsupported. No fallback algorithm is silently selected.
+
+The explicit-method scalar interface differentiates only `values`. Its method and objective configuration are fixed, including a built-in objective's initial state and observable; use the legacy supported state-gradient APIs when differentiating state inputs. Numerical pullbacks accept a real scalar seed and return a real parameter vector, support repeated calls, and preserve saved state when the caller changes a previously returned gradient. AD-specific zero/thunk and input-domain projection belong to the optional ChainRulesCore adapter.
+
+`ExpectationObjective` snapshots its template, observable, and initial state, retains its backend, and executes on an independent state copy. Its `ParameterMap` continues to define independent input order. The output is the real part of a scalar expectation. This concrete adapter is separate from the public objective protocol, which accepts external objective types without any quantum-state or storage requirement.
+
 Always retain the returned state:
 
 ```julia

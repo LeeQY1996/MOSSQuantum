@@ -72,12 +72,15 @@ include("observables/density_matrix_expectation.jl")
 
 # Public backend contracts adapt the dense CPU implementation.
 include("api/backend_protocols.jl")
+include("api/gradient_methods.jl")
+include("api/objectives.jl")
 include("execution/probabilities.jl")
 include("execution/simulation.jl")
 
 # Differentiation and partial trace.
 include("differentiation/circuit.jl")
 include("differentiation/expectation.jl")
+include("differentiation/objectives.jl")
 include("observables/partial_trace.jl")
 
 # Utilities retains its existing public module and import behavior.

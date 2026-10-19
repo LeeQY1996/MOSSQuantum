@@ -115,19 +115,24 @@ include("regression/quantum_semantics.jl")
 include("unit/parameter_binding.jl")
 include("unit/parameter_protocols.jl")
 include("unit/parameter_maps.jl")
+include("unit/gradient_methods.jl")
+include("unit/adjoint_objectives.jl")
 include("integration/execution_api.jl")
 include("extensions/backend_protocols.jl")
 include("extensions/optional_integrations.jl")
 include("extensions/adjoint_capabilities.jl")
 include("extensions/constructor_gradients.jl")
 include("extensions/shared_parameter_gradients.jl")
+include("extensions/differentiation_rules.jl")
 include("extensions/trainable_instructions.jl")
+include("extensions/independent_differentiation.jl")
 
 if "--load-orders" in ARGS
     @testset "Fresh-process optional integration loading" begin
         project = dirname(Base.active_project())
         script = joinpath(@__DIR__, "extensions", "load_order.jl")
-        for scenario in ("core", "zygote_first", "moss_first_zygote", "plots_first",
+        for scenario in ("core", "chainrules_first", "moss_first_chainrules",
+                         "zygote_first", "moss_first_zygote", "plots_first",
                          "moss_first_plots", "latex_then_moss_then_plots")
             @test success(`$(Base.julia_cmd()) --startup-file=no --project=$project $script $scenario`)
         end

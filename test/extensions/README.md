@@ -8,4 +8,6 @@ Constructor-gradient checks cover explicit copy controls, nested state wrappers,
 
 Shared-parameter gradient checks compare explicit maps with analytic and finite-difference results, including noncommuting gates, mixed inputs and fixed channels, value projections, and empty maps. The external fixture also trains shared values across its own immutable gate and a built-in gate.
 
+The explicit-method differentiation tests cover direct ChainRules pullbacks, zero/thunk/type/domain behavior, selected external methods, and coexistence with legacy Zygote rules. `MOSSDemoDifferentiation` verifies the same public protocol in a separate package, including core-only execution without any AD dependencies. Fresh-process scenarios now also load ChainRulesCore before and after MOSS without loading Zygote.
+
 Julia 1.10/1.13 local validation results are recorded in [the roadmap](../../docs/roadmap.md#verification-record).

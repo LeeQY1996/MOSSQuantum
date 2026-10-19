@@ -30,7 +30,22 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
-## Current milestone: shared parameter maps and gradient accumulation
+## Current milestone: replaceable differentiation and optional AD
+
+This milestone implements the existing automatic-differentiation path while keeping execution independent of the selected gradient method. Additional finite-difference, parameter-shift, and stochastic estimators will be designed separately; no such algorithms are introduced here.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Independent objectives | Public `evaluate` and a snapshot-owning `ExpectationObjective` adapter | Forward evaluation runs without AD packages or a gradient method, including explicit backend selection | Verified locally |
+| 2 Numerical gradient protocol | Replaceable `AbstractGradientMethod`, capability queries, value/gradient and pullback hooks, and the existing CPU `AdjointGradient` | Public hooks work without an AD framework; scalar, parameter-order, ownership, and unsupported-capability contracts are tested | Verified locally |
+| 3 Optional AD adapter | A ChainRulesCore extension for explicit-method `differentiable_value` | Correct zero/thunk/domain/type handling, selected-method dispatch, and coexistence with legacy Zygote rules | Verified locally |
+| 4 Independent companion acceptance | A separate package replaces its executor and numerical gradient method | No state/storage inheritance required; core-only, direct ChainRules, Zygote, and full Julia 1.10/1.13 acceptance pass | Verified locally |
+
+Only the explicit real parameter vector is differentiated by the new scalar entrypoint. The objective and method are fixed configuration. `evaluate` selects no derivative algorithm; external objectives and methods use public multiple dispatch rather than private CPU hooks. `ExpectationObjective` is one concrete adapter, not a required base type for future laboratory or hardware integrations.
+
+The CPU method reuses existing deterministic unitary/fixed-channel reverse passes and shared-parameter accumulation. It does not call Zygote internally. ChainRulesCore remains optional, and existing Zygote circuit APIs remain available. All four steps passed local acceptance; final results are recorded below.
+
+## Completed milestone: shared parameter maps and gradient accumulation
 
 This milestone adds explicit shared-value semantics to the public parameter foundation. The implementation stays in the main package so companion packages can use the same slot ordering and gradient reduction. All four implementation and acceptance steps are complete:
 
@@ -67,15 +82,29 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 
 The following features remain distinct follow-up changes:
 
-1. ChainRules registration and explicit differentiation capabilities for external backends.
+1. Design additional numerical gradient methods through the new protocol, including finite differences, parameter shift, and stochastic estimators.
 2. Complete batch gradients and parameterized noise.
 3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
 4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
 5. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
+6. Broader ChainRules coverage and migration of legacy circuit/state derivative entrypoints after their tangent contracts are explicitly defined.
 
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Replaceable differentiation and optional AD acceptance
+
+Local acceptance completed on 2026-10-19 with normal compiled-module loading and precompilation:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed all 3206 reported assertions across 45 testsets.
+- Julia 1.10.10, one thread: a new independent environment developed the checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with all 3206 reported assertions across 45 testsets. Dependencies were resolved separately from the development Manifest.
+- The 556 added assertions cover the numerical protocol (36), CPU scalar objectives and adjoints (159), direct ChainRules and AD contracts (132), external objective/method contracts (227), and two additional parent loading checks. Coverage includes shared/nested/frozen parameters, pure/mixed states and fixed channels, repeated pullbacks, parameter-domain snapshots after caller resizing, zero/thunk cotangents, type/domain projection, and unsupported combinations.
+- Each full run passed eight fresh-process scenarios: core only, ChainRulesCore before/after MOSS without Zygote, Zygote before/after MOSS, Plots before/after MOSS, and LaTeXStrings before MOSS and Plots. Legacy Zygote and the new scalar rule coexist.
+- Independent fixture `Pkg.test` passed on both Julia versions: `MOSSDemoBackend` 9 assertions per version, `MOSSDemoGates` 181 per version, and `MOSSDemoDifferentiation` 235 per version. The new fixture's isolated phases confirm execution without AD dependencies and direct ChainRules use without Zygote, as well as replacing the executor and numerical method independently.
+- The README's new examples ran in a fresh process: core evaluation and explicit numerical gradients first, with neither ChainRulesCore nor Zygote loaded, followed by the example's `using Zygote` and equivalent AD gradient. Documentation link targets, fences, and package TOML metadata were checked.
+
+The core's hard dependencies did not change. ChainRulesCore 1.26 is an optional weak dependency and test extra; the development Manifest was refreshed only for the corresponding project hash and extension metadata. Explicit-backend `QubitsOperator` register validation is also covered by the CPU objective checks. CI now resolves all three fixtures independently on Julia 1.10/1.13. Remote CI has not been run as part of this local acceptance.
 
 ### Shared parameter-map acceptance
 

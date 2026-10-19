@@ -105,6 +105,16 @@ _cpu_supports(::AbstractMatrix, ::Type{S}, action::Symbol) where S =
 _cpu_result_state(operation, ::Type{S}) where S = S
 _cpu_result_state(::QuantumMap, ::Type{S}) where {S<:StateVector} = DensityMatrix
 
+# Operators contain several register tuples rather than one positions list.
+function QuantumCircuits.validate_positions(observable::QubitsOperator, n::Integer)
+    n >= 0 || throw(ArgumentError("the number of qubits must be nonnegative"))
+    for key in keys(observable.data), position in key
+        1 <= position <= n ||
+            throw(ArgumentError("qubit position $position must be between 1 and $n"))
+    end
+    return nothing
+end
+
 function _cpu_circuit_state(circuit::QCircuit, state_type::Type)
     for operation in circuit
         if operation isa QCircuit

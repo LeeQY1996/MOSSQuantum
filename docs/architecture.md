@@ -9,7 +9,7 @@ Directories group responsibilities; they do not each introduce a Julia module.
 | Path | Responsibility | Owning namespace |
 | --- | --- | --- |
 | `src/MOSS.jl` | Dependency loading and package assembly | `MOSS` |
-| `src/api/` | Exports, state/backend contracts, parameter binding and explicit sharing maps | `MOSS` |
+| `src/api/` | Exports, state/backend contracts, parameter binding, objectives, and gradient-method protocols | `MOSS` |
 | `src/quantum_circuits/` | Instructions, gates, channels, circuits, and observable descriptions | `MOSS.QuantumCircuits` |
 | `src/quantum_circuits/gates/Gates.jl` | Elementary matrices and matrix constructors | `MOSS.QuantumCircuits.Gates` |
 | `src/states/` | Dense states, batches, initialization, and encoding | `MOSS` |
@@ -45,6 +45,7 @@ The CPU simulator implements the public execution interfaces while retaining exi
 | --- | --- |
 | Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions`, `copy_instruction` |
 | Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `ParameterMap`, `parameter_indices`, `accumulate_parameter_gradients`, `differentiate` |
+| Numerical differentiation | `ExpectationObjective`, `evaluate`, `AbstractGradientMethod`, `AdjointGradient`, `supports_gradient`, `value_and_gradient`, `value_and_pullback`, `differentiable_value` |
 | Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
 | States | `AbstractQuantumState`, `nqubits`, `copy`, `StateVector`, `DensityMatrix`, `BatchStateVector`; optional dense `storage` |
@@ -60,9 +61,15 @@ Public parameter writers may return replacement instructions. Circuit traversal 
 
 `ParameterMap` is owned by MOSS and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
 
+## Replaceable differentiation
+
+`evaluate(objective, values)` is a forward-only public protocol independent of gradient methods. `ExpectationObjective` snapshots a circuit, observable, and initial state and retains its execution backend, while external objectives can implement the protocol without state or storage inheritance. `AbstractGradientMethod`, `supports_gradient`, `value_and_gradient`, and `value_and_pullback` define numerical parameter differentiation independently of AD frameworks. The CPU `AdjointGradient` implementation reuses the existing reverse passes and shared-value reduction.
+
+`differentiable_value(method, objective, values)` explicitly carries the selected numerical method. Ordinary execution calls `evaluate`; the optional ChainRulesCore extension delegates differentiation to the public pullback hook. Only the explicit parameter vector is differentiated by this scalar entrypoint. This avoids imposing a new circuit tangent representation on the legacy Zygote interfaces or coupling a future numerical gradient strategy to the forward executor.
+
 ## Optional integrations
 
-MOSS requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSZygoteExt` registers existing Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
+MOSS requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. ChainRulesCore, Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSChainRulesCoreExt` registers the explicit-method scalar rule independently of Zygote; `MOSSZygoteExt` retains the legacy Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
 
 FiniteDifferences is a test dependency. The minimal simulator can load without installing an AD or plotting framework. Final version-specific loading results belong in the [verification record](roadmap.md#verification-record); a compatibility declaration alone does not establish a tested Julia version.
 
@@ -72,7 +79,9 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/fixtures/MOSSDemoBackend` is a separate package with its own `Project.toml` and `import MOSS`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSS kernels. Independent package resolution and final suite results are recorded separately from its implementation.
 
-`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step and compare gradients with analytic and finite-difference results. CI resolves and tests both fixtures independently on Julia 1.10 and Julia 1.13.
+`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step and compare gradients with analytic and finite-difference results.
+
+`test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. CI resolves and tests all three fixtures independently on Julia 1.10 and Julia 1.13.
 
 The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. Recorded warmed measurements remain necessary before making performance claims.
 
@@ -84,4 +93,4 @@ The ownership and parameter milestone preserves existing constructor-sharing def
 
 Explicit shared-value maps add reuse of independent parameter values and gradient accumulation on the existing supported dense CPU circuit path. They preserve two-argument binding and mutating reset, and introduce no symbolic algebra or general backend differentiation contract. The [parameter conventions](conventions.md#explicit-shared-parameter-maps) define their validation and lifecycle.
 
-Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, symbolic parameter expressions, and ChainRules integration remain future work. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.
+Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, symbolic parameter expressions, and broader legacy ChainRules migration remain future work. The new method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.
