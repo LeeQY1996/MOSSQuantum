@@ -144,3 +144,66 @@ function value_and_gradient(method::AdjointGradient, objective::ExpectationObjec
     value, back = value_and_pullback(method, objective, values)
     return value, back(one(value))
 end
+
+function _supports_cpu_batch_adjoint(objective::BatchExpectationObjective, template::QCircuit=objective.template)
+    objective.backend isa CPUBackend || return false
+    observable = objective.observable
+    observable isa Union{QubitsTerm,QubitsOperator} || return false
+    try
+        _check_batch_objective_configuration(objective)
+        _check_parameter_map(template, objective.parameter_map)
+        register_size = nqubits(objective.initial_state)
+        validate_positions(template, register_size)
+        validate_positions(observable, register_size)
+        _cpu_adjoint_observable_valid(observable) || return false
+        state_type = StateVector{eltype(objective.initial_state)}
+        # A batch of pure states has no mixed-state transition. In particular,
+        # single-state support for fixed channels does not establish batch
+        # support, and stochastic measurement/postselection are not adjoints.
+        _has_quantum_map(template) && return false
+        final_type = _cpu_adjoint_circuit_state(template, state_type)
+        return final_type === state_type && _cpu_supports(observable, final_type, :expectation)
+    catch error
+        error isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        return false
+    end
+end
+
+supports_gradient(::AdjointGradient, objective::BatchExpectationObjective) = _supports_cpu_batch_adjoint(objective)
+
+function value_and_pullback(method::AdjointGradient, objective::BatchExpectationObjective,
+                            values::AbstractVector{<:Real})
+    _require_gradient_support(method, objective)
+    _check_gradient_input(values)
+    saved_values = copy(values)
+    bound = bind_parameters(objective.template, saved_values, objective.parameter_map)
+    _supports_cpu_batch_adjoint(objective, bound) || throw(UnsupportedGradient(method, objective))
+
+    # Reuse the same numerical batch reverse passes as optional AD adapters.
+    # Both helpers own private circuit/state/observable snapshots, and perform
+    # one shared batch forward followed by independent per-column reverse work.
+    observable = deepcopy(objective.observable)
+    parameter_map = objective.parameter_map
+    output, circuit_back = _batch_circuit_adjoint(bound, objective.initial_state)
+    sample_values, observation_back = _batch_expectation_adjoint(observable, output)
+    value = _reduce_batch_objective(objective, real.(sample_values))
+    weights = _batch_objective_weights(objective, typeof(value))
+    back = function(seed::Real)
+        iszero(seed) && return zeros(typeof(value), length(saved_values))
+        # A heterogeneous real weight vector still needs a concrete numerical
+        # seed domain for the dense observation workspace.
+        seed_type = mapreduce(weight -> typeof(seed * weight), promote_type, weights)
+        sample_seeds = seed_type[seed * weight for weight in weights]
+        _, state_gradient = observation_back(sample_seeds)
+        slot_gradients, _ = circuit_back(state_gradient)
+        gradient = accumulate_parameter_gradients(parameter_map, slot_gradients)
+        return _check_parameter_gradient(gradient, saved_values)
+    end
+    return value, back
+end
+
+function value_and_gradient(method::AdjointGradient, objective::BatchExpectationObjective,
+                            values::AbstractVector{<:Real})
+    value, back = value_and_pullback(method, objective, values)
+    return value, back(one(value))
+end

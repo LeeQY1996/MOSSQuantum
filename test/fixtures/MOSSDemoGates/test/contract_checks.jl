@@ -126,7 +126,7 @@ function run(::Type{GateType}) where {GateType}
         @test Zygote.gradient(noisy_loss, theta)[1] ≈ 0.8 .* analytic atol=1e-10
 
         # These CPU circuit rules do not promise gradients for every operation,
-        # batch representation, stochastic execution, or external backend.
+        # stochastic execution or external backend.
         for instruction in (UnimplementedInstruction(), MOSS.QMeasure(2), MOSS.QSelect(2),
                             MOSS.QuantumGate(2, [1.0 0; 0 0.5]))
             unsupported = MOSS.QCircuit([source, MOSS.QCircuit([instruction])])
@@ -135,7 +135,7 @@ function run(::Type{GateType}) where {GateType}
         end
         batch = MOSS.BatchStateVector(2, 2)
         batch_loss(values) = real(sum(MOSS.expectation(observable, MOSS.bind_parameters(template, values) * batch)))
-        @test_throws ArgumentError Zygote.gradient(batch_loss, theta)
+        @test Zygote.gradient(batch_loss, theta)[1] ≈ 2 .* analytic atol=1e-10
     end
 
     @testset "explicit shared parameter identities" begin

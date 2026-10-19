@@ -16,6 +16,13 @@ The first position in `positions(g)` corresponds to the least significant local 
 
 Dense `storage(::StateVector)` is a length `2^n` vector; `storage(::DensityMatrix)` is a `2^n × 2^n` matrix backed by column-major vector storage. `storage(::BatchStateVector)` is a `2^n × batch_size` matrix with one state per column. External `AbstractQuantumState` implementations need not expose `storage`.
 
+`StateVector` and `BatchStateVector` remain separate representations using the
+same public operation names. Batch size one does not collapse to a single state:
+expectations retain a sample vector, readout retains its batch axis, and recorded
+execution returns `BatchSimulationResult`. A batch applies one circuit and one
+parameter vector to independent input columns. There is no batch density-matrix
+representation. See the [batch guide](batching.md) for the capability table.
+
 ## Circuit order and admission
 
 `QCircuit` accepts `AbstractInstruction` values, including nested circuits. Gates, channels, measurements, and post-selection are instructions. `QubitsTerm` and `QubitsOperator` remain observables rather than executable circuit elements.
@@ -68,7 +75,7 @@ accumulate_parameter_gradients(parameter_map, [2.0, 3.0, 5.0]) # [7.0, 3.0]
 
 computes `shared_gradient[j] = sum(flat_gradient[i] for i in eachindex(indices) if indices[i] == j)`. This helper requires one real gradient entry per slot and permits nonfinite gradients to propagate through the sums. For supported deterministic dense CPU circuits, differentiating a loss that calls the three-argument `bind_parameters` with Zygote performs this accumulation automatically. A map represents repeated values; symbolic expressions such as `2θ` or `θ + φ` are outside its contract.
 
-For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support the documented deterministic pure-state and density-matrix circuit workflows; arbitrary instructions, external backends, and batches require their own derivative support.
+For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support the documented deterministic single-state workflows and shared unitary circuits on pure-state batches. Arbitrary instructions and external backends require their own derivative support; batch noise and batch stochastic derivatives are not provided.
 
 ## Mutation and returned objects
 
@@ -77,6 +84,16 @@ For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns o
 The explicit-method scalar interface differentiates only `values`. Its method and objective configuration are fixed, including a built-in objective's initial state and observable; use the legacy supported state-gradient APIs when differentiating state inputs. Numerical pullbacks accept a real scalar seed and return a real parameter vector, support repeated calls, and preserve saved state when the caller changes a previously returned gradient. AD-specific zero/thunk and input-domain projection belong to the optional ChainRulesCore adapter.
 
 `ExpectationObjective` snapshots its template, observable, and initial state, retains its backend, and executes on an independent state copy. Its `ParameterMap` continues to define independent input order. The output is the real part of a scalar expectation. This concrete adapter is separate from the public objective protocol, which accepts external objective types without any quantum-state or storage requirement.
+
+`BatchExpectationObjective` likewise snapshots a nonempty initial pure-state batch,
+circuit, observable, and optional weights, and retains its backend. `evaluate_batch`
+returns the real sample expectations in column order. `evaluate` reduces them by
+`:mean` (default), `:sum`, or `:weighted_sum`. Weighted sums require one finite real
+weight per sample, allow negative weights, and do not normalize the weights.
+Weights on other reductions are rejected. The gradient has one entry per
+independent circuit parameter, regardless of batch size; the same reduction is
+applied to sample contributions. Empty batch containers are supported, but scalar
+batch objectives require at least one sample.
 
 ### Repeated evaluation and pullback ownership
 
@@ -97,6 +114,14 @@ A gate can promote real storage to complex storage. A channel applied to a `Stat
 
 Legacy measurement and post-selection have specific return conventions. `measure!` returns `(outcome, probability)` and mutates the state. `measure(state, position)` returns `(reduced_state, outcome, probability)` and removes that qubit, preserving the relative order of the others. Retained measurements default to resetting the measured qubit to zero; `auto_reset=false` retains the observed basis value. In-place post-selection returns its probability. These metadata returns are also retained by CPU backend adapters for `QMeasure` and `QSelect`.
 
+For a pure-state batch, outcomes and probabilities are vectors in sample order.
+`measure!` and `post_select!` retain the register size; nonmutating `measure` and
+`post_select(...; keep=false)` remove the selected qubit from every column.
+Batch post-selection requires positive finite selected probability in every
+sample and checks the entire batch before mutation. `partial_tr(batch, sites)`
+returns individual `DensityMatrix` values for partial reductions, rather than a
+batch density matrix; tracing every site returns the sample norms squared.
+
 ## Probabilities, samples, and counts
 
 `probabilities(state; qubits=1:nqubits(state))` returns a computational-basis distribution without mutation. Qubits must be distinct valid register positions; the input must be normalized. Significant negative probabilities, nonfinite values, and normalization errors are rejected. Small rounding errors are normalized before sampling.
@@ -113,7 +138,7 @@ Sample columns follow the requested qubit order. The leftmost character of a cou
 
 Zero shots produce empty samples and histograms; negative shots are invalid. An empty qubit selection has distribution `[1]`, sample shape `(shots, 0)`, and the empty-string counts key when shots are positive. Sampling and counts preserve the input state.
 
-## Single-trajectory results and RNG
+## Recorded execution and RNG
 
 `simulate(circuit, initial_state; backend=backend(initial_state), rng=...)` executes on a copy and returns a `SimulationResult`:
 
@@ -129,6 +154,13 @@ using MOSS, Random
 rng = MersenneTwister(42)
 results = [simulate(circuit, initial_state; rng=rng) for _ in 1:100]
 ```
+
+For `BatchStateVector`, `simulate` returns `BatchSimulationResult`. Its state
+retains the batch, and `measurements[column]` contains that sample's records in
+instruction order, including nested circuits. Random draws follow instruction
+order and then column order. Recorded `QMeasure` keeps the register size;
+qubit-removing measurements must use `measure` separately. Batch size one retains
+the nested record structure, and an empty batch has no sample record lists.
 
 Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, and `rand_batch(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
 
@@ -177,4 +209,4 @@ The density overload previously performed only left multiplication. Code requiri
 
 `supports(b, operation, state; action=:apply)` checks execution support. `action=:expectation` checks observation support. Unknown actions or unsupported combinations return `false`. Unsupported public backend execution or observation raises `UnsupportedOperation`; `validate_positions(operation, nqubits(state))` checks register bounds independently of backend arity or representation support.
 
-The dense CPU backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits. Channels convert pure to mixed states and are not implemented for batches. Retained `QMeasure` supports pure and mixed states; `QSelect` currently supports pure states. Batch gate and expectation support does not imply batch noise, measurement, or reverse-mode support. Legacy dense entrypoints retain some earlier assertions and error conventions.
+The dense CPU backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits. Channels convert pure to mixed states and are not implemented for batches. Retained `QMeasure` supports single pure/mixed states and pure-state batches; `QSelect` supports single pure states and pure-state batches. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support is limited to the documented unitary-circuit, observable, encoding, and constructor paths; it does not extend to stochastic execution or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.

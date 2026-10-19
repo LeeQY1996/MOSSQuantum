@@ -28,7 +28,9 @@ MOSS.positions(::UnsupportedAdjointInstruction) = (1,)
 
     batch = BatchStateVector(1, 2)
     batch_loss(circuit) = real(sum(expectation(observable, circuit * batch)))
-    @test_throws ArgumentError Zygote.gradient(batch_loss, QCircuit())
+    @test isempty(Zygote.gradient(batch_loss, QCircuit())[1])
+    @test Zygote.gradient(batch_loss, QCircuit([RyGate(1, 0.3; isparas=true)]))[1] ≈ [-2sin(0.3)]
+    @test_throws ArgumentError Zygote.gradient(batch_loss, QCircuit([QMeasure(1)]))
 
     # Standalone post-selection retains its existing separate differentiation.
     selection_loss(values) = last(post_select(StateVector(values), 1, 0))

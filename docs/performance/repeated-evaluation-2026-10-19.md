@@ -21,7 +21,8 @@ evaluation per sample. No other validation jobs ran during these measurements.
 Neither Zygote nor ChainRulesCore was loaded. Metadata records memory, BLAS
 configuration, source and environment hashes, samples, and the exact commands.
 
-The baseline is `e132ca0188487291b990c8b554876a29d9c4bfe3`. Only
+The baseline is `e132ca0188487291b990c8b554876a29d9c4bfe3`; the measured
+optimized revision is `642cab7`. Only
 `src/differentiation/objectives.jl` changes between the measured source snapshots.
 The benchmark script, Project, and resolved Manifest are identical across each
 before/after comparison. Documentation, test, and CI edits do not affect the
@@ -89,8 +90,9 @@ From the repository root, prepare the independent environment as described in
 the [benchmark guide](../../benchmark/README.md). The resolved environment used
 here is retained as `repeated-evaluation-2026-10-19/benchmark.Manifest.toml`;
 restore it to `benchmark/Manifest.toml` to use the same package versions.
-Keep this revision's benchmark files when measuring the baseline. On the
-optimized checkout, reverse only the saved source patch before the baseline
+Use revision `642cab7` for these historical measurements; later batch work
+changes additional source files. Keep that revision's benchmark files when
+measuring the baseline. On that optimized checkout, reverse only the saved source patch before the baseline
 commands:
 
 ```bash

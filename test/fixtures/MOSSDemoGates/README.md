@@ -68,10 +68,16 @@ or persistent sharing constraints to the circuit.
 
 The tests check analytic and finite-difference gradients, one descent step,
 nested and repeated gate occurrences, frozen parameters, adjoint wrappers,
-input independence, fixed CPU noise, and unsupported gradient paths. Shared
+input independence, single-state fixed CPU noise, unitary pure-state batch
+circuit gradients, and unsupported gradient paths. Shared
 parameter tests compare closed-form derivatives, finite differences, and summed
 slot gradients, including shared values across different gate types. They never
 access a state's storage or MOSS's private reset hooks.
 The execution and reverse pass in this example use MOSS's dense CPU states.
-General backend gradients, batch gradients, trainable noise, and stochastic AD
-remain outside this fixture's contract.
+The existing `BatchStateVector` uses the same public circuit/binding/expectation
+entrypoints, preserving its sample axis even for batch size one. Batch circuit
+gradients share parameters across columns; `BatchExpectationObjective` additionally
+provides explicit mean, sum, or weighted scalar reductions with replaceable
+gradient methods. See the [batch guide](../../../docs/batching.md).
+General backend gradients, batch density matrices/noise, trainable noise, and
+stochastic AD remain outside this fixture's contract.

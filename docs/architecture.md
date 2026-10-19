@@ -16,10 +16,10 @@ Directories group responsibilities; they do not each introduce a Julia module.
 | `src/execution/` | Execution, measurement, post-selection, probabilities, sampling, and results | `MOSS` |
 | `src/backends/cpu/` | Dense gate, channel, operator, and expectation kernels | `MOSS` |
 | `src/observables/` | Expectation interfaces, partial trace, and state diagnostics | `MOSS` |
-| `src/differentiation/` | Existing circuit reverse passes and expectation derivatives | `MOSS` |
+| `src/differentiation/` | Numerical single/batch circuit reverse passes and expectation/encoding derivatives | `MOSS` |
 | `src/utilities/` | Model builders, evolution helpers, and algorithms | `MOSS.Utilities` |
 | `src/utils/` | Internal indexing, tensor, distance, and parallel helpers | `MOSS` |
-| `ext/` | Optional Zygote registrations and plotting integration | Extension modules |
+| `ext/` | Optional ChainRulesCore/Zygote registrations and plotting integration | Extension modules |
 
 Each type and generic function has one owning module. Re-exports such as `MOSS.nqubits` and `MOSS.QuantumCircuits.nqubits` refer to the same function object. File relocation does not redefine a type under a new module.
 
@@ -45,14 +45,14 @@ The CPU simulator implements the public execution interfaces while retaining exi
 | --- | --- |
 | Instructions | `AbstractInstruction`, `Gate`, `ParametricGate`, `QuantumGate`, `positions`, `mat`, `validate_positions`, `copy_instruction` |
 | Parameters | `parameters`, `active_parameters`, `nparameters`, activation methods, `reset_parameters!`, `bind_parameters`, `ParameterMap`, `parameter_indices`, `accumulate_parameter_gradients`, `differentiate` |
-| Numerical differentiation | `ExpectationObjective`, `evaluate`, `AbstractGradientMethod`, `AdjointGradient`, `supports_gradient`, `value_and_gradient`, `value_and_pullback`, `differentiable_value` |
+| Numerical differentiation | `ExpectationObjective`, `BatchExpectationObjective`, `evaluate`, `evaluate_batch`, `AbstractGradientMethod`, `AdjointGradient`, `supports_gradient`, `value_and_gradient`, `value_and_pullback`, `differentiable_value` |
 | Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
 | States | `AbstractQuantumState`, `nqubits`, `copy`, `StateVector`, `DensityMatrix`, `BatchStateVector`; optional dense `storage` |
 | Backend selection | `AbstractBackend`, `CPUBackend`, `backend`, `supports`, `UnsupportedOperation` |
 | Execution | `apply!(backend, instruction, state)`, `apply!`, `circuit * state`, `simulate` |
 | Readout | `probabilities`, `sample`, `counts`, `measure`, `measure!`, `post_select`, `post_select!` |
-| Results | `SimulationResult.state`, `SimulationResult.measurements`, `MeasurementRecord` |
+| Results | `SimulationResult`, `BatchSimulationResult`, result `state`/`measurements`, `MeasurementRecord` |
 | Observables | `QubitsTerm`, `QubitsOperator`, `expectation(backend, observable, state)`, `fidelity`, `partial_tr`, entropy helpers |
 
 `supports(b, operation, state; action=:apply)` and `supports(b, observable, state; action=:expectation)` describe separate capabilities. Register bounds are checked through `validate_positions`. Declaring one capability does not imply noise, sampling, or differentiation support. The [extension guide](extending.md) gives implementation requirements and the [conventions](conventions.md) define ordering, ownership, and results.
@@ -61,13 +61,35 @@ Public parameter writers may return replacement instructions. Circuit traversal 
 
 `ParameterMap` is owned by MOSS and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
 
+## Pure-state batches
+
+`StateVector` remains the single-state representation and the existing
+`BatchStateVector` remains the dedicated batch representation. Public operations
+dispatch on these types while preserving their respective shapes. Each batch
+column is an independent sample sharing a circuit and parameter vector; B=1
+retains the batch axis. CPU batch support includes gates, operators, expectations,
+terminal readout, measurement, post-selection, and recorded simulation.
+`BatchSimulationResult` stores a record list per sample. Partial trace returns
+individual density matrices when a partial reduction is mixed; this does not
+introduce batch density storage or batch noise support. The [batch guide](batching.md)
+defines shapes and capabilities before any future batch density-matrix design.
+
 ## Replaceable differentiation
 
-`evaluate(objective, values)` is a forward-only public protocol independent of gradient methods. `ExpectationObjective` snapshots a circuit, observable, and initial state and retains its execution backend, while external objectives can implement the protocol without state or storage inheritance. `AbstractGradientMethod`, `supports_gradient`, `value_and_gradient`, and `value_and_pullback` define numerical parameter differentiation independently of AD frameworks. The CPU `AdjointGradient` implementation reuses the existing reverse passes and shared-value reduction.
+`evaluate(objective, values)` is a forward-only public protocol independent of gradient methods. `ExpectationObjective` snapshots a circuit, observable, and single initial state and retains its execution backend. `BatchExpectationObjective` additionally preserves a sample axis and explicitly reduces sample expectations by mean, sum, or weighted sum. External objectives can implement the protocol without state or storage inheritance. `AbstractGradientMethod`, `supports_gradient`, `value_and_gradient`, and `value_and_pullback` define numerical parameter differentiation independently of AD frameworks. The CPU `AdjointGradient` implementation reuses the numerical reverse passes and shared-value reduction.
 
 `differentiable_value(method, objective, values)` explicitly carries the selected numerical method. Ordinary execution calls `evaluate`; the optional ChainRulesCore extension delegates differentiation to the public pullback hook. Only the explicit parameter vector is differentiated by this scalar entrypoint. This avoids imposing a new circuit tangent representation on the legacy Zygote interfaces or coupling a future numerical gradient strategy to the forward executor.
 
 Repeated CPU evaluations keep their mutable execution state local to each call. A prepared adjoint owns its bound circuit, output, observation snapshot, and any fixed-channel checkpoints. There is no persistent cache on `ExpectationObjective`, and support and bound-parameter validation remain part of each gradient preparation. Reuse of a prepared pullback does not require a new execution-plan interface from other backends. The [ownership conventions](conventions.md#repeated-evaluation-and-pullback-ownership) define interleaving and concurrency.
+
+The batch scalar objective and legacy batch Zygote rules share numerical helpers
+in `src/differentiation/batch.jl`: one batch circuit forward, sample observation
+seeds, and per-column reverse reconstruction. Slot gradients are reduced through
+`ParameterMap` after sample contributions are accumulated. Explicit gradient calls
+therefore do not depend on an AD framework, while optional AD uses the same
+numerical implementation. Legacy rules also support batch qubit encoding and
+selected state constructors; stochastic simulation, measurement, and post-selection
+are outside the batch derivative contract.
 
 ## Optional integrations
 
@@ -81,11 +103,11 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/fixtures/MOSSDemoBackend` is a separate package with its own `Project.toml` and `import MOSS`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSS kernels. Independent package resolution and final suite results are recorded separately from its implementation.
 
-`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step and compare gradients with analytic and finite-difference results.
+`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step, compare gradients with analytic and finite-difference results, and verify unitary pure-state batch circuit gradients.
 
 `test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. CI resolves and tests all three fixtures independently on Julia 1.10 and Julia 1.13.
 
-The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. The [repeated-evaluation report](performance/repeated-evaluation-2026-10-19.md) records measured scalar-objective comparisons, trial summaries, environment metadata, and the first CPU allocation reduction. Those measurements do not establish a baseline for every dense-kernel workload. CI exercises the new harness on both supported Julia versions without timing thresholds.
+The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. `batch_evaluation.jl` compares batch objectives of size 1/4/16 with explicit single-state loops, including gradients and optional AD. The [repeated-evaluation report](performance/repeated-evaluation-2026-10-19.md) records measured single-state scalar-objective comparisons, trial summaries, environment metadata, and the first CPU allocation reduction. Those measurements do not establish a baseline for every dense-kernel workload. CI exercises benchmark harnesses without timing thresholds.
 
 ## Compatibility and remaining work
 
@@ -95,4 +117,4 @@ The ownership and parameter milestone preserves existing constructor-sharing def
 
 Explicit shared-value maps add reuse of independent parameter values and gradient accumulation on the existing supported dense CPU circuit path. They preserve two-argument binding and mutating reset, and introduce no symbolic algebra or general backend differentiation contract. The [parameter conventions](conventions.md#explicit-shared-parameter-maps) define their validation and lifecycle.
 
-Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, complete batch gradients, trainable noise parameters, symbolic parameter expressions, and broader legacy ChainRules migration remain future work. The new method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`.
+Dense state fields still use concrete CPU vectors and matrices. Array-generic storage, GPU kernels, batch density matrices and noise, per-sample circuit parameter vectors, trainable noise parameters, symbolic parameter expressions, and broader legacy ChainRules migration remain future work. The method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`, or every operation supported by forward batching.

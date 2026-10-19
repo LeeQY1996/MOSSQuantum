@@ -91,10 +91,10 @@ function _cpu_supports(operation::QuantumMap, ::Type{S}, action::Symbol) where S
 end
 
 _cpu_supports(operation::QMeasure, ::Type{S}, action::Symbol) where S =
-    action === :apply && S <: Union{StateVector,DensityMatrix} && operation.keep
+    action === :apply && S <: _DenseCPUState && operation.keep
 
 _cpu_supports(::QSelect, ::Type{S}, action::Symbol) where S =
-    action === :apply && S <: StateVector
+    action === :apply && S <: Union{StateVector,BatchStateVector}
 
 _cpu_supports(::Union{QubitsTerm,QubitsOperator}, ::Type{S}, action::Symbol) where S =
     action === :expectation && S <: _DenseCPUState

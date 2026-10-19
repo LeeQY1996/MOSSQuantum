@@ -85,7 +85,7 @@ function _qubit_encoding_adjoint(::Type{T}, mpsstr::Vector{<:Real}) where {T<:Nu
     y = qubit_encoding(T, mpsstr)
     return y, Δ -> begin
         circuit = QCircuit([RyGate(i, theta*pi, isparas=true) for (i, theta) in enumerate(mpsstr)])
-        Δ, grads, y = back_propagate(copy(StateVector(Δ)), circuit, copy(y))
+        Δ, grads, _ = back_propagate(copy(StateVector(Δ)), circuit, copy(y))
         return nothing, grads .* pi
     end
 end

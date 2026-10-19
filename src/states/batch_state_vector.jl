@@ -8,6 +8,10 @@ reuse compatible storage by default. The batch-to-batch constructor retains its
 historical `copy=true` default. Explicit `copy=true` guarantees independent
 storage; `copy=false` permits reuse but conversions can still allocate.
 `storage(batch)` exposes the mutable backing matrix.
+
+Columns are independent samples of the same qubit count. A one-column batch
+remains a batch; constructors never squeeze it into a `StateVector`. Empty
+batches and zero-qubit states are allowed when their dimensions are explicit.
 """
 struct BatchStateVector{T <: Number} <: AbstractQuantumState
     data::Matrix{T}
@@ -15,11 +19,19 @@ struct BatchStateVector{T <: Number} <: AbstractQuantumState
     batch_size::Int
 
     function BatchStateVector{T}(data::AbstractMatrix{<:Number}, nqubits::Int, batch_size::Int; copy::Bool=false) where {T <: Number}
-        @assert size(data, 1) == 2^nqubits
-        @assert size(data, 2) == batch_size
+        dimension = _batch_dimension(nqubits)
+        batch_size >= 0 || throw(ArgumentError("batch size must be nonnegative"))
+        size(data) == (dimension, batch_size) ||
+            throw(DimensionMismatch("expected a ($dimension, $batch_size) batch matrix, received $(size(data))"))
         converted = convert(Matrix{T}, data)
         new{T}(copy ? Base.copy(converted) : converted, nqubits, batch_size)
     end
+end
+
+function _batch_dimension(n::Int)
+    0 <= n < 8sizeof(Int) - 1 ||
+        throw(ArgumentError("qubit count must be nonnegative and its state dimension must fit Int"))
+    return 1 << n
 end
 
 # Outer constructors
@@ -32,8 +44,15 @@ BatchStateVector(data::AbstractMatrix{T}, nqubits::Int; copy::Bool=false) where 
 BatchStateVector(data::AbstractMatrix{T}; copy::Bool=false) where {T <: Number} =
     BatchStateVector{T}(data, _nqubits(data), size(data, 2); copy=copy)
 
+BatchStateVector{T}(data::AbstractMatrix{<:Number}, nqubits::Int; copy::Bool=false) where {T <: Number} =
+    BatchStateVector{T}(data, nqubits, size(data, 2); copy=copy)
+BatchStateVector{T}(data::AbstractMatrix{<:Number}; copy::Bool=false) where {T <: Number} =
+    BatchStateVector{T}(data, _nqubits(data), size(data, 2); copy=copy)
+
 function BatchStateVector{T}(nqubits::Int, batch_size::Int) where {T <: Number}
-    data = zeros(T, 2^nqubits, batch_size)
+    dimension = _batch_dimension(nqubits)
+    batch_size >= 0 || throw(ArgumentError("batch size must be nonnegative"))
+    data = zeros(T, dimension, batch_size)
     data[1, :] .= one(T)
     return BatchStateVector{T}(data, nqubits, batch_size)
 end
@@ -75,20 +94,21 @@ materialized for the current `StateVector` representation, including when
 `copy=false`; that option permits reuse but does not guarantee it.
 """
 function StateVector(batch::BatchStateVector, i::Int; copy::Bool=true)
-    @assert 1 <= i <= batch_size(batch)
+    1 <= i <= batch_size(batch) || throw(BoundsError(batch, (:, i)))
     data = reshape(view(storage(batch), :, i), :)
     return StateVector(data, nqubits(batch))
 end
 
 # Convert a vector of StateVectors to BatchStateVector
 function BatchStateVector(vec::AbstractVector{<:StateVector}; copy::Bool=false)
-    isempty(vec) && error("Vector of StateVectors is empty")
+    isempty(vec) && throw(ArgumentError("an empty state list needs explicit qubit and scalar dimensions"))
     nq = nqubits(vec[1])
     bs = length(vec)
     for sv in vec
-        @assert nqubits(sv) == nq "All StateVectors must have same number of qubits"
+        nqubits(sv) == nq || throw(DimensionMismatch("all samples must have the same qubit count"))
     end
-    data = Matrix{eltype(vec[1])}(undef, 2^nq, bs)
+    T = foldl(promote_type, (eltype(sv) for sv in vec))
+    data = Matrix{T}(undef, 2^nq, bs)
     for i in 1:bs
         data[:, i] = storage(vec[i])
     end
@@ -97,9 +117,9 @@ end
 
 # Helper function to compute nqubits from matrix rows
 function _nqubits(m::AbstractMatrix)
-    n = round(Int, log2(size(m, 1)))
-    (2^n == size(m, 1)) || error("Number of rows is not a power of 2")
-    return n
+    dimension = size(m, 1)
+    ispow2(dimension) || throw(ArgumentError("the batch row count must be a positive power of two"))
+    return trailing_zeros(dimension)
 end
 
 # Comparison
@@ -111,10 +131,10 @@ Base.:(==)(x::BatchStateVector, y::BatchStateVector) =
 
 # Basic arithmetic operations
 Base.:+(x::BatchStateVector, y::BatchStateVector) =
-    BatchStateVector(storage(x) + storage(y), nqubits(x), batch_size(x))
+    (_check_batch_pair(x, y); BatchStateVector(storage(x) + storage(y), nqubits(x), batch_size(x)))
 
 Base.:-(x::BatchStateVector, y::BatchStateVector) =
-    BatchStateVector(storage(x) - storage(y), nqubits(x), batch_size(x))
+    (_check_batch_pair(x, y); BatchStateVector(storage(x) - storage(y), nqubits(x), batch_size(x)))
 
 Base.:*(x::BatchStateVector, y::Number) =
     BatchStateVector(storage(x) * y, nqubits(x), batch_size(x))
@@ -125,16 +145,29 @@ Base.:/(x::BatchStateVector, y::Number) =
     BatchStateVector(storage(x) / y, nqubits(x), batch_size(x))
 
 # Matrix multiplication (applies same matrix to each state in batch)
-Base.:*(m::AbstractMatrix, x::BatchStateVector) =
-    BatchStateVector(m * storage(x), nqubits(x), batch_size(x))
+function Base.:*(m::AbstractMatrix, x::BatchStateVector)
+    dimension = size(storage(x), 1)
+    size(m) == (dimension, dimension) ||
+        throw(DimensionMismatch("operator dimensions must match the batch register"))
+    return BatchStateVector(m * storage(x), nqubits(x), batch_size(x))
+end
+
+function _check_batch_pair(x::BatchStateVector, y::BatchStateVector)
+    size(storage(x)) == size(storage(y)) ||
+        throw(DimensionMismatch("batch registers and sample counts must match"))
+    return nothing
+end
 
 # Linear algebra operations
 LinearAlgebra.norm(x::BatchStateVector) = [norm(view(storage(x), :, i)) for i in 1:batch_size(x)]
 
 function LinearAlgebra.normalize!(x::BatchStateVector)
+    norms = norm(x)
+    all(value -> isfinite(value) && value > 0, norms) ||
+        throw(ArgumentError("every sample must have finite, nonzero norm"))
     for i in 1:batch_size(x)
         col = view(storage(x), :, i)
-        normalize!(col)
+        col ./= norms[i]
     end
     return x
 end
@@ -143,25 +176,27 @@ LinearAlgebra.normalize(x::BatchStateVector) = normalize!(copy(x))
 
 # Dot product between two batches (element-wise)
 function LinearAlgebra.dot(x::BatchStateVector, y::BatchStateVector)
-    @assert batch_size(x) == batch_size(y) "Batch sizes must match"
+    _check_batch_pair(x, y)
     return [dot(view(storage(x), :, i), view(storage(y), :, i)) for i in 1:batch_size(x)]
 end
 
 # Dot product with weight vector m (element-wise)
 function LinearAlgebra.dot(x::BatchStateVector, m::AbstractVector, y::BatchStateVector)
-    @assert batch_size(x) == batch_size(y) == length(m) "Dimensions must match"
+    _check_batch_pair(x, y)
+    length(m) == batch_size(x) || throw(DimensionMismatch("one weight is required per sample"))
+    Base.require_one_based_indexing(m)
     return [dot(view(storage(x), :, i), m[i], view(storage(y), :, i)) for i in 1:batch_size(x)]
 end
 
 # Fidelity for each pair
 function fidelity(x::BatchStateVector, y::BatchStateVector)
-    @assert batch_size(x) == batch_size(y) "Batch sizes must match"
+    _check_batch_pair(x, y)
     return abs2.(dot(x, y))
 end
 
 # Distance functions for batch
 function distance2(x::BatchStateVector, y::BatchStateVector)
-    @assert batch_size(x) == batch_size(y) "Batch sizes must match"
+    _check_batch_pair(x, y)
     dots_xx = dot(x, x)
     dots_yy = dot(y, y)
     dots_xy = dot(x, y)
@@ -189,13 +224,14 @@ Create a batch of computational basis states specified by `indices`.
 Each element of `indices` is a binary vector representing the basis state.
 """
 function batch_onehot_encoding(::Type{T}, indices::Vector{Vector{Int}}) where {T <: Number}
-    isempty(indices) && error("indices is empty")
+    isempty(indices) && throw(ArgumentError("an empty basis list needs explicit qubit and batch dimensions"))
     n = length(indices[1])
     bs = length(indices)
+    all(bits -> length(bits) == n, indices) || throw(DimensionMismatch("all basis samples must have the same qubit count"))
+    all(_is_valid_indices, indices) || throw(ArgumentError("basis entries must be zero or one"))
     data = zeros(T, 2^n, bs)
     for (i, idx) in enumerate(indices)
-        @assert length(idx) == n "All indices must have same length"
-        pos = _sub2ind(idx) + 1
+        pos = isempty(idx) ? 1 : _sub2ind(idx) + 1
         data[pos, i] = one(T)
     end
     return BatchStateVector(data, n, bs)
@@ -204,13 +240,16 @@ end
 batch_onehot_encoding(indices::Vector{Vector{Int}}) = batch_onehot_encoding(ComplexF64, indices)
 
 """
-    batch_qubit_encoding(::Type{T}, inputs::Matrix{<:Real}) where {T <: Number}
+    batch_qubit_encoding(::Type{T}, inputs::AbstractMatrix{<:Real}) where {T <: Number}
 Create a batch of product states using qubit encoding.
 Each column of `inputs` is a vector of parameters for one state.
 """
-function batch_qubit_encoding(::Type{T}, inputs::Matrix{<:Real}) where {T <: Number}
+function batch_qubit_encoding(::Type{T}, inputs::AbstractMatrix{<:Real}) where {T <: Number}
+    Base.require_one_based_indexing(inputs)
+    all(isfinite, inputs) || throw(ArgumentError("encoding parameters must be finite"))
     n, bs = size(inputs)
     batch = BatchStateVector(T, n, bs)
+    n == 0 && return batch
     for i in 1:bs
         sv = qubit_encoding(T, inputs[:, i])
         batch.data[:, i] = storage(sv)
@@ -218,18 +257,20 @@ function batch_qubit_encoding(::Type{T}, inputs::Matrix{<:Real}) where {T <: Num
     return batch
 end
 
-batch_qubit_encoding(inputs::Matrix{<:Real}) = batch_qubit_encoding(ComplexF64, inputs)
+batch_qubit_encoding(inputs::AbstractMatrix{<:Real}) = batch_qubit_encoding(ComplexF64, inputs)
 
 """
-    batch_amplitude_encoding(::Type{T}, inputs::Matrix{<:Number}; nqubits::Int=ceil(Int, log2(size(inputs,1)))) where {T<:Number}
+    batch_amplitude_encoding(::Type{T}, inputs::AbstractMatrix{<:Number}; nqubits::Int) where {T<:Number}
 Create a batch of amplitude encoded states.
 Each column of `inputs` is a vector to encode as a quantum state.
+The default qubit count is the smallest register that holds all input rows.
 """
-function batch_amplitude_encoding(::Type{T}, inputs::Matrix{<:Number}; nqubits::Int=ceil(Int, log2(size(inputs,1)))) where {T<:Number}
+function batch_amplitude_encoding(::Type{T}, inputs::AbstractMatrix{<:Number}; nqubits::Int=_batch_amplitude_qubits(inputs)) where {T<:Number}
     d, bs = size(inputs)
-    nqubits >= 0 || throw(ArgumentError("number of qubits must be nonnegative"))
-    d <= 2^nqubits || throw(DimensionMismatch("input has more amplitudes than the target Hilbert space"))
-    data = zeros(T, 2^nqubits, bs)
+    dimension = _batch_dimension(nqubits)
+    Base.require_one_based_indexing(inputs)
+    0 < d <= dimension || throw(DimensionMismatch("amplitude rows must fit the target Hilbert space"))
+    data = zeros(T, dimension, bs)
     for i in 1:bs
         v = view(inputs, :, i)
         vn = norm(v)
@@ -244,7 +285,13 @@ function batch_amplitude_encoding(::Type{T}, inputs::Matrix{<:Number}; nqubits::
     return BatchStateVector(data, nqubits, bs)
 end
 
-batch_amplitude_encoding(inputs::Matrix{<:Number}; kwargs...) =
+function _batch_amplitude_qubits(inputs::AbstractMatrix)
+    rows = size(inputs, 1)
+    rows > 0 || throw(ArgumentError("amplitude input must have at least one row"))
+    return rows == 1 ? 0 : ndigits(rows - 1; base=2)
+end
+
+batch_amplitude_encoding(inputs::AbstractMatrix{<:Number}; kwargs...) =
     batch_amplitude_encoding(ComplexF64, inputs; kwargs...)
 
 # Reset functions
@@ -256,21 +303,25 @@ function reset!(x::BatchStateVector)
 end
 
 function reset_onehot!(x::BatchStateVector, indices::Vector{Vector{Int}})
-    @assert nqubits(x) == length(indices[1])
-    @assert batch_size(x) == length(indices)
+    batch_size(x) == length(indices) || throw(DimensionMismatch("one basis input is required per sample"))
+    all(bits -> length(bits) == nqubits(x), indices) || throw(DimensionMismatch("basis inputs must match the register"))
+    all(_is_valid_indices, indices) || throw(ArgumentError("basis entries must be zero or one"))
     fill!(storage(x), zero(eltype(x)))
     for (i, idx) in enumerate(indices)
-        pos = _sub2ind(idx) + 1
+        pos = isempty(idx) ? 1 : _sub2ind(idx) + 1
         storage(x)[pos, i] = one(eltype(x))
     end
     return x
 end
 
-function reset_qubit!(x::BatchStateVector, inputs::Matrix{<:Real})
-    @assert nqubits(x) == size(inputs, 1)
-    @assert batch_size(x) == size(inputs, 2)
+function reset_qubit!(x::BatchStateVector, inputs::AbstractMatrix{<:Real})
+    size(inputs) == (nqubits(x), batch_size(x)) || throw(DimensionMismatch("encoding shape must match the batch"))
+    Base.require_one_based_indexing(inputs)
+    all(isfinite, inputs) || throw(ArgumentError("encoding parameters must be finite"))
+    nqubits(x) == 0 && (storage(x) .= one(eltype(x)); return x)
+    angles = Base.mightalias(inputs, storage(x)) ? copy(inputs) : inputs
     for i in 1:batch_size(x)
-        sv = qubit_encoding(eltype(x), inputs[:, i])
+        sv = qubit_encoding(eltype(x), angles[:, i])
         x.data[:, i] = storage(sv)
     end
     return x
@@ -279,9 +330,11 @@ end
 # Amplitude access
 
 function amplitude(batch::BatchStateVector, idx::AbstractVector{Int}, i::Int; scaling::Real=√2)
-    @assert 1 <= i <= batch_size(batch)
-    sv = StateVector(batch, i)
-    return amplitude(sv, idx; scaling=scaling)
+    1 <= i <= batch_size(batch) || throw(BoundsError(batch, (:, i)))
+    length(idx) == nqubits(batch) || throw(DimensionMismatch("basis input must match the register"))
+    _is_valid_indices(idx) || throw(ArgumentError("basis entries must be zero or one"))
+    position = isempty(idx) ? 1 : _sub2ind(idx) + 1
+    return scaling^nqubits(batch) * storage(batch)[position, i]
 end
 
 amplitudes(batch::BatchStateVector) = storage(batch)
@@ -289,13 +342,10 @@ amplitudes(batch::BatchStateVector) = storage(batch)
 # Random batch generation
 
 function rand_batch(rng::Random.AbstractRNG, ::Type{T}, n::Int, batch_size::Int) where {T <: Number}
-    (n >= 1) || error("number of qubits must be positive.")
-    data = randn(rng, T, 2^n, batch_size)
-    for i in 1:batch_size
-        col = view(data, :, i)
-        col ./= norm(col)
-    end
-    return BatchStateVector(data, n, batch_size)
+    dimension = _batch_dimension(n)
+    batch_size >= 0 || throw(ArgumentError("batch size must be nonnegative"))
+    data = randn(rng, T, dimension, batch_size)
+    return normalize!(BatchStateVector(data, n, batch_size))
 end
 
 rand_batch(::Type{T}, n::Int, batch_size::Int) where {T<:Number} = rand_batch(Random.default_rng(), T, n, batch_size)
@@ -305,6 +355,8 @@ rand_batch(n::Int, batch_size::Int) = rand_batch(ComplexF64, n, batch_size)
 # Permutation (reuses existing permute function from QuantumCircuits)
 function QuantumCircuits.permute(x::BatchStateVector, newindex::Vector{Int})
     n = nqubits(x)
+    sort(newindex) == collect(1:n) ||
+        throw(ArgumentError("qubit order must be a permutation of 1:$n"))
     L = 2^n
     bs = batch_size(x)
     data = storage(x)
@@ -320,17 +372,17 @@ end
 # Aliases for consistency with StateVector API
 
 """
-    batch_qstate(::Type{T}, inputs::Matrix{<:Real}) where {T <: Number}
+    batch_qstate(::Type{T}, inputs::AbstractMatrix{<:Real}) where {T <: Number}
 Alias for `batch_qubit_encoding`. Create a batch of product states using qubit encoding.
 Each column of `inputs` is a vector of parameters for one state.
 """
-batch_qstate(::Type{T}, inputs::Matrix{<:Real}) where {T <: Number} = batch_qubit_encoding(T, inputs)
+batch_qstate(::Type{T}, inputs::AbstractMatrix{<:Real}) where {T <: Number} = batch_qubit_encoding(T, inputs)
 
 """
-    batch_qstate(inputs::Matrix{<:Real})
+    batch_qstate(inputs::AbstractMatrix{<:Real})
 Alias for `batch_qubit_encoding`. Create a batch of product states using qubit encoding.
 """
-batch_qstate(inputs::Matrix{<:Real}) = batch_qubit_encoding(inputs)
+batch_qstate(inputs::AbstractMatrix{<:Real}) = batch_qubit_encoding(inputs)
 
 """
     batch_qstate(::Type{T}, n::Int, batch_size::Int) where {T <: Number}

@@ -54,6 +54,105 @@ The measured qubit is removed; the remaining qubits retain their relative order.
 """
 measure(qstate::StateVector, pos::Int; rng::Random.AbstractRNG=Random.default_rng()) = apply(QMeasure(pos), qstate; rng=rng)
 
+"""
+    measure!(batch::BatchStateVector, position; auto_reset=true, rng=Random.default_rng())
+
+Measure each batch column independently, preserving the register size. Return
+`(outcomes, probabilities)` in column order. Each column is collapsed and,
+when `auto_reset=true`, its measured qubit is reset to zero. An empty batch
+returns empty vectors; `position` must still name an existing qubit.
+"""
+measure!(batch::BatchStateVector, position::Int; auto_reset::Bool=true,
+         rng::Random.AbstractRNG=Random.default_rng()) =
+    apply!(QMeasure(position; auto_reset=auto_reset), batch; rng=rng)
+
+function apply!(instruction::QMeasure, batch::BatchStateVector;
+                rng::Random.AbstractRNG=Random.default_rng())
+    instruction.keep || throw(ArgumentError("in-place measurement must keep the measured qubit"))
+    distributions = _batch_measurement_probabilities(batch, instruction.position)
+    outcomes = Vector{Int}(undef, batch_size(batch))
+    probabilities = Vector{Float64}(undef, batch_size(batch))
+    for column in 1:batch_size(batch)
+        selected = discrete_sample(rng, view(distributions, :, column))
+        outcomes[column] = selected - 1
+        probabilities[column] = distributions[selected, column]
+        _collapse_batch_column!(batch, column, instruction.position, selected - 1,
+                                probabilities[column], instruction.auto_reset)
+    end
+    return outcomes, probabilities
+end
+
+"""
+    measure(batch::BatchStateVector, position; rng=Random.default_rng())
+
+Measure each column independently and remove the measured qubit. Return
+`(collapsed_batch, outcomes, probabilities)` without modifying the input. The
+remaining qubits retain their relative order, including for the last qubit.
+"""
+measure(batch::BatchStateVector, position::Int; rng::Random.AbstractRNG=Random.default_rng()) =
+    apply(QMeasure(position), batch; rng=rng)
+
+function apply(instruction::QMeasure, batch::BatchStateVector;
+               rng::Random.AbstractRNG=Random.default_rng())
+    distributions = _batch_measurement_probabilities(batch, instruction.position)
+    outcomes = Vector{Int}(undef, batch_size(batch))
+    probabilities = Vector{Float64}(undef, batch_size(batch))
+    dimension = 2^(nqubits(batch) - 1)
+    data = Matrix{eltype(batch)}(undef, dimension, batch_size(batch))
+    for column in 1:batch_size(batch)
+        selected = discrete_sample(rng, view(distributions, :, column))
+        outcomes[column] = selected - 1
+        probabilities[column] = distributions[selected, column]
+        data[:, column] .= vec(_batch_qubit_slice(batch, instruction.position, selected - 1, column)) ./
+                           sqrt(probabilities[column])
+    end
+    return BatchStateVector(data, nqubits(batch) - 1, batch_size(batch)), outcomes, probabilities
+end
+
+# Validate every column before mutating or consuming randomness. Unlike a dense
+# density matrix, columns of this matrix are separate pure states.
+function _batch_measurement_probabilities(batch::BatchStateVector, position::Int)
+    _check_measurement_position(position, nqubits(batch))
+    values = zeros(Float64, 2, batch_size(batch))
+    bit = 1 << (position - 1)
+    for column in 1:batch_size(batch), basis in axes(storage(batch), 1)
+        outcome = ((basis - 1) & bit) == 0 ? 1 : 2
+        values[outcome, column] += abs2(storage(batch)[basis, column])
+    end
+    for column in 1:batch_size(batch)
+        _normalize_probabilities!(view(values, :, column), _probability_tolerance(eltype(batch)))
+    end
+    return values
+end
+
+function _batch_qubit_slice(batch::BatchStateVector, position::Int, outcome::Int, column::Int)
+    tensor = reshape(view(storage(batch), :, column), 2^(position - 1), 2,
+                     2^(nqubits(batch) - position))
+    return view(tensor, :, outcome + 1, :)
+end
+
+function _collapse_batch_column!(batch::BatchStateVector, column::Int, position::Int,
+                                 outcome::Int, probability::Real, auto_reset::Bool)
+    data = storage(batch)
+    stride = 1 << (position - 1)
+    scale = inv(sqrt(probability))
+    for block in 0:(2stride):(size(data, 1) - 1), offset in 1:stride
+        zero_index = block + offset
+        one_index = zero_index + stride
+        if outcome == 0
+            data[zero_index, column] *= scale
+            data[one_index, column] = zero(eltype(batch))
+        elseif auto_reset
+            data[zero_index, column] = data[one_index, column] * scale
+            data[one_index, column] = zero(eltype(batch))
+        else
+            data[zero_index, column] = zero(eltype(batch))
+            data[one_index, column] *= scale
+        end
+    end
+    return batch
+end
+
 function compute_probability_zero(v::AbstractVector, key::Int)
 	L = length(v)
 	pos = 2^(key-1)

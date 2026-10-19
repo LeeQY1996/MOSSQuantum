@@ -17,6 +17,12 @@ if scenario == "core"
     circuit = QCircuit()
     push!(circuit, HGate(1))
     @test norm(circuit * qstate(1)) ≈ 1
+    batch = BatchStateVector(1, 2)
+    @test norm(circuit * batch) ≈ ones(2)
+    objective = BatchExpectationObjective(
+        QCircuit([RyGate(1, 0.0; isparas=true)]), QubitsTerm(1 => "Z"), batch)
+    @test evaluate(objective, [0.37]) ≈ cos(0.37)
+    @test value_and_gradient(AdjointGradient(), objective, [0.37])[2] ≈ [-sin(0.37)]
     @test_throws ArgumentError MOSS.QuantumCircuits.plot(circuit)
 elseif scenario in ("chainrules_first", "moss_first_chainrules")
     if scenario == "chainrules_first"
@@ -34,6 +40,12 @@ elseif scenario in ("chainrules_first", "moss_first_chainrules")
         AdjointGradient(), objective, [theta])
     @test value ≈ cos(theta)
     @test pullback(1.0)[4] ≈ [-sin(theta)]
+    batch_objective = BatchExpectationObjective(circuit, QubitsTerm(1 => "Z"),
+        BatchStateVector(1, 2); reduction=:sum)
+    batch_value, batch_pullback = ChainRulesCore.rrule(differentiable_value,
+        AdjointGradient(), batch_objective, [theta])
+    @test batch_value ≈ 2cos(theta)
+    @test batch_pullback(1.0)[4] ≈ [-2sin(theta)]
     @test Base.get_extension(MOSS, :MOSSChainRulesCoreExt) !== nothing
     @test Base.get_extension(MOSS, :MOSSZygoteExt) === nothing
     loaded = Set(package.name for package in keys(Base.loaded_modules))
@@ -57,6 +69,12 @@ elseif scenario in ("zygote_first", "moss_first_zygote")
     objective = ExpectationObjective(circuit, observable, initial)
     parameter_loss(values) = differentiable_value(AdjointGradient(), objective, values)
     @test Zygote.gradient(parameter_loss, [theta])[1] ≈ [-sin(theta)]
+    batch = BatchStateVector(1, 2)
+    batch_loss(c) = real(sum(expectation(observable, c * batch)))
+    @test Zygote.gradient(batch_loss, circuit)[1] ≈ [-2sin(theta)]
+    batch_objective = BatchExpectationObjective(circuit, observable, batch)
+    batch_parameter_loss(values) = differentiable_value(AdjointGradient(), batch_objective, values)
+    @test Zygote.gradient(batch_parameter_loss, [theta])[1] ≈ [-sin(theta)]
     @test Base.get_extension(MOSS, :MOSSChainRulesCoreExt) !== nothing
 elseif scenario in ("plots_first", "moss_first_plots", "latex_then_moss_then_plots")
     if scenario == "plots_first"

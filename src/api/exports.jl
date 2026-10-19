@@ -58,7 +58,9 @@ export partial_tr
 export AbstractInstruction, validate_positions, AbstractQuantumState
 export AbstractBackend, CPUBackend, backend, supports, UnsupportedOperation
 export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
+export BatchSimulationResult
 export bind_parameters, copy_instruction
 export ParameterMap, parameter_indices, accumulate_parameter_gradients
 export AbstractGradientMethod, AdjointGradient, UnsupportedGradient, ExpectationObjective
+export BatchExpectationObjective, evaluate_batch
 export evaluate, supports_gradient, value_and_gradient, value_and_pullback, differentiable_value

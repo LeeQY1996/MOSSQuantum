@@ -8,10 +8,10 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).
 - **State simulation**: Dense state vectors, density matrices, and batch state vectors with serial/threaded gate application.
-- **Differentiation**: Optional Zygote integration for supported circuit, state, expectation, and post-selection derivatives. Stochastic execution and complete batch gradients are outside this contract.
+- **Differentiation**: Replaceable explicit gradient methods and optional Zygote integration, including shared-parameter pure-state batches with unitary circuits, supported expectations, and qubit encoding. Stochastic execution has no AD contract.
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
-- **Readout and results**: Probabilities, seeded samples/counts, batch readout, and single-trajectory results retaining intermediate measurement records.
+- **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
 - **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
@@ -64,7 +64,7 @@ measured = simulate(QCircuit([bell, QMeasure(1; auto_reset=false)]),
 measured.measurements # outcome and probability, including nested circuits
 ```
 
-`simulate` describes one trajectory and copies its input state. Sampling its final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
+`simulate` copies its input state. A single-state result describes one trajectory; a batch result contains one trajectory and record list per column. Sampling the final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
 
 ### Independent parameter binding
 
@@ -136,6 +136,38 @@ gradient = Zygote.gradient(loss, values)[1]
 ```
 
 External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Additional numerical gradient algorithms are separate future work; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines the current contracts.
+
+### Pure-state batches
+
+`StateVector` represents one pure state. The existing `BatchStateVector` represents
+independent pure states in a `(2^n, B)` matrix, one sample per column. Both use
+`apply!`, circuit multiplication, `expectation`, readout, and `simulate`; a batch
+of size one retains its batch shape and result type.
+
+```julia
+using MOSS, Random
+
+batch = BatchStateVector(2, 4)
+batch_template = QCircuit([RyGate(1, 0.0; isparas=true), CNOTGate(1, 2)])
+batch_objective = BatchExpectationObjective(batch_template, QubitsTerm(2 => "Z"), batch;
+    reduction=:mean)
+sample_values = evaluate_batch(batch_objective, [0.2]) # 4 real expectations
+value, gradient = value_and_gradient(AdjointGradient(), batch_objective, [0.2])
+
+batch_result = simulate(QCircuit([HGate(1), QMeasure(1; auto_reset=false)]), batch;
+    rng=MersenneTwister(42))
+batch_result.measurements[1] # records for the first sample
+```
+
+All samples share the circuit, parameter vector, and observable. Scalar batch
+objectives support `:mean`, `:sum`, and `:weighted_sum`; weights are explicit and
+are not normalized. Forward execution stays independent of the gradient method,
+and the optional `differentiable_value` adapter works with the selected method.
+CPU batch gradients currently cover deterministic unitary circuits with supported
+Hermitian observables. Measurement and post-selection are forward capabilities;
+batch noise and batch density matrices are not implemented. See the
+[batch guide](docs/batching.md) for shapes, measurement semantics, supported
+encoding derivatives, and gradient boundaries.
 
 ### State and circuit ownership
 
@@ -249,6 +281,7 @@ ChainRulesCore is an optional rule dependency for the explicit-method scalar int
 
 - [Architecture and package boundaries](docs/architecture.md)
 - [Numerical and API conventions](docs/conventions.md), including squared Uhlmann fidelity, two-sided density evolution, qubit order, RNGs, and ownership
+- [Pure-state batches and gradient boundaries](docs/batching.md)
 - [Extension guide](docs/extending.md)
 - [Core foundation roadmap](docs/roadmap.md)
 - [Benchmark setup and workloads](benchmark/README.md)
@@ -262,7 +295,7 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 
 Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, and `expectation(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage.
 
-The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic pure-state and density-matrix circuits; arbitrary instructions, custom backends, stochastic execution, and complete batch gradients need their own derivative support.
+The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single-state circuits and unitary pure-state batches. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
 
 Retain the return value of `apply!`: execution can promote numeric storage or convert a state vector to a density matrix when applying noise. See the conventions for qubit ordering, parameter activation, and storage ownership.
 

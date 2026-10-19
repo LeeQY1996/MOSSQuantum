@@ -1,5 +1,12 @@
 function apply!(x::Gate, batch::BatchStateVector)
-    @assert _check_pos_range(x, nqubits(batch))
+    supports(CPUBackend(), x, batch) || throw(UnsupportedOperation(CPUBackend(), x, batch, :apply))
+    validate_positions(x, nqubits(batch))
+    register = Tuple(positions(x))
+    length(register) == nqubits(x) && length(unique(register)) == length(register) ||
+        throw(ArgumentError("gate positions must be distinct and match its qubit count"))
+    dimension = 2^nqubits(x)
+    size(mat(x)) == (dimension, dimension) ||
+        throw(DimensionMismatch("gate matrix dimensions must match its qubit count"))
     T = eltype(batch)
     if (eltype(x) <: Complex) && (T <: Real)
         batch = convert(BatchStateVector{Complex{T}}, batch)
@@ -8,9 +15,24 @@ function apply!(x::Gate, batch::BatchStateVector)
     return batch
 end
 
-function apply!(circuit::QCircuit, batch::BatchStateVector)
-    for gate in circuit
-        batch = apply!(gate, batch)
+function apply!(circuit::QCircuit, batch::BatchStateVector;
+                rng::Random.AbstractRNG=Random.default_rng())
+    chosen_backend = backend(batch)
+    supports(chosen_backend, circuit, batch) ||
+        throw(UnsupportedOperation(chosen_backend, circuit, batch, :apply))
+    validate_positions(circuit, nqubits(batch))
+    for instruction in circuit
+        if instruction isa QMeasure
+            apply!(instruction, batch; rng=rng)
+        elseif instruction isa QSelect
+            apply!(instruction, batch)
+        elseif instruction isa QCircuit
+            batch = apply!(instruction, batch; rng=rng)
+        else
+            batch = apply!(instruction, batch)
+            batch isa AbstractQuantumState ||
+                throw(ArgumentError("apply! for $(typeof(instruction)) must return an AbstractQuantumState"))
+        end
     end
     return batch
 end

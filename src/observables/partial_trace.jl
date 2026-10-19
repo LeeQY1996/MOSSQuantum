@@ -1,5 +1,23 @@
 # partial trace
 
+"""
+    partial_tr(batch::BatchStateVector, sites::Vector{Int})
+
+Trace out `sites` independently for each pure-state sample. Return a vector of
+ordinary `DensityMatrix` results, or the vector of squared norms when all qubits
+of a nonzero register are traced out. This does not combine samples or introduce
+a batch density-matrix representation. Empty `sites` follows the single-state
+conversion convention. Results own independent storage.
+"""
+function partial_tr(batch::BatchStateVector, sites::Vector{Int})
+    check_partial_tr_inputs(sites, nqubits(batch))
+    if !isempty(sites) && length(sites) == nqubits(batch)
+        return real.(dot(batch, batch))
+    end
+    return DensityMatrix[partial_tr(StateVector(batch, column), sites)
+                         for column in 1:batch_size(batch)]
+end
+
 
 function partial_tr(state::DensityMatrix, sites::Vector{Int})
 	isempty(sites) && return state

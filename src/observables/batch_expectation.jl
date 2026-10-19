@@ -1,6 +1,41 @@
 # Main expectation functions for BatchStateVector
 
+function _check_batch_observable(observable, batch::BatchStateVector)
+    validate_positions(observable, nqubits(batch))
+    if observable isa Union{Gate,QubitsTerm}
+        register = Tuple(positions(observable))
+        length(unique(register)) == length(register) ||
+            throw(ArgumentError("observable positions must be distinct"))
+    end
+    if observable isa Gate
+        1 <= nqubits(observable) <= 5 ||
+            throw(UnsupportedOperation(CPUBackend(), observable, batch, :expectation))
+        dimension = 2^nqubits(observable)
+        size(mat(observable)) == (dimension, dimension) ||
+            throw(DimensionMismatch("gate observable dimensions must match its register"))
+    elseif observable isa QubitsTerm
+        all(matrix -> size(matrix) == (2, 2), oplist(observable)) ||
+            throw(DimensionMismatch("observable factors must be single-qubit matrices"))
+    elseif observable isa QubitsOperator
+        for (register, terms) in observable.data, (operators, _) in terms
+            length(unique(register)) == length(register) ||
+                throw(ArgumentError("observable positions must be distinct"))
+            length(operators) == length(register) && all(matrix -> size(matrix) == (2, 2), operators) ||
+                throw(DimensionMismatch("observable factors must match their registers"))
+        end
+    end
+    return nothing
+end
+
+function _check_batch_observable(observable::AbstractMatrix, batch::BatchStateVector)
+    dimension = size(storage(batch), 1)
+    size(observable) == (dimension, dimension) ||
+        throw(DimensionMismatch("observable dimensions must match the batch register"))
+    return nothing
+end
+
 function expectation(m::QubitsTerm, batch::BatchStateVector)
+    _check_batch_observable(m, batch)
     isempty(m) && return coeff(m) .* dot(batch, batch)
 
     pos = positions(m)
@@ -22,6 +57,7 @@ function expectation(m::QubitsTerm, batch::BatchStateVector)
 end
 
 function expectation(m::QubitsOperator, batch::BatchStateVector)
+    _check_batch_observable(m, batch)
     if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS_BATCH
         bs = batch_size(batch)
         results = zeros(promote_type(eltype(batch), eltype(m)), bs)
@@ -44,12 +80,14 @@ function expectation(m::QubitsOperator, batch::BatchStateVector)
 end
 
 function expectation(m::Gate, batch::BatchStateVector)
+    _check_batch_observable(m, batch)
     pos = ordered_positions(m)
     mat = ordered_mat(m)
     return expectation_value(pos, mat, batch)
 end
 
 function expectation(m::AbstractMatrix, batch::BatchStateVector)
+    _check_batch_observable(m, batch)
     bs = batch_size(batch)
     results = Vector{promote_type(eltype(batch), eltype(m))}(undef, bs)
     data = storage(batch)
@@ -62,7 +100,8 @@ end
 
 # Two-state batch expectation
 function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchStateVector)
-    @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
+    _check_batch_pair(state_c, state)
+    _check_batch_observable(m, state)
     isempty(m) && return coeff(m) .* dot(state_c, state)
 
     pos = positions(m)
@@ -84,7 +123,8 @@ function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchState
 end
 
 function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchStateVector)
-    @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
+    _check_batch_pair(state_c, state)
+    _check_batch_observable(m, state)
 
     if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS_BATCH
         bs = batch_size(state)
@@ -108,14 +148,16 @@ function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchS
 end
 
 function expectation(state_c::BatchStateVector, m::Gate, state::BatchStateVector)
-    @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
+    _check_batch_pair(state_c, state)
+    _check_batch_observable(m, state)
     pos = ordered_positions(m)
     mat = ordered_mat(m)
     return expectation_value(pos, mat, state, state_c)
 end
 
 function expectation(state_c::BatchStateVector, m::AbstractMatrix, state::BatchStateVector)
-    @assert batch_size(state_c) == batch_size(state) "Batch sizes must match"
+    _check_batch_pair(state_c, state)
+    _check_batch_observable(m, state)
     bs = batch_size(state)
     results = Vector{promote_type(eltype(state), eltype(state_c), eltype(m))}(undef, bs)
     data_c = storage(state_c)

@@ -83,6 +83,52 @@ retains measured six- and eight-qubit comparisons, their resolved environment,
 and the source patch. CI runs small core and optional AD harness checks on Julia
 1.10 and 1.13; those checks have no timing or allocation thresholds.
 
+### Shared-parameter pure-state batches
+
+`batch_evaluation.jl` measures `BatchExpectationObjective` on CPU pure-state
+batches of size 1, 4, and 16. Every sample shares the circuit, observable, and
+parameter vector; each layer also reuses the same per-qubit Ry/Rz parameters.
+The scalar objective is the mean of the sample expectations. Use a fresh process
+for each thread configuration:
+
+```bash
+julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-threads1.tsv
+julia --project=benchmark --threads=4 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-threads4.tsv
+```
+
+The core run loads neither Zygote nor ChainRulesCore. The six operations per
+batch size are native `evaluate`, `value_and_gradient`, `pullback_prepare`,
+`pullback_apply`, and explicit per-sample `loop_evaluate` and
+`loop_value_and_gradient` references. Objective construction is outside all
+timings. The reference objectives use the same samples, circuit, parameter map,
+and observable, and average scalar values and shared-parameter gradients. The
+native batch adjoint uses one shared batch forward and reconstructs each sample
+in the reverse pass. Optional AD and the explicit method reuse the same numerical
+helpers. These measurements establish a baseline and do not imply a gradient
+speedup.
+
+The harness checks sample order and values against the explicit loop, native
+gradients against loop gradients, a finite-difference coordinate, and reusable
+pullback ownership. `--with-zygote` adds a seventh operation through the generic
+`differentiable_value` adapter and compares it with the selected explicit method:
+
+```bash
+julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --with-zygote --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-adapter.tsv
+```
+
+The entrypoint accepts the same size, duration, BLAS-thread, and latency flags
+as `repeated_evaluation.jl`. A `--steady-only --qubits 2 --depth 1 --seconds 0.01`
+run checks the harness and is not a performance baseline. TSV rows additionally
+record `batch_count`. Output metadata includes the batch sizes, mean reduction,
+sharing semantics, reference setup, both benchmark script hashes, environment
+hashes, source hashes, and AD-loading status. Batches use prefixes of one seeded
+initial batch so the first sample is identical across all three sizes.
+
+The [batch baseline report](../docs/performance/batch-evaluation-2026-10-19.md)
+retains six-qubit one/four-thread measurements, both raw tables and metadata,
+and the resolved environment. Its B=1 case also records the overhead of keeping
+a one-column batch representation.
+
 ### Dense kernels and legacy differentiated circuits
 
 Use separate processes for first invocation latency and warmed throughput:

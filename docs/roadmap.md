@@ -30,7 +30,29 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
-## Current milestone: repeated evaluation and first measured optimization
+## Completed milestone: dense pure-state batch workflows
+
+Single states and batches retain separate types, `StateVector` and the existing
+`BatchStateVector`, with common operation names. A batch of one retains its
+sample axis. This milestone completes pure-state workflows before designing a
+batch density-matrix representation.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Container contracts | Explicit dimensions, empty/zero-qubit batches, scalar promotion, input views, and mutation/ownership checks | Invalid inputs fail before changing data; sample axes remain stable | Verified locally |
+| 2 Pure-state execution | Shared operator action, measurement, post-selection, recorded batch simulation, and per-sample partial trace | Dense references, seeded trajectories, nested circuits, readout axes, backend results, and independent reduced states | Verified locally |
+| 3 Replaceable differentiation | Reduced `BatchExpectationObjective`, native CPU adjoint, optional legacy batch state/circuit/encoding rules | Analytic and finite-difference agreement, shared-parameter sums, weighted reductions, independent repeated pullbacks; execution remains usable without AD | Verified locally |
+| 4 Compatibility and measurement | Minimum/primary full suites, independent companions, fresh-process loading, and a batch benchmark | Julia 1.10/1.13 acceptance and reproducible batch-versus-loop timing/allocation records | Verified locally |
+
+The [batch guide](batching.md) documents axes, ownership, scalar reductions,
+measurement records, and gradient boundaries. CPU batch unitary execution and
+reverse passes share numerical helpers across explicit and optional AD APIs.
+Forward capabilities and gradient capabilities remain independent. This stage
+does not add channels on batches, stochastic derivatives, per-sample circuit
+parameters, or batch density matrices. Partial trace returns a vector of ordinary
+density matrices.
+
+## Completed milestone: repeated evaluation and first measured optimization
 
 This milestone measures the new scalar interfaces before extending execution machinery. It retains independent execution and gradient selection, and leaves additional gradient algorithms for later work.
 
@@ -73,7 +95,7 @@ This milestone adds explicit shared-value semantics to the public parameter foun
 
 Maps are separate metadata rather than changes to the circuit representation. `[1, 2, 1]` binds two independent values into three active slots; repeated identities share values while mutable gate storage stays independent. Map indices follow the current `active_parameters` traversal. Binding validates the slot count, but changes to activation or instruction order with the same count require the caller to rebuild or review the map.
 
-This milestone covers explicit integer identities and the existing deterministic dense CPU gradient path. Symbolic expressions, automatic identity tracking through circuit edits, new AD frameworks, batch gradients, trainable noise, and arbitrary-backend differentiation remain separate work. Final local acceptance results are recorded below.
+This milestone covers explicit integer identities and the existing deterministic dense CPU gradient path. At that milestone, symbolic expressions, automatic identity tracking through circuit edits, new AD frameworks, batch gradients, trainable noise, and arbitrary-backend differentiation remained separate work; pure-state batch gradients are implemented in the later batch milestone above. Final local acceptance results are recorded below.
 
 ## Completed milestone: API ownership and trainable extensions
 
@@ -89,7 +111,7 @@ Legacy constructor sharing remains the default; explicit copy controls document 
 
 The optional Zygote rules accept the new constructor keywords and preserve cotangents through state-to-state construction and `copy(state)`. Constructor gradients are checked across copy choices, real and complex domains, typed conversion, and vector/matrix density inputs. The external gate's `differentiate` implementation follows the existing `(∂U/∂θ)' * U` convention; no reverse-pass algorithm change is required.
 
-The first differentiable extension uses the existing dense CPU reverse pass for deterministic unitary circuits. Shared symbolic parameters, new AD frameworks, batch gradients, trainable noise, and gradients for arbitrary backends remain separate follow-up work.
+The first differentiable extension uses the existing dense CPU reverse pass for deterministic unitary circuits. Shared symbolic parameters, new AD frameworks, batch gradients, trainable noise, and gradients for arbitrary backends were separate follow-up work at that stage; later milestones above add explicit parameter sharing and pure-state batch gradients.
 
 All three steps passed local acceptance. [Ownership and migration conventions](conventions.md#copying-and-storage-ownership) and the [extension guide](extending.md#parameters-and-differentiation) describe the completed contracts. Final assertion counts and independent-package results are recorded below.
 
@@ -98,7 +120,7 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 The following features remain distinct follow-up changes:
 
 1. Design additional numerical gradient methods through the new protocol, including finite differences, parameter shift, and stochastic estimators.
-2. Complete batch gradients and parameterized noise.
+2. Design batch density matrices and their noise/gradient contracts, then parameterized noise.
 3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
 4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
 5. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
@@ -107,6 +129,21 @@ The following features remain distinct follow-up changes:
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Dense pure-state batch workflows
+
+Local acceptance completed on 2026-10-19:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed 4365 assertions across 56 top-level testsets, including all eight fresh-process loading scenarios (64.6 seconds for that group).
+- Julia 1.10.10, one thread: an independently resolved environment developed the actual checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with 4365 assertions across 56 top-level testsets and all eight fresh-process loading scenarios (52.1 seconds for that group). Every testset name and assertion count matches the Julia 1.13 run.
+- The 1008 additional assertions cover container/operator/partial-trace contracts (120), measurement/post-selection/recorded simulation (482), scalar batch objectives (171), legacy circuit/state/encoding gradients (233), and two additional capability checks. They include B=0/1, zero-qubit registers, aliased encoding views, atomic failure, sample order, complex domains, shared parameters, weighted reductions, explicit backend boundaries, and private reusable pullbacks.
+- Independent standard fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9 assertions, `MOSSDemoGates` 181, and `MOSSDemoDifferentiation` 235 per version. The external trainable gate now checks its shared pure-state batch circuit gradient against its analytic reference.
+- README and batch-guide examples passed in four fresh processes: Julia 1.10/1.13, each in core and optional Zygote modes. Core examples confirmed that neither ChainRulesCore nor Zygote was loaded.
+- The new batch benchmark passed depth-two small harness checks on both versions in separate core/optional AD processes, producing 18/21 warmed rows. These checks exercise 8 active slots sharing 4 independent parameters across B=1/4/16.
+- The [batch measurement report](performance/batch-evaluation-2026-10-19.md) retains 54 first-call/warmed summaries from sequential one/four-thread six-qubit runs, unchanged raw tables/metadata, and the resolved benchmark Manifest. Every source/environment/script hash and reported table entry was checked independently. B=1 overhead and the lack of consistent thread scaling are recorded alongside B=4/16 loop comparisons.
+- Markdown links, anchors and fences, TOML files, source/artifact hashes, and whitespace checks passed. CI now checks the new batch harness in small core/AD processes; remote CI has not been run.
+
+Main-package dependencies and the development Manifest are unchanged. The existing `BatchStateVector` name and historical copy defaults are retained. Single states and batches remain separate types, and execution does not require an AD framework or select a gradient method. No batch density representation, batch channels, stochastic derivatives, or additional numerical estimators are introduced.
 
 ### Repeated evaluation and first CPU allocation optimization
 
@@ -117,7 +154,7 @@ Local acceptance completed on 2026-10-19:
 - The 151 additional lifecycle assertions bring the CPU objective group to 310. They cover pure/mixed inputs with and without fixed channels, shared parameters, interleaved points, independent concurrent pullbacks, returned-gradient and initial-state ownership, objective edits, and parameter-dependent invalid matrices or derivatives rejected before execution.
 - Standard independent fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9 assertions, `MOSSDemoGates` 181, and `MOSSDemoDifferentiation` 235 per version.
 - Both versions passed the new benchmark entrypoint in four isolated compatibility processes: core mode produced 32 first-call/warmed summary rows with neither AD package loaded; optional AD mode produced 40 rows and matched the explicit numerical gradient method. The two-qubit, two-layer cases exercise actual cross-layer parameter sharing.
-- Six benchmark tables retain 128 first-call/warmed summaries from six/eight-qubit before/after runs and an additional paired eight-qubit repetition. The 48 paired warmed comparisons use identical scripts and resolved environments. Independent review matched baseline source hashes to `e132ca0`, optimized hashes to the current source, and the sole source change to the archived patch. Allocation controls and both eight-qubit repetitions agree exactly; no general elapsed-time improvement is claimed.
+- Six benchmark tables retain 128 first-call/warmed summaries from six/eight-qubit before/after runs and an additional paired eight-qubit repetition. The 48 paired warmed comparisons use identical scripts and resolved environments. Independent review matched baseline source hashes to `e132ca0`, optimized hashes to revision `642cab7`, and the sole source change to the archived patch. Allocation controls and both eight-qubit repetitions agree exactly; no general elapsed-time improvement is claimed.
 - The [performance report](performance/repeated-evaluation-2026-10-19.md) retains the data and resolved benchmark Manifest. Documentation links, code fences, TOML metadata, and whitespace checks passed. CI now checks the independent benchmark harness on Julia 1.10 and 1.13 without timing thresholds; remote CI has not been run.
 
 Main-package dependencies, its development Manifest, and public API signatures are unchanged. BenchmarkTools remains in the independent benchmark environment; only benchmark metadata stdlibs were added there. The optimization removes a redundant copy, keeps all parameter-dependent validation, and adds no persistent cache or mandatory backend interface.
@@ -186,4 +223,4 @@ The earlier foundation acceptance completed locally on 2026-10-16:
 
 The current version-policy results are recorded above. These older checks document the foundation before the minimum-version change.
 
-BenchmarkTools workloads are supplied in a separate environment. Warmed performance measurements have not yet been recorded. Compare concrete workloads with the same Julia version, dependencies, hardware, thread count, and inputs; do not count dependency downloads or package precompilation as warmed execution time.
+BenchmarkTools workloads are supplied in a separate environment. The repeated-evaluation report above records a measured allocation improvement; the older foundation stage supplied only a harness. Compare concrete workloads with the same Julia version, dependencies, hardware, thread count, and inputs; do not count dependency downloads or package precompilation as warmed execution time.
