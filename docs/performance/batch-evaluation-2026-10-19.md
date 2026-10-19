@@ -54,7 +54,8 @@ public API overhead rather than isolating a kernel.
 
 Prepare the independent environment using the [benchmark guide](../../benchmark/README.md).
 The resolved Manifest is retained in the [record directory](batch-evaluation-2026-10-19/).
-Use the revision containing this report and restore that Manifest to
+Use revision `6017410` for these historical measurements; subsequent density-batch
+work changes the execution and validation paths. Restore that Manifest to
 `benchmark/Manifest.toml` to reproduce package versions:
 
 ```bash

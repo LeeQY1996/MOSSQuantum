@@ -15,12 +15,26 @@ function apply!(x::Gate, batch::BatchStateVector)
     return batch
 end
 
-function apply!(circuit::QCircuit, batch::BatchStateVector;
+function _check_batch_cpu_instructions(circuit::QCircuit, batch::_DenseBatchState)
+    for instruction in circuit
+        if instruction isa QCircuit
+            _check_batch_cpu_instructions(instruction, batch)
+        elseif instruction isa Gate
+            _check_batch_density_gate(instruction, batch)
+        elseif instruction isa QuantumMap
+            _check_batch_density_channel(instruction, batch)
+        end
+    end
+    return nothing
+end
+
+function apply!(circuit::QCircuit, batch::_DenseBatchState;
                 rng::Random.AbstractRNG=Random.default_rng())
     chosen_backend = backend(batch)
     supports(chosen_backend, circuit, batch) ||
         throw(UnsupportedOperation(chosen_backend, circuit, batch, :apply))
     validate_positions(circuit, nqubits(batch))
+    _check_batch_cpu_instructions(circuit, batch)
     for instruction in circuit
         if instruction isa QMeasure
             apply!(instruction, batch; rng=rng)

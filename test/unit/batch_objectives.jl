@@ -245,7 +245,14 @@ end
         @test evaluate(nonunitary, Float64[]) isa Real
         @test !supports_gradient(method, nonunitary)
 
-        for circuit in (QCircuit([AmplitudeDamping(1; γ=0.2)]), QCircuit([QMeasure(1)]), QCircuit([QSelect(1)])),
+        noisy = BatchExpectationObjective(QCircuit([AmplitudeDamping(1; γ=0.2)]), observable, initial)
+        @test supports_gradient(method, noisy)
+        @test isempty(value_and_gradient(method, noisy, Float64[])[2])
+        nonhermitian_noise = BatchExpectationObjective(QCircuit([AmplitudeDamping(1; γ=0.2)]),
+            QubitsTerm(1 => "+"), initial)
+        @test !supports_gradient(method, nonhermitian_noise)
+        @test_throws UnsupportedGradient value_and_gradient(method, nonhermitian_noise, Float64[])
+        for circuit in (QCircuit([QMeasure(1)]), QCircuit([QSelect(1)])),
                 observation in (observable, QubitsTerm(1 => "+"))
             objective = BatchExpectationObjective(circuit, observation, initial)
             @test !supports_gradient(method, objective)

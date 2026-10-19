@@ -1,6 +1,6 @@
 # Main expectation functions for BatchStateVector
 
-function _check_batch_observable(observable, batch::BatchStateVector)
+function _check_batch_observable(observable, batch::_DenseBatchState)
     validate_positions(observable, nqubits(batch))
     if observable isa Union{Gate,QubitsTerm}
         register = Tuple(positions(observable))
@@ -8,12 +8,20 @@ function _check_batch_observable(observable, batch::BatchStateVector)
             throw(ArgumentError("observable positions must be distinct"))
     end
     if observable isa Gate
+        length(register) == nqubits(observable) ||
+            throw(ArgumentError("gate observable positions must match its qubit count"))
         1 <= nqubits(observable) <= 5 ||
             throw(UnsupportedOperation(CPUBackend(), observable, batch, :expectation))
         dimension = 2^nqubits(observable)
         size(mat(observable)) == (dimension, dimension) ||
             throw(DimensionMismatch("gate observable dimensions must match its register"))
+        Tuple(ordered_positions(observable)) == Tuple(sort(collect(register))) ||
+            throw(ArgumentError("ordered observable positions must match its register"))
+        size(ordered_mat(observable)) == (dimension, dimension) ||
+            throw(DimensionMismatch("ordered gate observable dimensions must match its register"))
     elseif observable isa QubitsTerm
+        length(oplist(observable)) == length(positions(observable)) ||
+            throw(DimensionMismatch("observable factors must match their registers"))
         all(matrix -> size(matrix) == (2, 2), oplist(observable)) ||
             throw(DimensionMismatch("observable factors must be single-qubit matrices"))
     elseif observable isa QubitsOperator
@@ -27,7 +35,7 @@ function _check_batch_observable(observable, batch::BatchStateVector)
     return nothing
 end
 
-function _check_batch_observable(observable::AbstractMatrix, batch::BatchStateVector)
+function _check_batch_observable(observable::AbstractMatrix, batch::_DenseBatchState)
     dimension = size(storage(batch), 1)
     size(observable) == (dimension, dimension) ||
         throw(DimensionMismatch("observable dimensions must match the batch register"))

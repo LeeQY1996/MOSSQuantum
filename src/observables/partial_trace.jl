@@ -1,6 +1,27 @@
 # partial trace
 
 """
+    partial_tr(batch::BatchDensityMatrix, sites::Vector{Int})
+
+Trace out the same qubits in every sample. The result is an independently owned
+`BatchDensityMatrix` with the sample axis retained. Tracing every qubit of a
+nonzero register returns the vector of sample traces. Empty `sites` copies the
+batch; the existing pure-batch return convention remains unchanged.
+"""
+function partial_tr(batch::BatchDensityMatrix, sites::Vector{Int})
+    check_partial_tr_inputs(sites, nqubits(batch))
+    isempty(sites) && return copy(batch)
+    length(sites) == nqubits(batch) && return tr(batch)
+    remaining = nqubits(batch) - length(sites)
+    dimension = 2^remaining
+    data = Array{eltype(batch),3}(undef, dimension, dimension, batch_size(batch))
+    for column in 1:batch_size(batch)
+        data[:, :, column] .= _partial_tr_impl(view(storage(batch), :, :, column), sites, nqubits(batch))
+    end
+    return BatchDensityMatrix(data, remaining)
+end
+
+"""
     partial_tr(batch::BatchStateVector, sites::Vector{Int})
 
 Trace out `sites` independently for each pure-state sample. Return a vector of

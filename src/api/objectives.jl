@@ -42,13 +42,13 @@ function evaluate(objective::ExpectationObjective, values::AbstractVector{<:Real
 end
 
 """
-    BatchExpectationObjective(template, observable, initial_state::BatchStateVector;
+    BatchExpectationObjective(template, observable, initial_state;
                               parameter_map=ParameterMap(template),
                               backend=backend(initial_state), reduction=:mean, weights=nothing)
 
-A real scalar objective for a nonempty batch of pure states sharing one circuit,
-parameter vector, and observable. Each column is a sample. `evaluate_batch`
-returns the real expectation for each column in input order; `evaluate` reduces
+A real scalar objective for a nonempty `BatchStateVector` or `BatchDensityMatrix`
+sharing one circuit, parameter vector, and observable. The last axis indexes
+samples. `evaluate_batch` returns the real expectation for each sample in input order; `evaluate` reduces
 these values using `:mean` (default), `:sum`, or `:weighted_sum`.
 
 `:weighted_sum` requires a finite real weight for every sample. Weights may be
@@ -56,7 +56,7 @@ negative and are not normalized. Other reductions reject `weights`. Construction
 snapshots the circuit, observable, states, and weights; the backend remains an
 execution resource. Forward execution does not select a gradient method.
 """
-struct BatchExpectationObjective{O,S<:BatchStateVector,B<:AbstractBackend,W}
+struct BatchExpectationObjective{O,S<:Union{BatchStateVector,BatchDensityMatrix},B<:AbstractBackend,W}
     template::QCircuit
     observable::O
     initial_state::S
@@ -65,7 +65,8 @@ struct BatchExpectationObjective{O,S<:BatchStateVector,B<:AbstractBackend,W}
     reduction::Symbol
     weights::W
 
-    function BatchExpectationObjective(template::QCircuit, observable, initial_state::BatchStateVector;
+    function BatchExpectationObjective(template::QCircuit, observable,
+                                       initial_state::Union{BatchStateVector,BatchDensityMatrix};
                                        parameter_map::ParameterMap=ParameterMap(template),
                                        backend::AbstractBackend=MOSS.backend(initial_state),
                                        reduction::Symbol=:mean, weights=nothing)
@@ -97,7 +98,10 @@ end
 function _check_batch_objective_configuration(objective::BatchExpectationObjective)
     count = batch_size(objective.initial_state)
     count > 0 || throw(ArgumentError("a batch expectation objective requires at least one sample."))
-    size(storage(objective.initial_state)) == (2^nqubits(objective.initial_state), count) ||
+    dimension = 2^nqubits(objective.initial_state)
+    expected_shape = objective.initial_state isa BatchStateVector ? (dimension, count) :
+        (dimension, dimension, count)
+    size(storage(objective.initial_state)) == expected_shape ||
         throw(DimensionMismatch("batch storage no longer matches its sample and register dimensions."))
     _check_parameter_map(objective.template, objective.parameter_map)
     return nothing
@@ -121,6 +125,25 @@ function _check_batch_objective_gates(circuit::QCircuit)
             _check_batch_objective_gates(instruction)
         elseif instruction isa Gate
             _check_batch_objective_gate(instruction)
+        elseif instruction isa QuantumMap
+            register = Tuple(positions(instruction))
+            length(register) == nqubits(instruction) && length(unique(register)) == length(register) ||
+                throw(ArgumentError("channel positions must be distinct and match its qubit count."))
+            Tuple(ordered_positions(instruction)) == Tuple(sort(collect(register))) ||
+                throw(ArgumentError("ordered channel positions must match its register."))
+            local_dimension = 2^nqubits(instruction)
+            matrices = kraus_matrices(instruction)
+            !isempty(matrices) || throw(ArgumentError("a channel needs at least one Kraus matrix."))
+            for matrix in matrices
+                size(matrix) == (local_dimension, local_dimension) ||
+                    throw(DimensionMismatch("Kraus dimensions must match the channel register."))
+                all(isfinite, matrix) || throw(ArgumentError("Kraus matrix entries must be finite."))
+            end
+            dimension = local_dimension^2
+            matrix = ordered_supermat(instruction)
+            size(matrix) == (dimension, dimension) ||
+                throw(DimensionMismatch("channel supermatrix dimensions must match its qubit count."))
+            all(isfinite, matrix) || throw(ArgumentError("channel matrix entries must be finite."))
         end
     end
     return nothing
@@ -153,8 +176,14 @@ function _check_batch_objective_execution(objective::BatchExpectationObjective, 
     state, execution_backend = objective.initial_state, objective.backend
     supports(execution_backend, bound, state) ||
         throw(UnsupportedOperation(execution_backend, bound, state, :apply))
-    supports(execution_backend, objective.observable, state; action=:expectation) ||
-        throw(UnsupportedOperation(execution_backend, objective.observable, state, :expectation))
+    if execution_backend isa CPUBackend
+        final_type = _cpu_circuit_state(bound, typeof(state))
+        _cpu_supports(objective.observable, final_type, :expectation) ||
+            throw(UnsupportedOperation(execution_backend, objective.observable, state, :expectation))
+    else
+        supports(execution_backend, objective.observable, state; action=:expectation) ||
+            throw(UnsupportedOperation(execution_backend, objective.observable, state, :expectation))
+    end
     validate_positions(bound, nqubits(state))
     if objective.observable isa AbstractMatrix
         dimension = 2^nqubits(state)

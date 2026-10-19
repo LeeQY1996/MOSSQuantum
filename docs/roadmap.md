@@ -30,6 +30,28 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
+## Completed milestone: dense batch density matrices
+
+This milestone extends the separate-type design to `BatchDensityMatrix` in the
+main package. Storage has axes `(2^n, 2^n, B)` and each sample remains independent.
+The existing `BatchExpectationObjective` and `BatchSimulationResult` support both
+pure and mixed batches; no second objective or result hierarchy is introduced.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Representation | Batch density type, initialization, typed/view constructors, copy controls, and sample/pure conversions | B=0/1, zero-qubit registers, dimensions, scalar domains, and independent ownership | Verified locally |
+| 2 Execution | Two-sided gate action, Kraus channels, pure-batch promotion, and whole-circuit preflight | Explicit dense gate/Kraus references, unsorted 1–5-qubit gates, fixed 1–2-qubit channels, and precision-preserving execution | Verified locally |
+| 3 Observation and results | Expectations, readout, measurements, selection, partial trace, and mixed recorded trajectories | Per-sample shapes, projectors, RNG order, invalid-input atomicity, and external-backend result contracts | Verified locally |
+| 4 Differentiation | Mixed and noisy batch scalar objectives plus optional circuit/state rules | Finite-difference/analytic/loop agreement, shared weights/parameters, complex cotangents, singular channels, and independent reusable pullbacks | Verified locally |
+| 5 Compatibility | Full minimum/primary suites, independent companions, loading orders, examples, and existing benchmark harnesses | Julia 1.10/1.13 local acceptance and documentation/source review | Verified locally |
+
+Floating execution keeps the state's component precision, matching existing
+single-density behavior; explicit conversion chooses another precision. Unitary
+gradients use one batch forward, while paths with fixed channels use per-sample
+checkpoint reverse passes and require no inverse channel. Forward evaluation is
+independent of AD packages and of the selected gradient method. The
+[batch density guide](batch-density-matrices.md) documents the public contracts.
+
 ## Completed milestone: dense pure-state batch workflows
 
 Single states and batches retain separate types, `StateVector` and the existing
@@ -120,7 +142,7 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 The following features remain distinct follow-up changes:
 
 1. Design additional numerical gradient methods through the new protocol, including finite differences, parameter shift, and stochastic estimators.
-2. Design batch density matrices and their noise/gradient contracts, then parameterized noise.
+2. Design trainable noise parameters and their derivative contracts; measure density-batch kernels before further execution optimization.
 3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
 4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
 5. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
@@ -129,6 +151,20 @@ The following features remain distinct follow-up changes:
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Dense batch density matrices
+
+Local acceptance completed on 2026-10-19:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed 5579 assertions across 69 top-level testsets. All eight fresh-process loading scenarios passed, including core-only mixed/noisy evaluation, direct ChainRules loading before/after MOSS, and optional Zygote mixed/noisy batch gradients (99.0 seconds for that group).
+- Julia 1.10.10, one thread: a new independent environment developed the checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with 5579 assertions across 69 top-level testsets and all eight loading scenarios (88.0 seconds). Every top-level testset name and assertion count matches the primary-version run.
+- The new density groups contain 1212 assertions: representation/algebra/execution (205), observations and partial trace (92), readout/measurement/post-selection/recorded simulation (543), scalar objectives (124), and optional circuit/state gradients (248). Coverage includes explicit complex dense gate and Kraus references, unsorted 1–5-qubit gate registers, floating precision, trace normalization, B=0/1 and zero-qubit states, conditional projector formulas, RNG and mutation atomicity, raw/typed/view constructors, complex cotangents, shared weights/parameters, singular channels, and reusable private snapshots.
+- Existing extension contracts add four positive noisy batch checks and remove two obsolete noise-rejection assertions, giving a net increase of 1214 assertions over the pure-batch stage. Independent standard fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9, `MOSSDemoGates` 185, and `MOSSDemoDifferentiation` 235. The external trainable gate now trains pure-to-mixed and mixed-initial batches with fixed channels through public APIs.
+- README computation examples and all batch-density guide examples ran in four independent processes: Julia 1.10/1.13, each in core and optional AD mode. Core examples confirmed no ChainRulesCore or Zygote loading. Package installation commands and unrelated plotting examples were outside this example check; plotting and loading remain covered by the full suite.
+- Eight small existing benchmark harness checks passed: both Julia versions, scalar/pure-batch entrypoints, and separate core/optional AD modes. Two-qubit, one-layer, 0.01-second cases produced 32/40 scalar summary rows and 18/21 pure-batch rows with correct version and AD-loading metadata. These are compatibility checks, not new performance measurements. Historical pure-batch reproduction now explicitly selects revision `6017410`.
+- Source and public-interface review, local Markdown links/anchors/fences, TOML files, and whitespace checks passed. The existing CI main/independent-extension matrix covers the new tests on both versions; remote CI has not been run.
+
+Runtime dependencies, the main development Manifest, and the existing benchmark scripts/environment are unchanged. Density batches remain a separate representation in the main package; scalar reductions, result records, execution selection, and replaceable gradient methods retain their public interfaces. Fixed channels are supported without inverse-map assumptions. Trainable noise, stochastic derivatives, array-generic storage, and new numerical gradient estimators remain separate work.
 
 ### Dense pure-state batch workflows
 

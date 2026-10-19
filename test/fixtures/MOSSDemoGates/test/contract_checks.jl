@@ -136,6 +136,12 @@ function run(::Type{GateType}) where {GateType}
         batch = MOSS.BatchStateVector(2, 2)
         batch_loss(values) = real(sum(MOSS.expectation(observable, MOSS.bind_parameters(template, values) * batch)))
         @test Zygote.gradient(batch_loss, theta)[1] ≈ 2 .* analytic atol=1e-10
+        for batch_initial in (batch, MOSS.BatchDensityMatrix(batch))
+            mixed_batch_loss(values) = real(sum(MOSS.expectation(observable,
+                MOSS.bind_parameters(noisy_template, values) * batch_initial)))
+            @test mixed_batch_loss(theta) ≈ 1.6 * cos(total_angle)
+            @test Zygote.gradient(mixed_batch_loss, theta)[1] ≈ 1.6 .* analytic atol=1e-10
+        end
     end
 
     @testset "explicit shared parameter identities" begin

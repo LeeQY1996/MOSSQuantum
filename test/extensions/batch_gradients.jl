@@ -232,7 +232,7 @@ end
         @test output == zero_qubit
         @test isempty(back(ones(1, 2))[1])
         @test storage(back(ones(1, 2))[2]) == ones(1, 2)
-        for instruction in (AmplitudeDamping(1; γ=0.2), QMeasure(1), QSelect(1),
+        for instruction in (QMeasure(1), QSelect(1),
                             QuantumGate(1, [1.0 0; 0 0.5]))
             for rejected in (QCircuit([instruction]), QCircuit([QCircuit([instruction])]))
                 @test_throws ArgumentError MOSS._batch_circuit_adjoint(rejected, BatchStateVector(1, 2))

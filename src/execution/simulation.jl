@@ -18,12 +18,12 @@ struct SimulationResult{S}
 end
 
 """
-Result of a batch circuit execution. `state` contains one final pure state per
-column, and `measurements[column]` contains that sample's intermediate records
+Result of a batch circuit execution. `state` contains one final pure or mixed
+state per sample, and `measurements[column]` contains that sample's intermediate records
 in execution order, including nested circuits. Random draws are made in circuit
 instruction order and then batch column order. An empty batch has no records.
 """
-struct BatchSimulationResult{S<:BatchStateVector}
+struct BatchSimulationResult{S<:Union{BatchStateVector,BatchDensityMatrix}}
     state::S
     measurements::Vector{Vector{MeasurementRecord}}
 end
@@ -33,22 +33,24 @@ function measure!(b::AbstractBackend, state::AbstractQuantumState, position::Int
     throw(UnsupportedOperation(b, QMeasure(position; auto_reset=auto_reset), state, :apply))
 end
 
-function measure!(b::CPUBackend, state::Union{StateVector,DensityMatrix,BatchStateVector}, position::Int;
+function measure!(b::CPUBackend, state::Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}, position::Int;
                   auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng())
     return measure!(state, position; auto_reset=auto_reset, rng=rng)
 end
 
 function _check_simulation_batch_state(state, count::Int, instruction)
-    state isa BatchStateVector ||
-        throw(ArgumentError("batch apply! for $(typeof(instruction)) must return a BatchStateVector"))
+    state isa Union{BatchStateVector,BatchDensityMatrix} ||
+        throw(ArgumentError("batch apply! for $(typeof(instruction)) must return a BatchStateVector or BatchDensityMatrix"))
     batch_size(state) == count ||
         throw(DimensionMismatch("batch circuit execution must preserve the number of samples ($count)."))
-    size(storage(state)) == (2^nqubits(state), count) ||
+    dimension = _batch_dimension(nqubits(state))
+    expected = state isa BatchStateVector ? (dimension, count) : (dimension, dimension, count)
+    size(storage(state)) == expected ||
         throw(DimensionMismatch("batch state storage must match its sample and register dimensions."))
     return state
 end
 
-function _check_batch_record_probabilities(probabilities, state::BatchStateVector)
+function _check_batch_record_probabilities(probabilities, state::Union{BatchStateVector,BatchDensityMatrix})
     probabilities isa AbstractVector{<:Real} ||
         throw(ArgumentError("batch measurement probabilities must be a real vector."))
     Base.require_one_based_indexing(probabilities)
@@ -64,7 +66,7 @@ function _check_batch_record_probabilities(probabilities, state::BatchStateVecto
     return probabilities
 end
 
-function _check_batch_record_outcomes(outcomes, state::BatchStateVector)
+function _check_batch_record_outcomes(outcomes, state::Union{BatchStateVector,BatchDensityMatrix})
     outcomes isa AbstractVector{<:Integer} ||
         throw(ArgumentError("batch measurement outcomes must be an integer vector."))
     Base.require_one_based_indexing(outcomes)
@@ -77,7 +79,7 @@ end
 
 _batch_record_probability(probability::Real) = clamp(probability, zero(probability), one(probability))
 
-function _check_batch_recorded_instructions(circuit::QCircuit, chosen_backend, state::BatchStateVector)
+function _check_batch_recorded_instructions(circuit::QCircuit, chosen_backend, state::Union{BatchStateVector,BatchDensityMatrix})
     for instruction in circuit
         if instruction isa QCircuit
             _check_batch_recorded_instructions(instruction, chosen_backend, state)
@@ -90,7 +92,7 @@ function _check_batch_recorded_instructions(circuit::QCircuit, chosen_backend, s
     return nothing
 end
 
-function _simulate!(circuit::QCircuit, state::BatchStateVector, chosen_backend, rng,
+function _simulate!(circuit::QCircuit, state::Union{BatchStateVector,BatchDensityMatrix}, chosen_backend, rng,
                     records::Vector{Vector{MeasurementRecord}})
     count = length(records)
     _check_simulation_batch_state(state, count, circuit)
@@ -163,11 +165,12 @@ function simulate(circuit::QCircuit, state; backend=MOSS.backend(state), rng::Ra
     return SimulationResult(result, records)
 end
 
-function simulate(circuit::QCircuit, state::BatchStateVector; backend=MOSS.backend(state),
+function simulate(circuit::QCircuit, state::Union{BatchStateVector,BatchDensityMatrix}; backend=MOSS.backend(state),
                   rng::Random.AbstractRNG=Random.default_rng())
     supports(backend, circuit, state) || throw(UnsupportedOperation(backend, circuit, state, :apply))
     _check_batch_recorded_instructions(circuit, backend, state)
     validate_positions(circuit, nqubits(state))
+    backend isa CPUBackend && _check_batch_cpu_instructions(circuit, state)
     records = [MeasurementRecord[] for _ in 1:batch_size(state)]
     result = _simulate!(circuit, copy(state), backend, rng, records)
     return BatchSimulationResult(result, records)

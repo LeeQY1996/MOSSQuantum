@@ -7,8 +7,8 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 ## Features
 
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).
-- **State simulation**: Dense state vectors, density matrices, and batch state vectors with serial/threaded gate application.
-- **Differentiation**: Replaceable explicit gradient methods and optional Zygote integration, including shared-parameter pure-state batches with unitary circuits, supported expectations, and qubit encoding. Stochastic execution has no AD contract.
+- **State simulation**: Dense state vectors and density matrices, with dedicated batch representations, gate execution, and Kraus noise.
+- **Differentiation**: Replaceable explicit gradient methods and optional Zygote integration, including shared-parameter pure/mixed batches with unitary gates and fixed noise, supported expectations, and pure-state qubit encoding. Stochastic execution and trainable noise parameters have no AD contract.
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
 - **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
@@ -64,7 +64,7 @@ measured = simulate(QCircuit([bell, QMeasure(1; auto_reset=false)]),
 measured.measurements # outcome and probability, including nested circuits
 ```
 
-`simulate` copies its input state. A single-state result describes one trajectory; a batch result contains one trajectory and record list per column. Sampling the final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
+`simulate` copies its input state. A single-state result describes one trajectory; a batch result contains one trajectory and record list per sample. Sampling the final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
 
 ### Independent parameter binding
 
@@ -163,11 +163,35 @@ All samples share the circuit, parameter vector, and observable. Scalar batch
 objectives support `:mean`, `:sum`, and `:weighted_sum`; weights are explicit and
 are not normalized. Forward execution stays independent of the gradient method,
 and the optional `differentiable_value` adapter works with the selected method.
-CPU batch gradients currently cover deterministic unitary circuits with supported
-Hermitian observables. Measurement and post-selection are forward capabilities;
-batch noise and batch density matrices are not implemented. See the
+CPU batch gradients cover deterministic unitary gates and fixed `QuantumMap`
+channels with supported Hermitian observables. Measurement and post-selection
+are forward capabilities. See the
 [batch guide](docs/batching.md) for shapes, measurement semantics, supported
 encoding derivatives, and gradient boundaries.
+
+### Density-matrix batches
+
+`DensityMatrix` represents one mixed state; `BatchDensityMatrix` stores independent
+samples in an array with axes `(2^n, 2^n, B)`. Batch size one retains the final
+axis. Converting a pure-state batch computes one outer product per sample:
+
+```julia
+using MOSS
+
+pure_batch = QCircuit([HGate(1), CNOTGate(1, 2)]) * BatchStateVector(2, 4)
+mixed_batch = BatchDensityMatrix(pure_batch)
+mixed_batch = apply!(AmplitudeDamping(1; γ=0.2), mixed_batch)
+sample_expectations = expectation(QubitsTerm(1 => "Z"), mixed_batch)
+```
+
+Noise applied directly to `BatchStateVector` also returns `BatchDensityMatrix`.
+Retain the returned state. Gate execution applies `UρU†` to each sample, while
+observable multiplication remains the algebraic left action. Density samples
+normalize by trace; their matrix norms generally differ from one.
+`BatchExpectationObjective` accepts either batch type, and both use the same
+readout and `BatchSimulationResult` interfaces. See the
+[density-matrix batch guide](docs/batch-density-matrices.md) for constructors,
+copying, partial trace, precision, and fixed-noise gradient support.
 
 ### State and circuit ownership
 
@@ -178,7 +202,7 @@ shallow = copy(template)             # new container, shared instructions
 independent = copy_instruction(template) # independent mutable instruction data
 ```
 
-Existing constructor defaults are preserved: compatible array inputs generally permit reuse, `StateVector(state)` and `DensityMatrix(rho)` permit reuse, and `BatchStateVector(batch)` copies. Explicit `copy=true` copies numeric state storage; the same keyword on `QCircuit` copies its container. Type or layout conversion may allocate even with `copy=false`. Immutable instruction copies may remain `===`. See [ownership conventions](docs/conventions.md#copying-and-storage-ownership) for the complete table.
+Existing constructor defaults are preserved: compatible array inputs generally permit reuse, `StateVector(state)` and `DensityMatrix(rho)` permit reuse, and constructors from an existing `BatchStateVector` or `BatchDensityMatrix` copy by default. Pure-to-density conversions always allocate independent storage. Explicit `copy=true` copies numeric state storage; the same keyword on `QCircuit` copies its container. Type or layout conversion may allocate even with `copy=false`. Immutable instruction copies may remain `===`. See [ownership conventions](docs/conventions.md#copying-and-storage-ownership) for the complete table.
 
 Retain the return value of `reset_parameters!`, activation, and deactivation when working with replacement instructions. Mutating reset keeps its historical alias behavior: a repeated mutable gate ends with the last supplied value. Circuit `activate_parameter!(circuit, j)` still selects instruction `j`. The container methods `push!`, `append!`, and `empty!` return the modified circuit.
 
@@ -282,6 +306,7 @@ ChainRulesCore is an optional rule dependency for the explicit-method scalar int
 - [Architecture and package boundaries](docs/architecture.md)
 - [Numerical and API conventions](docs/conventions.md), including squared Uhlmann fidelity, two-sided density evolution, qubit order, RNGs, and ownership
 - [Pure-state batches and gradient boundaries](docs/batching.md)
+- [Density-matrix batches, noise, and gradients](docs/batch-density-matrices.md)
 - [Extension guide](docs/extending.md)
 - [Core foundation roadmap](docs/roadmap.md)
 - [Benchmark setup and workloads](benchmark/README.md)
@@ -295,9 +320,9 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 
 Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, and `expectation(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage.
 
-The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single-state circuits and unitary pure-state batches. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
+The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single and batch pure/mixed circuits, including fixed channels. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
 
-Retain the return value of `apply!`: execution can promote numeric storage or convert a state vector to a density matrix when applying noise. See the conventions for qubit ordering, parameter activation, and storage ownership.
+Retain the return value of `apply!`: execution can change the numeric domain or convert single/batch state vectors to density matrices when applying noise. Floating density-batch execution preserves the state's component precision, including real-to-complex promotion. See the conventions for qubit ordering, parameter activation, and storage ownership.
 
 ## License
 

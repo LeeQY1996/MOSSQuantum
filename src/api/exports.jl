@@ -37,6 +37,7 @@ export schmidt_numbers, renyi_entropy
 export permute
 # batch statevector
 export BatchStateVector, batch_size, batch_onehot_encoding, batch_qubit_encoding, batch_amplitude_encoding, rand_batch
+export BatchDensityMatrix, rand_batch_densitymatrix
 
 # utility functions
 export variational_circuit_1d, real_variational_circuit_1d

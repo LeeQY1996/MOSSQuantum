@@ -31,6 +31,8 @@ include("api/state_protocols.jl")
 include("states/state_vector.jl")
 include("states/batch_state_vector.jl")
 include("states/density_matrix.jl")
+include("states/batch_density_matrix.jl")
+const _DenseBatchState = Union{BatchStateVector,BatchDensityMatrix}
 
 # CPU gate kernels and public execution methods.
 include("backends/cpu/gates/serial_short_range.jl")
@@ -45,10 +47,12 @@ include("backends/cpu/gates/batch_threaded_short_range.jl")
 include("backends/cpu/gates/batch_threaded_long_range.jl")
 include("execution/batch_gates.jl")
 include("backends/cpu/gates/batch.jl")
+include("execution/batch_density_gates.jl")
 
 # Measurement and postselection.
 include("execution/measurement.jl")
 include("execution/post_selection.jl")
+include("execution/batch_density_measurement.jl")
 
 # Operator execution and expectation values.
 include("backends/cpu/operators/utils.jl")
@@ -70,6 +74,7 @@ include("backends/cpu/expectations/batch.jl")
 include("observables/batch_expectation.jl")
 include("backends/cpu/expectations/density_matrix_serial.jl")
 include("observables/density_matrix_expectation.jl")
+include("observables/batch_density_expectation.jl")
 
 # Public backend contracts adapt the dense CPU implementation.
 include("api/backend_protocols.jl")

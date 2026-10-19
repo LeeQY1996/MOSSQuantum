@@ -220,16 +220,17 @@ end
     @test apply!(cpu, QCircuit([QMeasure(1), QSelect(1), XGate(1)]), measured) === measured
     @test storage(measured) == [0 0; 1 1]
 
-    blocked = BatchStateVector(2, 3)
+    # Three-qubit generic channels remain beyond the CPU superoperator limit.
+    blocked = BatchStateVector(3, 3)
     before = copy(storage(blocked))
-    unsupported = QCircuit([XGate(1), QCircuit([AmplitudeDamping(1; γ=0.2)])])
+    unsupported = QCircuit([XGate(1), QCircuit([QuantumMap((1, 2, 3), [Matrix{Float64}(I, 8, 8)])])])
     rng = MersenneTwister(3)
     @test_throws UnsupportedOperation apply!(unsupported, blocked; rng=rng)
     @test storage(blocked) == before
     @test rand(rng) == rand(MersenneTwister(3))
     @test_throws UnsupportedOperation simulate(unsupported, blocked)
     @test storage(blocked) == before
-    @test_throws ArgumentError apply!(QCircuit([XGate(1), XGate(3)]), blocked)
+    @test_throws ArgumentError apply!(QCircuit([XGate(1), XGate(4)]), blocked)
     @test storage(blocked) == before
 end
 

@@ -14,14 +14,16 @@ Qubit positions start at `1`. Qubit `1` is the least significant bit. For binary
 
 The first position in `positions(g)` corresponds to the least significant local matrix bit. `ordered_positions(g)` sorts positions; `ordered_mat(g)` permutes the matrix accordingly. Convert external matrices with a different bit convention before constructing a gate.
 
-Dense `storage(::StateVector)` is a length `2^n` vector; `storage(::DensityMatrix)` is a `2^n × 2^n` matrix backed by column-major vector storage. `storage(::BatchStateVector)` is a `2^n × batch_size` matrix with one state per column. External `AbstractQuantumState` implementations need not expose `storage`.
+Dense `storage(::StateVector)` is a length `2^n` vector; `storage(::DensityMatrix)` is a `2^n × 2^n` matrix backed by column-major vector storage. `storage(::BatchStateVector)` is a `2^n × B` matrix with one state per column. `storage(::BatchDensityMatrix)` has axes `(2^n, 2^n, B)`, with one density matrix per final-axis slice. External `AbstractQuantumState` implementations need not expose `storage`.
 
-`StateVector` and `BatchStateVector` remain separate representations using the
+Single and batch pure/mixed states use separate representations with the
 same public operation names. Batch size one does not collapse to a single state:
 expectations retain a sample vector, readout retains its batch axis, and recorded
 execution returns `BatchSimulationResult`. A batch applies one circuit and one
-parameter vector to independent input columns. There is no batch density-matrix
-representation. See the [batch guide](batching.md) for the capability table.
+parameter vector to independent samples. Both batch types support zero-qubit
+registers and empty batches. Their shapes remain `(1, B)` and `(1, 1, B)` for
+zero qubits, and retain a zero-length final axis for B=0. See the
+[pure batch guide](batching.md) and [density batch guide](batch-density-matrices.md).
 
 ## Circuit order and admission
 
@@ -75,7 +77,7 @@ accumulate_parameter_gradients(parameter_map, [2.0, 3.0, 5.0]) # [7.0, 3.0]
 
 computes `shared_gradient[j] = sum(flat_gradient[i] for i in eachindex(indices) if indices[i] == j)`. This helper requires one real gradient entry per slot and permits nonfinite gradients to propagate through the sums. For supported deterministic dense CPU circuits, differentiating a loss that calls the three-argument `bind_parameters` with Zygote performs this accumulation automatically. A map represents repeated values; symbolic expressions such as `2θ` or `θ + φ` are outside its contract.
 
-For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support the documented deterministic single-state workflows and shared unitary circuits on pure-state batches. Arbitrary instructions and external backends require their own derivative support; batch noise and batch stochastic derivatives are not provided.
+For the existing dense CPU circuit reverse pass, `differentiate(gate)` returns one gate per active parameter, in the same order. Its matrices store `(∂U/∂θ)' * U` for unitary `U`, rather than the raw derivative `∂U/∂θ`. A trainable gate without this method raises an explicit error. These derivatives support documented deterministic single/batch pure and mixed workflows with unitary gates and fixed `QuantumMap` channels. The noisy batch reverse pass retains per-sample checkpoints, so singular fixed maps such as amplitude damping at `γ=1` are allowed. Arbitrary instructions and external backends require their own derivative support; trainable noise and batch stochastic derivatives are not provided.
 
 ## Mutation and returned objects
 
@@ -85,7 +87,7 @@ The explicit-method scalar interface differentiates only `values`. Its method an
 
 `ExpectationObjective` snapshots its template, observable, and initial state, retains its backend, and executes on an independent state copy. Its `ParameterMap` continues to define independent input order. The output is the real part of a scalar expectation. This concrete adapter is separate from the public objective protocol, which accepts external objective types without any quantum-state or storage requirement.
 
-`BatchExpectationObjective` likewise snapshots a nonempty initial pure-state batch,
+`BatchExpectationObjective` likewise snapshots a nonempty initial pure or mixed batch,
 circuit, observable, and optional weights, and retains its backend. `evaluate_batch`
 returns the real sample expectations in column order. `evaluate` reduces them by
 `:mean` (default), `:sum`, or `:weighted_sum`. Weighted sums require one finite real
@@ -110,17 +112,28 @@ state = apply!(circuit, state)
 state = apply!(backend(state), instruction, state)
 ```
 
-A gate can promote real storage to complex storage. A channel applied to a `StateVector` returns a `DensityMatrix`. The returned state can therefore differ in identity and type. `circuit * state` copies the initial state before execution and is useful when evaluating a deterministic loss repeatedly.
+A gate can promote real storage to complex storage. A channel applied to a `StateVector` returns a `DensityMatrix`; a channel applied to `BatchStateVector` returns `BatchDensityMatrix`. The returned state can therefore differ in identity and type. `circuit * state` copies the initial state before execution and is useful when evaluating a deterministic loss repeatedly.
+
+Density-batch gate and channel execution preserves an existing floating component
+type, even when operation coefficients use wider precision. Complex operations
+on real floating storage return `Complex{T}` with the same component type `T`;
+nonfloating storage uses numeric promotion. Execution does not silently normalize
+states when changing representation or numeric domain.
 
 Legacy measurement and post-selection have specific return conventions. `measure!` returns `(outcome, probability)` and mutates the state. `measure(state, position)` returns `(reduced_state, outcome, probability)` and removes that qubit, preserving the relative order of the others. Retained measurements default to resetting the measured qubit to zero; `auto_reset=false` retains the observed basis value. In-place post-selection returns its probability. These metadata returns are also retained by CPU backend adapters for `QMeasure` and `QSelect`.
 
-For a pure-state batch, outcomes and probabilities are vectors in sample order.
+For either batch type, outcomes and probabilities are vectors in sample order.
 `measure!` and `post_select!` retain the register size; nonmutating `measure` and
-`post_select(...; keep=false)` remove the selected qubit from every column.
+`post_select(...; keep=false)` remove the selected qubit from every sample.
 Batch post-selection requires positive finite selected probability in every
-sample and checks the entire batch before mutation. `partial_tr(batch, sites)`
-returns individual `DensityMatrix` values for partial reductions, rather than a
-batch density matrix; tracing every site returns the sample norms squared.
+sample and checks the entire batch before mutation. For density batches, the
+reported post-selection weight is the raw selected-block trace, and inputs need
+not have unit trace. `partial_tr(batch, sites)` on a pure batch preserves its
+existing return contract: individual `DensityMatrix` values for partial reductions,
+or sample norms squared when tracing every site of a nonzero register. On a density
+batch, partial reductions return an independent `BatchDensityMatrix`; tracing every
+site of a nonzero register returns the vector of sample traces. Empty `sites`
+copies the density batch, including for a zero-qubit register.
 
 ## Probabilities, samples, and counts
 
@@ -155,14 +168,15 @@ rng = MersenneTwister(42)
 results = [simulate(circuit, initial_state; rng=rng) for _ in 1:100]
 ```
 
-For `BatchStateVector`, `simulate` returns `BatchSimulationResult`. Its state
-retains the batch, and `measurements[column]` contains that sample's records in
+For `BatchStateVector` or `BatchDensityMatrix`, `simulate` returns
+`BatchSimulationResult`. Its state retains the batch and can change from pure to
+mixed after noise; `measurements[column]` contains that sample's records in
 instruction order, including nested circuits. Random draws follow instruction
 order and then column order. Recorded `QMeasure` keeps the register size;
 qubit-removing measurements must use `measure` separately. Batch size one retains
 the nested record structure, and an empty batch has no sample record lists.
 
-Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, and `rand_batch(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
+Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, `rand_batch(rng, n, batch_size)`, and `rand_batch_densitymatrix(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
 
 `simulate`, `sample`, and `counts` have no automatic differentiation contract. Use supported deterministic circuit application and expectation APIs for analytic gradients.
 
@@ -178,7 +192,12 @@ Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `me
 | `BatchStateVector(data_or_single_state; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
 | `BatchStateVector(existing_batch; copy=true)` | Copies by default; `copy=false` permits reuse |
 | `StateVector(batch, i; copy=true)` | Copies the column; the current representation also materializes it with `copy=false` |
-| `copy(state)` for the three dense state types | Copies numeric storage |
+| `BatchDensityMatrix(data_or_single_density; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
+| `BatchDensityMatrix(existing_batch; copy=true)` | Copies by default; `copy=false` permits reuse |
+| `BatchDensityMatrix(pure_state_or_pure_batch; copy=...)` | Always allocates independent per-sample outer products |
+| `BatchDensityMatrix(density_list; copy=...)` | Always allocates independent sample storage |
+| `DensityMatrix(density_batch, i; copy=true)` | Materializes independent storage even with `copy=false` |
+| `copy(state)` for the four dense state types | Copies numeric storage |
 | `QCircuit(operations; copy=false)` | Reuses a `Vector{AbstractInstruction}`; converting other vector types allocates a container |
 | `copy(circuit)` or `QCircuit(existing_circuit; copy=true)` | Copies the container and retains instruction objects; `QCircuit(...; copy=false)` can share the container |
 | `copy_instruction(instruction_or_circuit)` | Independently copies mutable instruction data, recursively per occurrence for circuits |
@@ -190,6 +209,19 @@ Independent circuit containers alone do not imply independent parameter arrays. 
 `push!`, `append!`, and `empty!` return the modified `QCircuit`, matching their documented container API. Earlier versions returned its internal operation vector; code relying on that return value should now use `circuit.operations` explicitly.
 
 ## Physical quantities and migration notes
+
+`normalize!(BatchStateVector)` normalizes each sample by its vector norm.
+`normalize!(BatchDensityMatrix)` divides each sample by its finite positive real
+trace, validating all traces before mutation. `tr(density_batch)` returns sample
+traces, whereas `norm(density_batch)` returns Frobenius norms. Unit-trace mixed
+samples generally have norms below one. Constructors check shape rather than
+positivity or normalization; density readout validates finite real nonnegative
+diagonal probabilities and unit trace, including when requesting a marginal.
+
+Gate execution on a density batch applies `UρᵢU†` independently to each sample.
+`QubitsTerm`, `QubitsOperator`, and full-matrix multiplication denote the algebraic
+left action `Oρᵢ`; `expectation(O, batch)` returns `tr(Oρᵢ)` per sample. These
+operator products need not be physical density matrices.
 
 `fidelity` uses squared Uhlmann fidelity for normalized states:
 
@@ -209,4 +241,4 @@ The density overload previously performed only left multiplication. Code requiri
 
 `supports(b, operation, state; action=:apply)` checks execution support. `action=:expectation` checks observation support. Unknown actions or unsupported combinations return `false`. Unsupported public backend execution or observation raises `UnsupportedOperation`; `validate_positions(operation, nqubits(state))` checks register bounds independently of backend arity or representation support.
 
-The dense CPU backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits. Channels convert pure to mixed states and are not implemented for batches. Retained `QMeasure` supports single pure/mixed states and pure-state batches; `QSelect` supports single pure states and pure-state batches. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support is limited to the documented unitary-circuit, observable, encoding, and constructor paths; it does not extend to stochastic execution or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.
+The dense CPU backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits for single and batch states. Channels convert pure to mixed states while preserving sample independence. Retained `QMeasure` supports all four dense representations; `QSelect` supports single pure states and both batch types. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support covers documented deterministic unitary/fixed-channel, observable, encoding, and constructor paths; it does not extend to stochastic execution, trainable noise, or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.

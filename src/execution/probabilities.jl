@@ -73,6 +73,37 @@ function probabilities(state::BatchStateVector; qubits=1:nqubits(state))
     return values
 end
 
+function probabilities(state::BatchDensityMatrix; qubits=1:nqubits(state))
+    indices = _readout_qubits(state, qubits)
+    diagonal = _batch_density_diagonal_probabilities(state; normalized=true)
+    values = zeros(Float64, 2^length(indices), batch_size(state))
+    for b in 1:batch_size(state), i in axes(diagonal, 1)
+        values[_readout_index(i - 1, indices), b] += diagonal[i, b]
+    end
+    return values
+end
+
+# Check the full diagonal before taking a marginal. Invalid entries must not be
+# hidden by cancellation when multiple basis states contribute to one outcome.
+function _batch_density_diagonal_probabilities(state::BatchDensityMatrix; normalized::Bool)
+    data = storage(state)
+    values = Matrix{Float64}(undef, size(data, 1), batch_size(state))
+    tolerance = _probability_tolerance(eltype(state))
+    for b in 1:batch_size(state), i in axes(data, 1)
+        value = data[i, i, b]
+        isfinite(value) || throw(ArgumentError("density-matrix diagonal must be finite"))
+        abs(imag(value)) <= tolerance || throw(ArgumentError("density-matrix diagonal must be real"))
+        real(value) >= -tolerance || throw(DomainError(value, "density-matrix probabilities must be nonnegative"))
+        values[i, b] = max(real(value), 0)
+    end
+    if normalized
+        for b in 1:batch_size(state)
+            _normalize_probabilities!(view(values, :, b), tolerance)
+        end
+    end
+    return values
+end
+
 function _draw_samples!(output, rng, distribution, nshots, nbits)
     all(p -> isfinite(p) && p >= 0, distribution) || throw(ArgumentError("invalid sampling distribution"))
     cumulative = cumsum(distribution)
@@ -103,7 +134,7 @@ function sample(rng::Random.AbstractRNG, state, shots::Integer; qubits=1:nqubits
     return _draw_samples!(Matrix{Int}(undef, shots, length(indices)), rng, distribution, shots, length(indices))
 end
 
-function sample(rng::Random.AbstractRNG, state::BatchStateVector, shots::Integer; qubits=1:nqubits(state))
+function sample(rng::Random.AbstractRNG, state::Union{BatchStateVector,BatchDensityMatrix}, shots::Integer; qubits=1:nqubits(state))
     shots >= 0 || throw(ArgumentError("shots must be nonnegative"))
     indices = _readout_qubits(state, qubits)
     distributions = probabilities(state; qubits=indices)

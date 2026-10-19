@@ -44,7 +44,7 @@ function backend(state::AbstractQuantumState)
     throw(ArgumentError("$(typeof(state)) must implement backend(state)"))
 end
 
-backend(::Union{StateVector,DensityMatrix,BatchStateVector}) = CPUBackend()
+backend(::Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}) = CPUBackend()
 
 """
     supports(backend, operation, state; action=:apply) -> Bool
@@ -63,7 +63,7 @@ function supports(b::AbstractBackend, circuit::QCircuit, state::AbstractQuantumS
     return action === :apply && all(operation -> supports(b, operation, state; action=action), circuit)
 end
 
-const _DenseCPUState = Union{StateVector,DensityMatrix,BatchStateVector}
+const _DenseCPUState = Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}
 
 function supports(::CPUBackend, operation, state::AbstractQuantumState; action::Symbol=:apply)
     return _cpu_supports(operation, typeof(state), action)
@@ -80,30 +80,31 @@ function _cpu_supports(operation::Gate, ::Type{S}, action::Symbol) where S
     if action === :apply
         return S <: _DenseCPUState && 1 <= nqubits(operation) <= 5
     elseif action === :expectation
-        return S <: Union{StateVector,BatchStateVector} && 1 <= nqubits(operation) <= 5
+        return S <: Union{StateVector,BatchStateVector,BatchDensityMatrix} && 1 <= nqubits(operation) <= 5
     end
     return false
 end
 
 function _cpu_supports(operation::QuantumMap, ::Type{S}, action::Symbol) where S
     # A map on N qubits applies a supermatrix to 2N vectorized density axes.
-    return action === :apply && S <: Union{StateVector,DensityMatrix} && 1 <= nqubits(operation) <= 2
+    return action === :apply && S <: _DenseCPUState && 1 <= nqubits(operation) <= 2
 end
 
 _cpu_supports(operation::QMeasure, ::Type{S}, action::Symbol) where S =
     action === :apply && S <: _DenseCPUState && operation.keep
 
 _cpu_supports(::QSelect, ::Type{S}, action::Symbol) where S =
-    action === :apply && S <: Union{StateVector,BatchStateVector}
+    action === :apply && S <: Union{StateVector,BatchStateVector,BatchDensityMatrix}
 
 _cpu_supports(::Union{QubitsTerm,QubitsOperator}, ::Type{S}, action::Symbol) where S =
     action === :expectation && S <: _DenseCPUState
 
 _cpu_supports(::AbstractMatrix, ::Type{S}, action::Symbol) where S =
-    action === :expectation && S <: Union{StateVector,BatchStateVector}
+    action === :expectation && S <: Union{StateVector,BatchStateVector,BatchDensityMatrix}
 
 _cpu_result_state(operation, ::Type{S}) where S = S
 _cpu_result_state(::QuantumMap, ::Type{S}) where {S<:StateVector} = DensityMatrix
+_cpu_result_state(::QuantumMap, ::Type{S}) where {S<:BatchStateVector} = BatchDensityMatrix
 
 # Operators contain several register tuples rather than one positions list.
 function QuantumCircuits.validate_positions(observable::QubitsOperator, n::Integer)

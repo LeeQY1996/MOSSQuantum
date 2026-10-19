@@ -7,6 +7,11 @@ one-column batch remains a batch: expectation values and measurement outcomes
 retain their sample axis. MOSS already uses the name `BatchStateVector`; there
 is no second `StateVectorBatch` type.
 
+Mixed states have their own `BatchDensityMatrix` with shape `(2^n, 2^n, B)`.
+Both batch types share operation names, scalar objectives, and recorded results.
+The [batch density guide](batch-density-matrices.md) describes mixed-state storage,
+Kraus execution, conditional measurements, and deterministic gradients.
+
 All samples in this implementation share their qubit count, circuit, parameter
 vector, and observable. A different circuit parameter vector per sample is outside this
 API. The implementation uses dense CPU `Matrix` storage.
@@ -52,6 +57,7 @@ accepts matrix views; `reset_qubit!` also handles views overlapping its output.
 | `batch = apply!(circuit, batch)` | In-place execution; retain the returned state after type promotion |
 | `observable * batch`, `observable(batch)` | `QubitsTerm`/`QubitsOperator` act on every sample |
 | `matrix * batch` | Apply a full register matrix to every sample |
+| `apply!(channel, batch)` | Return a `BatchDensityMatrix`, one mixed state per input column |
 | `expectation(observable, batch)` | Vector of length `B`, without automatic averaging |
 | `expectation(left, observable, right)` | One bilinear value per corresponding pair of columns |
 | `norm`, `dot`, `fidelity`, `distance` | One value per sample or corresponding sample pair |
@@ -65,11 +71,12 @@ nested circuits. Register validation runs before kernel execution. Paired batch
 operations require matching registers and sample counts. Readout follows
 [qubit and basis ordering](conventions.md#qubit-and-basis-ordering).
 
-Partial trace can produce mixed states, so it returns a vector of independently
-owned ordinary density matrices. This does not introduce a batched density
-representation. Channels on pure-state batches remain unsupported; their
-output representation will be addressed with batch density matrices or an
-explicit trajectory design.
+Partial trace on a pure batch retains its established vector of independently
+owned ordinary density matrices. Wrap those results in `BatchDensityMatrix`
+when a mixed batch is desired. Applying a supported Kraus channel to a pure
+batch directly returns `BatchDensityMatrix`; retain the returned state rather
+than assuming its type or storage rank remains the same. A channel computes a
+mixed state for each sample without randomly choosing one Kraus branch.
 
 ## Measurement and recorded execution
 
@@ -133,11 +140,12 @@ circuit slots; sample contributions are summed before slot identities are
 accumulated.
 
 `evaluate` and `evaluate_batch` require no AD package and select no gradient
-method. The current CPU `AdjointGradient` supports shared unitary circuits and
-Hermitian `QubitsTerm`/`QubitsOperator` observables on pure batches, with valid
-`differentiate` rules for active gate parameters. It executes one batch
-forward and reconstructs each column during the reverse pass. It rejects
-measurement, post-selection, and channels. Query `supports_gradient` separately
+method. CPU `AdjointGradient` supports shared unitary gates, fixed Kraus channels,
+and Hermitian `QubitsTerm`/`QubitsOperator` observables on pure or mixed batches,
+with valid `differentiate` rules for active gate parameters. Unitary circuits
+execute one batch forward and reconstruct each sample during the reverse pass.
+Channel circuits use per-sample checkpoints, including for singular channels.
+It rejects measurement and post-selection. Query `supports_gradient` separately
 from backend execution capabilities. Other gradient methods can implement the
 [public protocol](extending.md#execution-and-replaceable-differentiation); no fallback is
 silently chosen.
@@ -150,9 +158,10 @@ loss(theta) = differentiable_value(AdjointGradient(), objective, theta)
 gradient = Zygote.gradient(loss, theta)[1]
 ```
 
-Legacy Zygote circuit/state entrypoints support shared unitary circuits,
+Legacy Zygote circuit/state entrypoints support shared unitary gates and fixed channels,
 batch `QubitsTerm`/`QubitsOperator` expectations, state construction and copying,
-and `batch_qubit_encoding`/`batch_qstate` angle inputs. They sum shared circuit
+and `batch_qubit_encoding`/`batch_qstate` angle inputs, including pure-to-mixed
+conversion. They sum shared circuit
 parameter contributions and retain per-column state cotangents. Observable
 configuration is fixed. This is a defined set of derivative rules, rather than
 an AD guarantee for every batch function; readout, stochastic measurement,

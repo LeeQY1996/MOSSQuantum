@@ -14,7 +14,7 @@ circuit = QCircuit([QuantumGate(1, phase)])
 state = apply!(circuit, qstate(2))
 ```
 
-The first gate position is the least significant local matrix bit. `QuantumGate` does not validate unitarity, so the caller is responsible for the intended operation. `QuantumMap` accepts Kraus matrices; applying it to a single state vector returns a density matrix. Current CPU generic channels support at most two physical qubits because their superoperators act on twice as many density indices; they do not support pure-state batches.
+The first gate position is the least significant local matrix bit. `QuantumGate` does not validate unitarity, so the caller is responsible for the intended operation. `QuantumMap` accepts Kraus matrices; applying it to a state vector returns a density matrix, and applying it to `BatchStateVector` returns `BatchDensityMatrix`. Current CPU generic channels support at most two physical qubits because their superoperators act on twice as many density indices. Batch samples undergo the same channel independently.
 
 A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, `MOSS.mat`, and `MOSS.change_positions`. It then uses the existing CPU gate dispatcher, subject to its arity limits. A fixed gate angle does not become trainable automatically. Trainable gates add the public parameter and derivative methods described below, without adopting the built-in gate fields.
 
@@ -33,11 +33,19 @@ A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, 
 `QCircuit` accepts external `AbstractInstruction` subtypes, including instructions outside the gate/channel hierarchy. Observable descriptions such as `QubitsOperator` are not instructions. Instructions are parameterless by default. `storage` is optional for external states, and neither `.data` nor MOSS private helpers belong to the extension contract.
 
 The dense CPU types keep single and batch representation separate:
-`StateVector` has one vector, while the existing `BatchStateVector` has one sample
-per matrix column. Reuse public operation names when adding batch capabilities;
+`StateVector` has one vector, while `BatchStateVector` has one sample
+per matrix column. `DensityMatrix` has one matrix; `BatchDensityMatrix` has axes
+`(2^n, 2^n, B)`, with one independent matrix per final-axis slice. Reuse public
+operation names when adding batch capabilities;
 preserve sample order and batch axes even for one sample. A batch shares its
-circuit and circuit parameters. The [batch guide](batching.md) describes supported
-CPU operations and the boundaries for future mixed-state batching.
+circuit and circuit parameters. Both batch types support B=0 and zero qubits.
+The [pure batch guide](batching.md) and [density batch guide](batch-density-matrices.md)
+describe supported CPU operations, ownership, and differentiation boundaries.
+
+Density-batch gate execution applies `UρU†`; observable multiplication remains
+the algebraic left action. Preserve floating state component precision during
+dense gate and channel execution, including promotion from real `T` to
+`Complex{T}`. Density normalization uses trace, rather than matrix norm.
 
 ## Backend and observation contracts
 
@@ -56,9 +64,11 @@ The two-argument methods `apply!(instruction, state)` and `expectation(observabl
 
 The existing CPU measurement adapters retain metadata return values for `QMeasure` and `QSelect`. To support stochastic measurement through `simulate`, a custom backend implements `measure!(backend, state, position; auto_reset, rng)` returning `(outcome, probability)`, and advertises support for the corresponding `QMeasure`. Generic `simulate` records those outcomes; it does not invent a backend's measurement algorithm or AD rule.
 
-For a `BatchStateVector`, those two metadata fields are vectors in column order.
+For `BatchStateVector` or `BatchDensityMatrix`, those two metadata fields are
+vectors in sample order.
 `simulate` requires one valid outcome/probability per sample and preserves the
-sample count after every instruction. It returns `BatchSimulationResult`, whose
+sample count after every instruction, allowing transitions between pure and
+mixed batch representations. It returns `BatchSimulationResult`, whose
 `measurements[column]` holds the individual records. Batch `QSelect` similarly
 returns one probability per sample. Recorded batch measurements keep the register
 size; separate nonmutating `measure`/`post_select` calls support qubit removal.
@@ -113,7 +123,7 @@ To use a custom unitary `Gate` with the existing dense CPU circuit reverse pass,
 Dⱼ = (∂U/∂θⱼ)' * U
 ```
 
-on the same register positions as the original gate. This is the generator convention used by the reverse pass, rather than a list of raw `∂U/∂θⱼ` matrices. A gate with active parameters but no derivative implementation raises `ArgumentError`; a parameterless gate returns `nothing`. The reverse pass requires unitary gates. Single-state workflows also support the existing fixed `QuantumMap` channels; pure-state batch workflows support shared unitary circuits. Arbitrary `AbstractInstruction` subtypes, custom backends, batch noise, and trainable noise parameters are outside that implementation. For the current Zygote training contract, bind the parameters of a `QCircuit` inside the loss; standalone instruction binding does not establish a general AD rule.
+on the same register positions as the original gate. This is the generator convention used by the reverse pass, rather than a list of raw `∂U/∂θⱼ` matrices. A gate with active parameters but no derivative implementation raises `ArgumentError`; a parameterless gate returns `nothing`. The reverse pass requires unitary gates and also supports fixed `QuantumMap` channels in single/batch pure and mixed workflows. Arbitrary `AbstractInstruction` subtypes, custom backends, and trainable noise parameters are outside that implementation. For the current Zygote training contract, bind the parameters of a `QCircuit` inside the loss; standalone instruction binding does not establish a general AD rule.
 
 [`test/fixtures/MOSSDemoGates`](../test/fixtures/MOSSDemoGates) is an independent package showing the complete path. Its immutable `DemoRotation <: ParametricGate{1}` stores `wire`, `angle`, and `trainable`, implements only public MOSS methods, and needs no special reset or execution code in MOSS. Its contract tests cover nested and repeated binding, frozen parameters, adjoint wrappers, analytic and finite-difference gradients, one optimization update, and fixed-channel gradients. After developing both packages into the consumer environment:
 
@@ -152,9 +162,10 @@ Sharing a value does not share mutable gate storage. Existing independent bindin
 Zygote registrations are optional and loaded by `MOSSZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
 
 The legacy circuit/state integration uses Zygote adjoints. Its batch rules cover
-unitary circuit application, `QubitsTerm`/`QubitsOperator` expectations,
+pure/mixed circuit application with unitary gates and fixed channels,
+`QubitsTerm`/`QubitsOperator` expectations,
 `batch_qubit_encoding` (including its `batch_qstate` alias), and supported state
-constructors/copies. They allow gradients of shared circuit parameters or
+constructors/copies, including pure-to-density conversion. They allow gradients of shared circuit parameters or
 per-sample encoding inputs, without implying derivatives for every batch
 operation. Batch measurement and post-selection remain forward capabilities.
 The explicit parameter-vector interface below uses a separate optional
@@ -189,7 +200,7 @@ The constructor snapshots the instruction tree, observable, and initial state. T
 The generic pullback fallback calls `value_and_gradient` once and caches a private copy of the gradient. This fallback is eager. Strategies can override the pullback to reuse a forward execution and defer their reverse work. The default gradient hook throws `UnsupportedGradient`; the two defaults never call each other recursively and never silently select another algorithm. Inputs use finite real values with one-based vector indexing. The value must be real and scalar; the gradient is a real vector with the same length. Nonfinite output gradients may propagate. Numerical gradient precision is chosen by the method; AD adapters project to the input domain.
 
 `BatchExpectationObjective(template, observable, initial_batch; parameter_map,
-backend, reduction=:mean, weights=nothing)` adapts a nonempty pure-state batch to
+backend, reduction=:mean, weights=nothing)` adapts a nonempty pure or mixed batch to
 the same scalar protocol. `evaluate_batch` returns real sample expectations in
 column order; `evaluate` applies `:mean`, `:sum`, or `:weighted_sum`. Weighted sums
 require one finite real weight per sample, keep negative weights, and do not
@@ -202,13 +213,17 @@ forward execution or the optional AD adapter.
 `AdjointGradient` specializes the numerical pullback using dense CPU reverse
 passes without invoking Zygote. `ExpectationObjective` supports single pure/mixed
 states, unitary gates, and fixed `QuantumMap` channels.
-`BatchExpectationObjective` supports shared unitary circuits on pure-state batches.
+`BatchExpectationObjective` supports shared circuits on pure/mixed batches with
+unitary gates and fixed `QuantumMap` channels.
 Both require supported Hermitian `QubitsTerm`/`QubitsOperator` observables and valid
 derivative rules for active parameters. Shared slots are accumulated through the
 objective's `ParameterMap`, and batch contributions follow its scalar reduction.
 The batch implementation reuses the numerical reverse helpers used by optional
-Zygote rules, with one batch forward and per-sample reverse reconstruction.
-Stochastic instructions, batch noise, trainable channels, arbitrary backends, and
+Zygote rules. Unitary-only circuits use one batch forward and per-sample reverse
+reconstruction. Noisy circuits retain per-sample forward checkpoints and apply
+channel adjoints, allowing singular fixed noise such as complete amplitude
+damping at `γ=1` without requiring an inverse channel.
+Stochastic instructions, trainable channels, arbitrary backends, and
 missing derivative rules are unsupported by this method. Querying another method
 is independent of the execution backend's `supports` queries.
 

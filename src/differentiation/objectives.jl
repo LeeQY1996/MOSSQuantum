@@ -40,7 +40,14 @@ function _cpu_adjoint_circuit_state(circuit::QCircuit, state_type::Type)
         elseif instruction isa QuantumMap
             _cpu_supports(instruction, state_type, :apply) || return nothing
             nparameters(instruction) == 0 || return nothing
-            dimension = 2^(2nqubits(instruction))
+            register = Tuple(positions(instruction))
+            length(register) == nqubits(instruction) && length(unique(register)) == length(register) || return nothing
+            Tuple(ordered_positions(instruction)) == Tuple(sort(collect(register))) || return nothing
+            local_dimension = 2^nqubits(instruction)
+            matrices = kraus_matrices(instruction)
+            !isempty(matrices) && all(matrix -> size(matrix) == (local_dimension, local_dimension) &&
+                all(isfinite, matrix), matrices) || return nothing
+            dimension = local_dimension^2
             supermatrix = ordered_supermat(instruction)
             size(supermatrix) == (dimension, dimension) && all(isfinite, supermatrix) || return nothing
             state_type = _cpu_result_state(instruction, state_type)
@@ -156,13 +163,9 @@ function _supports_cpu_batch_adjoint(objective::BatchExpectationObjective, templ
         validate_positions(template, register_size)
         validate_positions(observable, register_size)
         _cpu_adjoint_observable_valid(observable) || return false
-        state_type = StateVector{eltype(objective.initial_state)}
-        # A batch of pure states has no mixed-state transition. In particular,
-        # single-state support for fixed channels does not establish batch
-        # support, and stochastic measurement/postselection are not adjoints.
-        _has_quantum_map(template) && return false
+        state_type = typeof(objective.initial_state)
         final_type = _cpu_adjoint_circuit_state(template, state_type)
-        return final_type === state_type && _cpu_supports(observable, final_type, :expectation)
+        return !isnothing(final_type) && _cpu_supports(observable, final_type, :expectation)
     catch error
         error isa Union{InterruptException,OutOfMemoryError} && rethrow()
         return false
@@ -180,8 +183,9 @@ function value_and_pullback(method::AdjointGradient, objective::BatchExpectation
     _supports_cpu_batch_adjoint(objective, bound) || throw(UnsupportedGradient(method, objective))
 
     # Reuse the same numerical batch reverse passes as optional AD adapters.
-    # Both helpers own private circuit/state/observable snapshots, and perform
-    # one shared batch forward followed by independent per-column reverse work.
+    # Both helpers own private circuit/state/observable snapshots. Unitary-only
+    # circuits share a batch forward; channels use per-sample checkpoints so
+    # singular maps never require an inverse.
     observable = deepcopy(objective.observable)
     parameter_map = objective.parameter_map
     output, circuit_back = _batch_circuit_adjoint(bound, objective.initial_state)

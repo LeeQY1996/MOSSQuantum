@@ -23,6 +23,14 @@ if scenario == "core"
         QCircuit([RyGate(1, 0.0; isparas=true)]), QubitsTerm(1 => "Z"), batch)
     @test evaluate(objective, [0.37]) ≈ cos(0.37)
     @test value_and_gradient(AdjointGradient(), objective, [0.37])[2] ≈ [-sin(0.37)]
+    mixed = BatchDensityMatrix(batch)
+    noisy_circuit = QCircuit([RyGate(1, 0.0; isparas=true), AmplitudeDamping(1; γ=0.2)])
+    mixed_objective = BatchExpectationObjective(noisy_circuit, QubitsTerm(1 => "Z"), mixed)
+    @test size(storage(noisy_circuit * batch)) == (2, 2, 2)
+    @test evaluate(mixed_objective, [0.37]) ≈ 0.2 + 0.8cos(0.37)
+    @test value_and_gradient(AdjointGradient(), mixed_objective, [0.37])[2] ≈ [-0.8sin(0.37)]
+    loaded_after_execution = Set(package.name for package in keys(Base.loaded_modules))
+    @test all(name -> !(name in loaded_after_execution), ("ChainRulesCore", "Zygote"))
     @test_throws ArgumentError MOSS.QuantumCircuits.plot(circuit)
 elseif scenario in ("chainrules_first", "moss_first_chainrules")
     if scenario == "chainrules_first"
@@ -46,6 +54,13 @@ elseif scenario in ("chainrules_first", "moss_first_chainrules")
         AdjointGradient(), batch_objective, [theta])
     @test batch_value ≈ 2cos(theta)
     @test batch_pullback(1.0)[4] ≈ [-2sin(theta)]
+    noisy_objective = BatchExpectationObjective(
+        QCircuit([RyGate(1, 0.0; isparas=true), AmplitudeDamping(1; γ=0.2)]),
+        QubitsTerm(1 => "Z"), BatchDensityMatrix(1, 2))
+    mixed_value, mixed_pullback = ChainRulesCore.rrule(differentiable_value,
+        AdjointGradient(), noisy_objective, [theta])
+    @test mixed_value ≈ 0.2 + 0.8cos(theta)
+    @test mixed_pullback(1.0)[4] ≈ [-0.8sin(theta)]
     @test Base.get_extension(MOSS, :MOSSChainRulesCoreExt) !== nothing
     @test Base.get_extension(MOSS, :MOSSZygoteExt) === nothing
     loaded = Set(package.name for package in keys(Base.loaded_modules))
@@ -75,6 +90,12 @@ elseif scenario in ("zygote_first", "moss_first_zygote")
     batch_objective = BatchExpectationObjective(circuit, observable, batch)
     batch_parameter_loss(values) = differentiable_value(AdjointGradient(), batch_objective, values)
     @test Zygote.gradient(batch_parameter_loss, [theta])[1] ≈ [-sin(theta)]
+    noisy_circuit = QCircuit([RyGate(1, 0.0; isparas=true), AmplitudeDamping(1; γ=0.2)])
+    for batch_initial in (batch, BatchDensityMatrix(batch))
+        noisy_batch_loss(values) = real(sum(expectation(observable,
+            bind_parameters(noisy_circuit, values) * batch_initial)))
+        @test Zygote.gradient(noisy_batch_loss, [theta])[1] ≈ [-1.6sin(theta)]
+    end
     @test Base.get_extension(MOSS, :MOSSChainRulesCoreExt) !== nothing
 elseif scenario in ("plots_first", "moss_first_plots", "latex_then_moss_then_plots")
     if scenario == "plots_first"
