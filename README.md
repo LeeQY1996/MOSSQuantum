@@ -252,6 +252,7 @@ ChainRulesCore is an optional rule dependency for the explicit-method scalar int
 - [Extension guide](docs/extending.md)
 - [Core foundation roadmap](docs/roadmap.md)
 - [Benchmark setup and workloads](benchmark/README.md)
+- [Repeated-evaluation measurements and allocation optimization](docs/performance/repeated-evaluation-2026-10-19.md)
 
 Run the test suite through the package entrypoint:
 

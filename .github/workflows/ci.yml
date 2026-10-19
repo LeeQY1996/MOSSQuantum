@@ -60,3 +60,24 @@ jobs:
           version: ${{ matrix.julia }}
       - name: Test extension against the local MOSS source
         run: julia --project=test/fixtures/${{ matrix.fixture }} --startup-file=no -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.test()'
+
+  benchmark-smoke:
+    name: Benchmark harness / Julia ${{ matrix.julia }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        julia: ['1.10', '1.13']
+    env:
+      JULIA_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: ${{ matrix.julia }}
+      - name: Prepare the independent benchmark environment
+        run: julia --project=benchmark --startup-file=no -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
+      - name: Check core repeated-evaluation workloads without AD
+        run: julia --project=benchmark --startup-file=no benchmark/repeated_evaluation.jl --steady-only --seconds 0.01 --qubits 2 --depth 2
+      - name: Check optional AD adapter workloads in a fresh process
+        run: julia --project=benchmark --startup-file=no benchmark/repeated_evaluation.jl --steady-only --with-zygote --seconds 0.01 --qubits 2 --depth 2

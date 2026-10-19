@@ -30,7 +30,22 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
-## Current milestone: replaceable differentiation and optional AD
+## Current milestone: repeated evaluation and first measured optimization
+
+This milestone measures the new scalar interfaces before extending execution machinery. It retains independent execution and gradient selection, and leaves additional gradient algorithms for later work.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Performance baseline | An independent core-only benchmark entrypoint, with optional AD workloads and separate preparation/application measurements | Pure, mixed, fixed-channel, and shared-parameter cases; time, allocation, first-call/warmed phases, reproducible environment and source metadata | Verified locally |
+| 2 Execution ownership | Document per-call state/checkpoints, repeated pullbacks, independent tasks, and bound-parameter revalidation | Interleaved points and objective edits preserve earlier pullbacks; invalid bound gates fail before execution | Verified locally |
+| 3 First CPU optimization | Remove the duplicate initial-state copy before the existing adjoint helper | Identical numerical behavior and unchanged validation; matched before/after allocation reductions with controls and a paired repetition | Verified locally |
+| 4 Compatibility | Full minimum/primary-version suites, independent fixtures, and core/AD benchmark smoke checks | Julia 1.10/1.13 pass; CI checks the harness without performance thresholds | Verified locally |
+
+The [measurement report](performance/repeated-evaluation-2026-10-19.md) retains every trial table, source and environment hashes, the resolved benchmark Manifest, and the source patch. Eight-qubit mixed-state pullback preparation allocates 1,405,832 bytes instead of 2,454,480 bytes, a 42.72% reduction. Complete explicit gradients save the same 1,048,648 bytes. Unchanged operations exhibit elapsed-time drift; the report makes no general throughput claim.
+
+The result needs no persistent objective cache or new public execution-plan interface. Each prepared pullback keeps its own bound circuit and saved state, while current template and bound-value checks remain intact. Dedicated backend workspaces and compilation can be designed after measurements identify another concrete need.
+
+## Completed milestone: replaceable differentiation and optional AD
 
 This milestone implements the existing automatic-differentiation path while keeping execution independent of the selected gradient method. Additional finite-difference, parameter-shift, and stochastic estimators will be designed separately; no such algorithms are introduced here.
 
@@ -92,6 +107,20 @@ The following features remain distinct follow-up changes:
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Repeated evaluation and first CPU allocation optimization
+
+Local acceptance completed on 2026-10-19:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed 3357 assertions across 45 top-level testsets, including all eight fresh-process loading scenarios (45.7 seconds for that group).
+- Julia 1.10.10, one thread: an independent environment developed the actual checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with 3357 assertions across 45 top-level testsets and all eight fresh-process loading scenarios (48.8 seconds for that group).
+- The 151 additional lifecycle assertions bring the CPU objective group to 310. They cover pure/mixed inputs with and without fixed channels, shared parameters, interleaved points, independent concurrent pullbacks, returned-gradient and initial-state ownership, objective edits, and parameter-dependent invalid matrices or derivatives rejected before execution.
+- Standard independent fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9 assertions, `MOSSDemoGates` 181, and `MOSSDemoDifferentiation` 235 per version.
+- Both versions passed the new benchmark entrypoint in four isolated compatibility processes: core mode produced 32 first-call/warmed summary rows with neither AD package loaded; optional AD mode produced 40 rows and matched the explicit numerical gradient method. The two-qubit, two-layer cases exercise actual cross-layer parameter sharing.
+- Six benchmark tables retain 128 first-call/warmed summaries from six/eight-qubit before/after runs and an additional paired eight-qubit repetition. The 48 paired warmed comparisons use identical scripts and resolved environments. Independent review matched baseline source hashes to `e132ca0`, optimized hashes to the current source, and the sole source change to the archived patch. Allocation controls and both eight-qubit repetitions agree exactly; no general elapsed-time improvement is claimed.
+- The [performance report](performance/repeated-evaluation-2026-10-19.md) retains the data and resolved benchmark Manifest. Documentation links, code fences, TOML metadata, and whitespace checks passed. CI now checks the independent benchmark harness on Julia 1.10 and 1.13 without timing thresholds; remote CI has not been run.
+
+Main-package dependencies, its development Manifest, and public API signatures are unchanged. BenchmarkTools remains in the independent benchmark environment; only benchmark metadata stdlibs were added there. The optimization removes a redundant copy, keeps all parameter-dependent validation, and adds no persistent cache or mandatory backend interface.
 
 ### Replaceable differentiation and optional AD acceptance
 

@@ -67,6 +67,8 @@ Public parameter writers may return replacement instructions. Circuit traversal 
 
 `differentiable_value(method, objective, values)` explicitly carries the selected numerical method. Ordinary execution calls `evaluate`; the optional ChainRulesCore extension delegates differentiation to the public pullback hook. Only the explicit parameter vector is differentiated by this scalar entrypoint. This avoids imposing a new circuit tangent representation on the legacy Zygote interfaces or coupling a future numerical gradient strategy to the forward executor.
 
+Repeated CPU evaluations keep their mutable execution state local to each call. A prepared adjoint owns its bound circuit, output, observation snapshot, and any fixed-channel checkpoints. There is no persistent cache on `ExpectationObjective`, and support and bound-parameter validation remain part of each gradient preparation. Reuse of a prepared pullback does not require a new execution-plan interface from other backends. The [ownership conventions](conventions.md#repeated-evaluation-and-pullback-ownership) define interleaving and concurrency.
+
 ## Optional integrations
 
 MOSS requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. ChainRulesCore, Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSChainRulesCoreExt` registers the explicit-method scalar rule independently of Zygote; `MOSSZygoteExt` retains the legacy Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
@@ -83,7 +85,7 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. CI resolves and tests all three fixtures independently on Julia 1.10 and Julia 1.13.
 
-The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. Recorded warmed measurements remain necessary before making performance claims.
+The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. The [repeated-evaluation report](performance/repeated-evaluation-2026-10-19.md) records measured scalar-objective comparisons, trial summaries, environment metadata, and the first CPU allocation reduction. Those measurements do not establish a baseline for every dense-kernel workload. CI exercises the new harness on both supported Julia versions without timing thresholds.
 
 ## Compatibility and remaining work
 

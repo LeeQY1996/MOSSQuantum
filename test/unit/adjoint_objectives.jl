@@ -27,6 +27,39 @@ struct BadMatrix <: MOSS.Gate{1} end
 MOSS.positions(::BadMatrix) = (1,)
 MOSS.mat(::BadMatrix) = ones(3, 3)
 
+# The template is valid, but binding a different parameter can invalidate a
+# matrix or its derivative. Execution deliberately fails so these cases also
+# verify that validation finishes before any gate is applied.
+struct BoundValidationGate <: MOSS.ParametricGate{1}
+    angle::Float64
+    failure::Symbol
+end
+MOSS.positions(::BoundValidationGate) = (1,)
+MOSS.parameters(gate::BoundValidationGate) = [gate.angle]
+MOSS.active_parameters(gate::BoundValidationGate) = [gate.angle]
+function MOSS.reset_parameters!(gate::BoundValidationGate, values::AbstractVector{<:Real})
+    length(values) == 1 || throw(DimensionMismatch())
+    return BoundValidationGate(only(values), gate.failure)
+end
+function MOSS.mat(gate::BoundValidationGate)
+    if gate.angle > 0.5
+        gate.failure === :matrix && return [1.0 0.0; 0.0 2.0]
+        gate.failure === :matrix_shape && return ones(3, 3)
+    end
+    return [cos(gate.angle / 2) -sin(gate.angle / 2); sin(gate.angle / 2) cos(gate.angle / 2)]
+end
+function MOSS.differentiate(gate::BoundValidationGate)
+    if gate.angle > 0.5
+        gate.failure === :derivative_shape && return [BadMatrix()]
+        gate.failure === :derivative_nonfinite && return [MOSS.QuantumGate(1, [NaN 0.0; 0.0 0.0])]
+    end
+    return [MOSS.QuantumGate(1, [0.0 0.5; -0.5 0.0])]
+end
+for State in (MOSS.StateVector, MOSS.DensityMatrix)
+    @eval MOSS.apply!(::BoundValidationGate, ::$State) =
+        throw(AssertionError("invalid bound instructions must be rejected before execution"))
+end
+
 function MOSS.differentiate(gate::Rotation)
     gate.rule === :missing && throw(ArgumentError("implement differentiate"))
     gate.rule === :length && return MOSS.Gate[]
@@ -212,6 +245,99 @@ end
         @test_throws DimensionMismatch value_and_gradient(method, objective, Float64[])
         @test_throws ArgumentError value_and_pullback(method, objective, [NaN])
         @test_throws ArgumentError value_and_gradient(method, objective, [Inf])
+    end
+
+    @testset "Interleaved evaluations retain independent pullback state" begin
+        points = [[0.23, -0.41], [-0.37, 0.22], [0.74, 0.67]]
+        for initial in (StateVector(1), DensityMatrix(1)), noisy in (false, true)
+            template = QCircuit([RyGate(1, 0.0; isparas=true),
+                RzGate(1, 0.0; isparas=true), RyGate(1, 0.0; isparas=true)])
+            noisy && push!(template, AmplitudeDamping(1; γ=0.21))
+            objective = ExpectationObjective(template, QubitsTerm(1 => "Z"), initial;
+                parameter_map=ParameterMap(template, [1, 2, 1]))
+            expected_values = [evaluate(objective, point) for point in points]
+            expected_gradients = [_objective_finite_difference(objective, point) for point in points]
+
+            first_value, first_back = value_and_pullback(method, objective, points[1])
+            @test evaluate(objective, points[2]) ≈ expected_values[2]
+            middle_value, middle_gradient = value_and_gradient(method, objective, points[2])
+            last_value, last_back = value_and_pullback(method, objective, points[3])
+            @test [first_value, middle_value, last_value] ≈ expected_values
+            @test middle_gradient ≈ expected_gradients[2] atol=1e-8
+            @test first_back(1.0) ≈ expected_gradients[1] atol=1e-8
+            returned_gradient = first_back(1.0)
+            returned_gradient .= 99
+            @test last_back(-2.0) ≈ -2expected_gradients[3] atol=2e-8
+            @test first_back(-2.0) ≈ -2expected_gradients[1] atol=2e-8
+            @test last_back(1.0) ≈ expected_gradients[3] atol=1e-8
+
+            # Each task owns its pullback. The shared objective is read only;
+            # yields also exercise interleaving when Julia has one thread.
+            tasks = map(points) do point
+                Threads.@spawn begin
+                    task_values = copy(point)
+                    value, back = value_and_pullback(method, objective, task_values)
+                    yield()
+                    returned = back(1.0)
+                    returned .= 99
+                    yield()
+                    (value, back(1.0), back(-2.0), task_values)
+                end
+            end
+            for (index, task) in enumerate(tasks)
+                value, gradient, scaled_gradient, task_values = fetch(task)
+                @test value ≈ expected_values[index]
+                @test gradient ≈ expected_gradients[index] atol=1e-8
+                @test scaled_gradient ≈ -2expected_gradients[index] atol=2e-8
+                @test task_values == points[index]
+            end
+            @test active_parameters(objective.template) == [0.0, 0.0, 0.0]
+            @test active_parameters(template) == [0.0, 0.0, 0.0]
+            @test objective.initial_state == initial
+            @test initial == (initial isa StateVector ? StateVector(1) : DensityMatrix(1))
+            @test first_back(1.0) ≈ expected_gradients[1] atol=1e-8
+        end
+    end
+
+    @testset "Support is revalidated after parameter binding and objective edits" begin
+        F = AdjointObjectiveFixtures
+        for initial in (StateVector(1), DensityMatrix(1)), failure in
+                (:matrix, :matrix_shape, :derivative_shape, :derivative_nonfinite)
+            objective = ExpectationObjective(QCircuit([F.BoundValidationGate(0.1, failure)]),
+                QubitsTerm(1 => "Z"), initial)
+            @test supports_gradient(method, objective)
+            @test_throws UnsupportedGradient value_and_pullback(method, objective, [0.8])
+            @test_throws UnsupportedGradient value_and_gradient(method, objective, [0.8])
+            @test supports_gradient(method, objective)
+            @test active_parameters(objective.template) == [0.1]
+        end
+
+        objective = ExpectationObjective(QCircuit([RyGate(1, 0.0; isparas=true)]),
+            QubitsTerm(1 => "Z"), StateVector(1))
+        @test supports_gradient(method, objective)
+        value, original_back = value_and_pullback(method, objective, [0.3])
+        @test value ≈ cos(0.3)
+        push!(objective.template, XGate(1))
+        @test supports_gradient(method, objective)
+        @test value_and_gradient(method, objective, [0.3])[2] ≈ [sin(0.3)]
+        @test original_back(1.0) ≈ [-sin(0.3)]
+
+        objective.template[1] = F.Rotation(1, 0.0, :missing)
+        @test !supports_gradient(method, objective)
+        @test_throws UnsupportedGradient value_and_gradient(method, objective, [0.3])
+        objective.template[1] = RyGate(1, 0.0; isparas=true)
+        @test supports_gradient(method, objective)
+        @test value_and_gradient(method, objective, [0.3])[2] ≈ [sin(0.3)]
+
+        observation = oplist(objective.observable)[1]
+        observation .= [0.0 1.0; 0.0 0.0]
+        @test !supports_gradient(method, objective)
+        @test_throws UnsupportedGradient value_and_pullback(method, objective, [0.3])
+        observation .= [2.0 0.0; 0.0 -2.0]
+        @test supports_gradient(method, objective)
+        @test value_and_gradient(method, objective, [0.3])[1] ≈ -2cos(0.3)
+        @test value_and_gradient(method, objective, [0.3])[2] ≈ [2sin(0.3)]
+        @test original_back(1.0) ≈ [-sin(0.3)]
     end
 
     @testset "Capability queries reject unsupported paths before execution" begin

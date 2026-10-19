@@ -78,6 +78,14 @@ The explicit-method scalar interface differentiates only `values`. Its method an
 
 `ExpectationObjective` snapshots its template, observable, and initial state, retains its backend, and executes on an independent state copy. Its `ParameterMap` continues to define independent input order. The output is the real part of a scalar expectation. This concrete adapter is separate from the public objective protocol, which accepts external objective types without any quantum-state or storage requirement.
 
+### Repeated evaluation and pullback ownership
+
+Each CPU `AdjointGradient` call binds an independent circuit and prepares its own output state, observable snapshot, and any channel checkpoints. Preparing another pullback at a different parameter point does not replace an earlier pullback's saved data. A returned gradient is independent of later pullback calls, and changing the caller's parameter vector or the objective after preparation does not change that prepared pullback.
+
+The objective's fields contain mutable objects even though its outer struct is immutable. Later evaluations inspect the current template, parameter map, observable, and initial state rather than trusting a previous capability query. Parameters can also change a custom gate's matrix or derivative validity; every bound circuit is checked before execution. No persistent matrix, derivative, or capability cache is attached to the objective.
+
+Independent CPU pullbacks may be prepared and called concurrently while their common objective is kept unchanged. Give each task its own parameter inputs, and serialize calls to any one pullback: the existing observation implementation can use mutable captured workspace. Concurrent mutation of an objective or its inputs during preparation is outside this contract. These CPU guarantees do not impose storage, compilation, or workspace interfaces on external backends or gradient methods.
+
 Always retain the returned state:
 
 ```julia

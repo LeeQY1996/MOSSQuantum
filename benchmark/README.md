@@ -16,6 +16,75 @@ The generated `benchmark/Manifest.toml` records the resolved dependencies for a 
 
 ## Run the workloads
 
+### Repeated scalar objectives and replaceable gradients
+
+`repeated_evaluation.jl` measures the public execution/gradient interfaces in an
+independent entrypoint. It loads MOSS and BenchmarkTools without loading Zygote
+or ChainRulesCore. For comparable before/after measurements, use the same Julia
+version, resolved benchmark environment, thread counts, sizes, and trial duration:
+
+```bash
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --latency-only --qubits 6 --depth 2 --output /tmp/moss-before-first.tsv
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --seconds 1 --qubits 6 --depth 2 --output /tmp/moss-before-steady.tsv
+```
+
+After the change, rerun the same commands with `after` output names. Use a fresh
+process for each command. The default is one BLAS thread; `--blas-threads N`
+changes that setting explicitly. `--qubits` must be at least two, and `--depth`
+must be positive. A shorter `--seconds 0.05 --qubits 2 --depth 1` run checks the
+harness but is not the standard performance baseline. With neither mode flag,
+the entrypoint records first calls and then warmed trials in one process.
+
+The four cases are a random pure state, a genuinely mixed density matrix,
+the mixed state with fixed amplitude-damping channels in every layer, and a
+pure-state circuit with gate parameters shared across layers. All use a seeded
+input, ComplexF64 states, a two-term Hermitian observable, and the explicit
+`AdjointGradient` method. Shared and ordinary circuits have the same number of
+parameter slots; shared parameters reduce the independent vector length.
+
+Each case measures `evaluate`, `value_and_gradient`, `value_and_pullback`
+preparation, and repeated `back(1.0)` calls. Preparation is outside the
+`pullback_apply` trial: this row measures the reverse work and output allocation
+of an already prepared, reusable pullback. The other rows include every cost
+inside their public call, including defensive copies and validation. Objective
+construction and correctness checks are excluded. Checks compare scalar values,
+explicit and pullback gradients, a finite-difference coordinate, preservation of
+the input/state, and pullback independence after interleaved evaluations.
+
+To additionally measure the optional Zygote adapter, opt in explicitly:
+
+```bash
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --with-zygote --seconds 1 --output /tmp/moss-adapter.tsv
+```
+
+Only that invocation loads Zygote. It adds a `zygote_gradient` row for gradients
+of `differentiable_value(method, objective, values)` and compares its result with
+the selected explicit method. Compare adapter-enabled and core runs separately;
+loading extensions can change compilation and first-call measurements.
+
+The TSV contains the phase, case, operation, parameter-slot and independent
+parameter counts, elapsed nanoseconds, allocated bytes, allocation count, GC
+nanoseconds, sample count, and evaluations per sample. `steady_median` rows use
+the median BenchmarkTools estimate with `evals=1`. First-call rows use `@timed`
+and include compilation that occurs after package loading and case construction;
+later cases may reuse prior compilation, so they do not represent isolated cold
+startup. In particular, pullback application follows its measured preparation.
+
+Each `--output PATH` also writes `PATH.metadata.toml` with the Julia and machine
+details, Julia/BLAS thread counts, revision and working-tree state, environment
+and script hashes, individual `src`/`ext` file hashes and a combined source
+snapshot hash, sizes, seed, selected method, AD-loading status, and a
+reproduction command. Retain the generated `benchmark/Manifest.toml` alongside
+reports. Compare matching TSV keys and metadata before attributing a difference
+to the implementation. With no output path the table is printed to stdout.
+
+The [2026-10-19 report](../docs/performance/repeated-evaluation-2026-10-19.md)
+retains measured six- and eight-qubit comparisons, their resolved environment,
+and the source patch. CI runs small core and optional AD harness checks on Julia
+1.10 and 1.13; those checks have no timing or allocation thresholds.
+
+### Dense kernels and legacy differentiated circuits
+
 Use separate processes for first invocation latency and warmed throughput:
 
 ```bash

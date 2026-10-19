@@ -119,7 +119,10 @@ function value_and_pullback(method::AdjointGradient, objective::ExpectationObjec
     bound = bind_parameters(objective.template, saved_values, objective.parameter_map)
     _supports_cpu_adjoint(objective, bound) || throw(UnsupportedGradient(method, objective))
     observable = deepcopy(objective.observable)
-    output, circuit_back = _circuit_adjoint(bound, copy(objective.initial_state))
+    # Both circuit-adjoint paths copy their input before execution. Passing the
+    # snapshot directly avoids a second full state copy without sharing the
+    # output or channel checkpoints between prepared pullbacks.
+    output, circuit_back = _circuit_adjoint(bound, objective.initial_state)
     observation_state = _cpu_observation_state(output, observable)
     expectation_value, observation_back = _cpu_objective_expectation_pullback(observable, observation_state)
     value = _check_objective_value(real(expectation_value))

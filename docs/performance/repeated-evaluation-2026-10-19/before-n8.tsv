@@ -1,0 +1,17 @@
+phase	case	operation	parameter_slots	independent_parameters	time_ns	bytes	allocations	gc_time_ns	samples	evals
+steady_median	pure	evaluate	32	32	126038.0	107416	2620	0.0	6410	1
+steady_median	pure	value_and_gradient	32	32	509652.0	554632	11681	0.0	1593	1
+steady_median	pure	pullback_prepare	32	32	321075.0	362368	7742	0.0	2478	1
+steady_median	pure	pullback_apply	32	32	163010.0	192136	3936	0.0	4893	1
+steady_median	mixed	evaluate	32	32	7.482313e6	1155048	2672	0.0	132	1
+steady_median	mixed	value_and_gradient	32	32	3.9747888e7	73938112	11821	1.241456e6	19	1
+steady_median	mixed	pullback_prepare	32	32	8.639758e6	2454480	7794	0.0	115	1
+steady_median	mixed	pullback_apply	32	32	2.774609e7	71483504	4024	1.2755595e6	28	1
+steady_median	fixed_noise	evaluate	32	32	9.576096e6	1180136	3184	0.0	102	1
+steady_median	fixed_noise	value_and_gradient	32	32	6.3209017e7	107528320	12627	1.471866e6	14	1
+steady_median	fixed_noise	pullback_prepare	32	32	1.1131838e7	19266352	8542	0.0	76	1
+steady_median	fixed_noise	pullback_apply	32	32	3.0849134e7	88261824	4082	1.173563e6	25	1
+steady_median	shared	evaluate	32	16	104407.0	107416	2620	0.0	7566	1
+steady_median	shared	value_and_gradient	32	16	556965.0	554376	11681	0.0	1478	1
+steady_median	shared	pullback_prepare	32	16	344862.0	362240	7742	0.0	2251	1
+steady_median	shared	pullback_apply	32	16	151139.0	192008	3936	0.0	5089	1
