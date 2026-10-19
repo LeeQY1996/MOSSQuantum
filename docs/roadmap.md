@@ -30,6 +30,36 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
+## Completed milestone: measured CPU batch allocation improvements
+
+This milestone measures pure and mixed batch execution and reduces CPU
+observation and reverse-pass allocations. Additional numerical gradient
+estimators are deferred. It retains the existing execution, gradient-selection,
+validation, ownership, and concurrency contracts.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Baseline | An independent pure/mixed/unitary/fixed-noise harness for B=1/4/16/64 | Matched source/environment metadata; separate gate, channel, observation, objective, gradient, and pullback measurements on one/four threads | Verified locally |
+| 2 Allocation analysis | Inspect full gradient and pullback allocations before selecting changes | Attribute avoidable payload copies to concrete source locations | Verified locally |
+| 3 Internal workspaces | Reuse density derivative scratch within one reverse invocation; reuse equal-seed observation actions and read short traces directly | Numerical/type/domain behavior unchanged; no retained mutable workspace or mandatory backend API | Verified locally |
+| 4 Final comparison | Matched before/after trials, independent repeat, full suites and companion checks | Minimum/primary tests and source/provenance review pass; reported claims distinguish allocations from timings | Verified locally |
+
+The [CPU batch report](performance/cpu-batch-2026-10-20.md) retains 884 warmed
+summaries: 416 matched before/after pairs plus 26 independently confirmed pairs.
+The baseline source is `cd127e6`; only three CPU observation/reverse-pass files
+change. In the six-qubit, B=16, one-thread mixed unitary case, complete gradients
+allocate 10,841,104 rather than 64,526,424 bytes (83.20% less), and a prepared
+pullback allocates 8,099,920 rather than 59,667,152 bytes (86.42% less).
+
+Two derivative buffers are reused within each reverse invocation. Short density
+observables read sample views, and density observation pullbacks reuse a seeded
+operator action for consecutive equal seeds within one call. Seeding occurs
+before operator products to preserve precision and underflow behavior. Each
+invocation owns its mutable buffers; execution and gradient-selection protocols
+remain independent, with no new public workspace requirement. Gate/channel
+kernels and scheduling retain their existing implementation. Timing results and
+unchanged controls are recorded separately from allocation improvements.
+
 ## Completed milestone: dense batch density matrices
 
 This milestone extends the separate-type design to `BatchDensityMatrix` in the
@@ -151,6 +181,18 @@ The following features remain distinct follow-up changes:
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### CPU batch allocation improvements
+
+Local acceptance completed on 2026-10-20:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed 6390 assertions across 71 top-level testsets, including all eight fresh-process loading scenarios (92.8 seconds).
+- Julia 1.10.10, one thread: an independently resolved environment developed the actual checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with the same 6390 assertions, 71 ordered testsets, and eight loading scenarios (76.9 seconds). Source, tests, and root Project/Manifest hashes remain unchanged during both runs.
+- The 811 additional assertions cover promoted short density contractions (including Float32/ComplexF32), complex and wider-domain cotangents, representable derivatives recovered by seeding before operator products, empty/zero-qubit batches, independent saved snapshots, repeated and concurrent pullbacks, nested unsorted multi-parameter gates with shared values, singular channels, and scalar-domain restoration across checkpoints.
+- Independent standard fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9, `MOSSDemoGates` 185, and `MOSSDemoDifferentiation` 235 assertions each. Fourteen fresh benchmark compatibility processes passed: each version checks scalar core/AD 16/20 warmed rows, pure-batch 18/21, new pure/mixed batch 52/60, and 26 new core first-call rows. Core processes confirm that neither AD package is loaded.
+- The [CPU batch report](performance/cpu-batch-2026-10-20.md) retains 884 formal summaries and the resolved environment, frozen scripts, source patch, diagnostic profile, comparisons, and checksums. Independent review reproduces all 107 optimized source hashes by applying the exact three-file patch to `cd127e6`, verifies every paired control and reported value, and confirms that all 26 independent confirmation operations reproduce allocation bytes/counts for both implementations.
+
+Runtime dependencies, the root Project/Manifest, benchmark environment, older benchmark entrypoints, and public execution/gradient interfaces remain unchanged. CPU allocation work stays internal. New numerical gradient algorithms, trainable noise, generic array storage, and GPU execution remain separate work.
 
 ### Dense batch density matrices
 

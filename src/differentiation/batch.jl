@@ -115,7 +115,7 @@ _batch_single_expectation_pullback(observable::QubitsOperator, state::DensityMat
     _qop_expec_util(observable, state)
 
 function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator},
-                                     state::Union{BatchStateVector,BatchDensityMatrix})
+                                     state::BatchStateVector)
     validate_positions(observable, nqubits(state))
     saved_observable = deepcopy(observable)
     T = promote_type(eltype(state), eltype(observable))
@@ -138,6 +138,50 @@ function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator}
             selectdim(gradient, ndims(gradient), column) .= storage(sample_gradient)
         end
         return nothing, _batch_wrap(gradient, saved_state)
+    end
+    return values, back
+end
+
+
+# A density expectation is linear in its state. Its cotangent is seed * O',
+# independent of rho, so equal consecutive seeds can share one numerical action.
+function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator},
+                                     state::BatchDensityMatrix)
+    validate_positions(observable, nqubits(state))
+    saved_observable = deepcopy(observable)
+    T = promote_type(eltype(state), eltype(saved_observable))
+    register_size = nqubits(state)
+    count = batch_size(state)
+    shape = size(storage(state))
+    values = expectation(saved_observable, state)
+    saved_adjoint = saved_observable'
+    function back(seed)
+        isnothing(seed) && return nothing,
+            BatchDensityMatrix(zeros(T, shape), register_size, count)
+        seed isa AbstractVector{<:Number} ||
+            throw(ArgumentError("a batch expectation cotangent must be a vector"))
+        length(seed) == count ||
+            throw(DimensionMismatch("batch expectation cotangent must have one entry per sample"))
+        Base.require_one_based_indexing(seed)
+        CT = promote_type(T, eltype(seed))
+        gradient = Array{CT}(undef, shape)
+        if count > 0
+            # Apply the seed before operator products and sums, exactly as in
+            # the scalar reverse pass. Moving it after a cached O' could lose
+            # precision or underflow, including for a seed in a wider domain.
+            # Both the identity and the most recent seeded action belong to
+            # this call; returned gradients and concurrent calls stay separate.
+            identity = DensityMatrix(Matrix{CT}(I, shape[1], shape[2]), register_size)
+            sample_gradient = (seed[1] * saved_adjoint) * identity
+            for column in 1:count
+                if column > 1 && (typeof(seed[column]) !== typeof(seed[column - 1]) ||
+                        !isequal(seed[column], seed[column - 1]))
+                    sample_gradient = (seed[column] * saved_adjoint) * identity
+                end
+                view(gradient, :, :, column) .= storage(sample_gradient)
+            end
+        end
+        return nothing, BatchDensityMatrix(gradient, register_size, count)
     end
     return values, back
 end

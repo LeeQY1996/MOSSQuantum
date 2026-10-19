@@ -103,7 +103,7 @@ Each CPU `AdjointGradient` call binds an independent circuit and prepares its ow
 
 The objective's fields contain mutable objects even though its outer struct is immutable. Later evaluations inspect the current template, parameter map, observable, and initial state rather than trusting a previous capability query. Parameters can also change a custom gate's matrix or derivative validity; every bound circuit is checked before execution. No persistent matrix, derivative, or capability cache is attached to the objective.
 
-Independent CPU pullbacks may be prepared and called concurrently while their common objective is kept unchanged. Give each task its own parameter inputs, and serialize calls to any one pullback: the existing observation implementation can use mutable captured workspace. Concurrent mutation of an objective or its inputs during preparation is outside this contract. These CPU guarantees do not impose storage, compilation, or workspace interfaces on external backends or gradient methods.
+Independent CPU pullbacks may be prepared and called concurrently while their common objective is kept unchanged. Give each task its own parameter inputs. For `BatchExpectationObjective` with a `BatchDensityMatrix` initial state, calls to the same prepared CPU `AdjointGradient` pullback may also run concurrently: its saved observable is private and read-only, and each call owns its observation, cotangent, and reverse buffers. Serialize calls to other prepared pullbacks. Concurrent mutation of an objective or its inputs during preparation is outside this contract. These CPU guarantees do not impose storage, compilation, or workspace interfaces on external backends or gradient methods.
 
 Always retain the returned state:
 

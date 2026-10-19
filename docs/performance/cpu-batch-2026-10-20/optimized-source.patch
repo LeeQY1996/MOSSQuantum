@@ -1,0 +1,225 @@
+diff --git a/src/differentiation/batch.jl b/src/differentiation/batch.jl
+index ce3dca8..e631407 100644
+--- a/src/differentiation/batch.jl
++++ b/src/differentiation/batch.jl
+@@ -118 +118 @@ function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator}
+-                                     state::Union{BatchStateVector,BatchDensityMatrix})
++                                     state::BatchStateVector)
+@@ -144,0 +145,44 @@ end
++
++# A density expectation is linear in its state. Its cotangent is seed * O',
++# independent of rho, so equal consecutive seeds can share one numerical action.
++function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator},
++                                     state::BatchDensityMatrix)
++    validate_positions(observable, nqubits(state))
++    saved_observable = deepcopy(observable)
++    T = promote_type(eltype(state), eltype(saved_observable))
++    register_size = nqubits(state)
++    count = batch_size(state)
++    shape = size(storage(state))
++    values = expectation(saved_observable, state)
++    saved_adjoint = saved_observable'
++    function back(seed)
++        isnothing(seed) && return nothing,
++            BatchDensityMatrix(zeros(T, shape), register_size, count)
++        seed isa AbstractVector{<:Number} ||
++            throw(ArgumentError("a batch expectation cotangent must be a vector"))
++        length(seed) == count ||
++            throw(DimensionMismatch("batch expectation cotangent must have one entry per sample"))
++        Base.require_one_based_indexing(seed)
++        CT = promote_type(T, eltype(seed))
++        gradient = Array{CT}(undef, shape)
++        if count > 0
++            # Apply the seed before operator products and sums, exactly as in
++            # the scalar reverse pass. Moving it after a cached O' could lose
++            # precision or underflow, including for a seed in a wider domain.
++            # Both the identity and the most recent seeded action belong to
++            # this call; returned gradients and concurrent calls stay separate.
++            identity = DensityMatrix(Matrix{CT}(I, shape[1], shape[2]), register_size)
++            sample_gradient = (seed[1] * saved_adjoint) * identity
++            for column in 1:count
++                if column > 1 && (typeof(seed[column]) !== typeof(seed[column - 1]) ||
++                        !isequal(seed[column], seed[column - 1]))
++                    sample_gradient = (seed[column] * saved_adjoint) * identity
++                end
++                view(gradient, :, :, column) .= storage(sample_gradient)
++            end
++        end
++        return nothing, BatchDensityMatrix(gradient, register_size, count)
++    end
++    return values, back
++end
++
+diff --git a/src/differentiation/circuit.jl b/src/differentiation/circuit.jl
+index 05b0053..9b0273f 100644
+--- a/src/differentiation/circuit.jl
++++ b/src/differentiation/circuit.jl
+@@ -0,0 +1,17 @@
++# Scratch belongs to one reverse invocation and is never retained by a pullback.
++# The type can change when reconstructing an earlier state across a channel.
++mutable struct _DensityGradientWorkspace
++    buffers::Any
++end
++_DensityGradientWorkspace() = _DensityGradientWorkspace(nothing)
++
++function _density_gradient_buffers!(workspace::_DensityGradientWorkspace, ::Type{T}, count::Int) where {T}
++    buffers = workspace.buffers
++    if !(buffers isa Tuple{Vector{T},Vector{T}}) ||
++       length(buffers[1]) != count || length(buffers[2]) != count
++        buffers = (Vector{T}(undef, count), Vector{T}(undef, count))
++        workspace.buffers = buffers
++    end
++    return buffers
++end
++
+@@ -62 +79,2 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
+-    return y, Δ -> begin
++    function back(Δ)
++        workspace = _DensityGradientWorkspace()
+@@ -76 +94,5 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
+-                Δ, ∇θs, state = back_propagate(Δ, item, state)
++                Δ, ∇θs, state = if state isa DensityMatrix
++                    back_propagate(Δ, item, state, workspace)
++                else
++                    back_propagate(Δ, item, state)
++                end
+@@ -81,0 +104 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
++    return y, back
+@@ -110 +133,21 @@ end
+-function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix)
++function _density_gate_gradient!(left::Vector{T}, right::Vector{T},
++                                 Δ::DensityMatrix, item::Gate, x::DensityMatrix) where {T}
++    # D = (dU)'U, hence d(U*x*U') in the input frame is D'*x + x*D.
++    # Both buffers must be reset for every parameter, including multi-parameter gates.
++    copyto!(left, x.data)
++    copyto!(right, x.data)
++    pos = ordered_positions(item)
++    bra_pos = ntuple(i -> pos[i] + nqubits(x), length(pos))
++    d = ordered_mat(item)
++    if length(left) >= 32
++        _apply_gate_threaded2!(pos, d', left)
++        _apply_gate_threaded2!(bra_pos, transpose(d), right)
++    else
++        _apply_gate_2!(pos, d', left)
++        _apply_gate_2!(bra_pos, transpose(d), right)
++    end
++    return real(dot(Δ.data, left) + dot(Δ.data, right))
++end
++
++function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix,
++                                 workspace::_DensityGradientWorkspace)
+@@ -113 +156,2 @@ function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix)
+-        # D = (dU)'U, hence d(U*x*U') in the input frame is D'*x + x*D.
++        # Retain the original derivative/state arithmetic domain; the seed does
++        # not widen the reconstructed-state workspace.
+@@ -115,13 +159,2 @@ function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix)
+-        left = convert(Vector{T}, copy(x.data))
+-        right = copy(left)
+-        pos = ordered_positions(item)
+-        bra_pos = ntuple(i -> pos[i] + nqubits(x), length(pos))
+-        d = ordered_mat(item)
+-        if length(left) >= 32
+-            _apply_gate_threaded2!(pos, d', left)
+-            _apply_gate_threaded2!(bra_pos, transpose(d), right)
+-        else
+-            _apply_gate_2!(pos, d', left)
+-            _apply_gate_2!(bra_pos, transpose(d), right)
+-        end
+-        return real(dot(Δ.data, left) + dot(Δ.data, right))
++        left, right = _density_gradient_buffers!(workspace, T, length(x.data))
++        _density_gate_gradient!(left, right, Δ, item, x)
+@@ -129,0 +163,2 @@ end
++_density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix) =
++    _density_gate_gradients(Δ, m, x, _DensityGradientWorkspace())
+@@ -131 +166,2 @@ end
+-function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix)
++function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix,
++                        workspace::_DensityGradientWorkspace)
+@@ -134 +170 @@ function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix)
+-    ∇θs = _density_gate_gradients(Δ, m, y)
++    ∇θs = _density_gate_gradients(Δ, m, y, workspace)
+@@ -136,0 +173,2 @@ end
++back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix) =
++    back_propagate(Δ, m, y, _DensityGradientWorkspace())
+@@ -158 +196,12 @@ back_propagate(Δ::StateVector, circuit::QCircuit, y::StateVector) = back_propag
+-back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix) = back_propagate_util(Δ, circuit, y)
++function back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix,
++                        workspace::_DensityGradientWorkspace)
++    RT = real(eltype(y))
++    grads = Vector{RT}[]
++    for item in reverse(circuit)
++        Δ, parameters, y = back_propagate(Δ, item, y, workspace)
++        !isnothing(parameters) && push!(grads, parameters)
++    end
++    return Δ, _flatten_gradients(grads, RT), y
++end
++back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix) =
++    back_propagate(Δ, circuit, y, _DensityGradientWorkspace())
+diff --git a/src/observables/batch_density_expectation.jl b/src/observables/batch_density_expectation.jl
+index 288f4e2..4c3a251 100644
+--- a/src/observables/batch_density_expectation.jl
++++ b/src/observables/batch_density_expectation.jl
+@@ -0,0 +1,16 @@
++# The scalar density expectation wrappers convert an entire state into the
++# observable's scalar domain. These small contractions only read matrix blocks;
++# promote the local observable instead and reuse it across all samples.
++function _batch_density_short_expectation!(values, register::NTuple{N,Int},
++                                           matrix::AbstractMatrix, data,
++                                           ::Type{T}) where {N,T<:Number}
++    dimension = 1 << N
++    local_matrix = SMatrix{dimension,dimension,T}(matrix)
++    kernel_register = N == 1 ? register[1] : register
++    for column in axes(data, 3)
++        values[column] += _expectation_value_util(kernel_register, local_matrix,
++            view(data, :, :, column))
++    end
++    return values
++end
++
+@@ -2 +18,27 @@
+-function expectation(observable::Union{QubitsTerm,QubitsOperator}, batch::BatchDensityMatrix)
++function expectation(observable::QubitsTerm, batch::BatchDensityMatrix)
++    _check_batch_observable(observable, batch)
++    T = promote_type(eltype(observable), eltype(batch))
++    values = zeros(T, batch_size(batch))
++    isempty(values) && return values
++    data = storage(batch)
++    if isempty(observable)
++        for column in axes(data, 3)
++            sample_trace = zero(T)
++            for index in axes(data, 1)
++                sample_trace += data[index, index, column]
++            end
++            values[column] = coeff(observable) * sample_trace
++        end
++    elseif length(positions(observable)) <= 3
++        _batch_density_short_expectation!(values, Tuple(positions(observable)),
++            _get_mat(observable), data, T)
++    else
++        for column in axes(data, 3)
++            state = DensityMatrix(Matrix{T}(view(data, :, :, column)), nqubits(batch))
++            values[column] = expectation(observable, state)
++        end
++    end
++    return values
++end
++
++function expectation(observable::QubitsOperator, batch::BatchDensityMatrix)
+@@ -5,4 +47,13 @@ function expectation(observable::Union{QubitsTerm,QubitsOperator}, batch::BatchD
+-    values = Vector{T}(undef, batch_size(batch))
+-    for column in 1:batch_size(batch)
+-        state = DensityMatrix(Matrix{T}(view(storage(batch), :, :, column)), nqubits(batch))
+-        values[column] = expectation(observable, state)
++    values = zeros(T, batch_size(batch))
++    isempty(values) && return values
++    data = storage(batch)
++    if _largest_nterm(observable) <= 3
++        for (register, terms) in observable.data
++            _batch_density_short_expectation!(values, register,
++                _get_mat(length(register), terms), data, T)
++        end
++    else
++        for column in axes(data, 3)
++            state = DensityMatrix(Matrix{T}(view(data, :, :, column)), nqubits(batch))
++            values[column] = expectation(observable, state)
++        end

@@ -129,6 +129,88 @@ retains six-qubit one/four-thread measurements, both raw tables and metadata,
 and the resolved environment. Its B=1 case also records the overhead of keeping
 a one-column batch representation.
 
+### Pure and mixed batch execution
+
+`batch_execution.jl` independently measures both batch representations, including
+pure-to-mixed transitions. It keeps the earlier entrypoints and dependency
+environment unchanged. The default batch counts are 1, 4, 16, and 64; select
+other positive, distinct counts with `--batches 1,8,32` (or `--batch-counts`).
+Use the same frozen script, helper, environment, sizes, and thread counts for
+before/after measurements:
+
+```bash
+julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/moss-batch-execution-before-threads1.tsv
+julia --project=benchmark --threads=4 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/moss-batch-execution-before-threads4.tsv
+```
+
+Run each command in a fresh process without competing benchmark or test jobs.
+After changing production code, repeat the commands using `after` output names.
+The entrypoint also accepts `--latency-only`, `--blas-threads`, and
+`--with-zygote` with the same meanings as `repeated_evaluation.jl`. With neither
+phase flag, it records both first calls and warmed measurements. The default
+BLAS thread count is one. `--qubits` must be at least two.
+
+Four cases use shared circuits, parameters, observables, and mean reduction:
+
+| Case | Input and circuit |
+| --- | --- |
+| `pure_unitary` | `BatchStateVector`, unitary circuit |
+| `mixed_unitary` | Genuinely mixed `BatchDensityMatrix`, unitary circuit |
+| `pure_fixed_noise` | Pure batch, amplitude damping in each circuit layer; output becomes mixed |
+| `mixed_fixed_noise` | Mixed batch, the same fixed-noise circuit |
+
+Inputs use seed `20261020` and ComplexF64 storage. All batch sizes use prefixes
+of one random batch; mixed samples are `0.8|psi><psi| + 0.2I/D`, rather than
+pure-state outer products alone. The independent parameter vector has one Ry/Rz
+pair per qubit shared across circuit layers and all samples.
+
+Every case measures `gate_apply` for one seeded general two-qubit unitary,
+`expectation` on the initial batch, `evaluate`, `value_and_gradient`,
+`pullback_prepare`, and `pullback_apply`. The two fixed-noise cases additionally
+measure `channel_apply` for one amplitude-damping channel. Thus each batch count
+produces 26 rows per phase, or 30 with the optional `zygote_gradient` adapter.
+The four default counts produce 104 core rows per phase (120 with the adapter).
+
+The mutating rows use `working=copy(initial)` in BenchmarkTools `setup` and
+`evals=1`: reset/copy is outside the measured expression and each sample starts
+from identical private storage. Public validation, internal temporaries, and
+pure-to-mixed promotion remain inside `apply!`. First-call rows also exclude
+the initial private copy. Scalar objective calls include their own defensive
+copies, parameter binding, forward execution, and reduction. Reusable pullback
+preparation stays outside the `pullback_apply` trial. Inputs and objective
+construction are outside every timed expression.
+
+Before warmed trials, checks compare gate/channel outputs, sample expectations,
+objective values, and shared-parameter gradients against explicit per-sample
+single-state loops. Checks also cover one finite-difference coordinate,
+interleaved evaluations, repeated pullback seeds, returned-gradient ownership,
+and preservation of input states. These references validate correctness and
+are not timed loop speed comparisons.
+
+The TSV adds `kind` and `batch_count` to the timing, allocation, parameter, and
+sample fields. Its companion metadata records operation definitions, input and
+ownership semantics, both entrypoint/helper hashes, resolved environment hashes,
+individual and combined production source hashes, Julia/BLAS thread counts,
+and whether AD packages were loaded. Core runs assert that neither Zygote nor
+ChainRulesCore was loaded. Preserve the resolved Manifest with reported results.
+
+For a small harness check, use the following command; its timings are not a
+performance baseline. Add `--with-zygote` separately to check the adapter.
+
+```bash
+julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 2 --depth 1 --batches 1 --seconds 0.01 --output /tmp/moss-batch-execution-smoke.tsv
+```
+
+CI checks this entrypoint on Julia 1.10 and 1.13 using two-qubit, two-layer
+workloads with `--batches 1,4 --seconds 0.01`: a core process checks 52 rows,
+and a separate optional-AD process checks 60 rows. These jobs verify the harness
+and reference comparisons without enforcing timing or allocation thresholds.
+
+The [CPU batch measurement report](../docs/performance/cpu-batch-2026-10-20.md)
+retains matched four/six-qubit, one/four-thread before/after records, the frozen
+environment and scripts, source patch, and an independent paired confirmation.
+It reports density-gradient allocation savings separately from elapsed timings.
+
 ### Dense kernels and legacy differentiated circuits
 
 Use separate processes for first invocation latency and warmed throughput:

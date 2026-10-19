@@ -1,3 +1,20 @@
+# Scratch belongs to one reverse invocation and is never retained by a pullback.
+# The type can change when reconstructing an earlier state across a channel.
+mutable struct _DensityGradientWorkspace
+    buffers::Any
+end
+_DensityGradientWorkspace() = _DensityGradientWorkspace(nothing)
+
+function _density_gradient_buffers!(workspace::_DensityGradientWorkspace, ::Type{T}, count::Int) where {T}
+    buffers = workspace.buffers
+    if !(buffers isa Tuple{Vector{T},Vector{T}}) ||
+       length(buffers[1]) != count || length(buffers[2]) != count
+        buffers = (Vector{T}(undef, count), Vector{T}(undef, count))
+        workspace.buffers = buffers
+    end
+    return buffers
+end
+
 
 _to_sv(x::StateVector, Δ) = Δ isa StateVector ? Δ : StateVector(Δ, nqubits(x))
 _to_sv(x::DensityMatrix, Δ) = Δ isa DensityMatrix ? Δ : DensityMatrix(Δ, nqubits(x))
@@ -59,7 +76,8 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
         item isa QuantumMap && (checkpoints[i] = copy(y))
         y = apply!(item, y)
     end
-    return y, Δ -> begin
+    function back(Δ)
+        workspace = _DensityGradientWorkspace()
         Δ = copy(_to_sv(y, Δ))
         state = copy(y)
         RT = real(eltype(y))
@@ -73,12 +91,17 @@ function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix
                     Δ = _density_to_state_cotangent(state, Δ)
                 end
             else
-                Δ, ∇θs, state = back_propagate(Δ, item, state)
+                Δ, ∇θs, state = if state isa DensityMatrix
+                    back_propagate(Δ, item, state, workspace)
+                else
+                    back_propagate(Δ, item, state)
+                end
                 !isnothing(∇θs) && push!(grads, ∇θs)
             end
         end
         return _flatten_gradients(grads, RT), Δ
     end
+    return y, back
 end
 
 function _qubit_encoding_adjoint(::Type{T}, mpsstr::Vector{<:Real}) where {T<:Number}
@@ -107,33 +130,48 @@ function expectation(x::DensityMatrix, m::Gate, y::DensityMatrix)
     return dot(storage(x)', storage(yc))
 end 
 
-function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix)
-    nparameters(m) == 0 && return nothing
-    return map(differentiate(m)) do item
-        # D = (dU)'U, hence d(U*x*U') in the input frame is D'*x + x*D.
-        T = promote_type(eltype(item), eltype(x))
-        left = convert(Vector{T}, copy(x.data))
-        right = copy(left)
-        pos = ordered_positions(item)
-        bra_pos = ntuple(i -> pos[i] + nqubits(x), length(pos))
-        d = ordered_mat(item)
-        if length(left) >= 32
-            _apply_gate_threaded2!(pos, d', left)
-            _apply_gate_threaded2!(bra_pos, transpose(d), right)
-        else
-            _apply_gate_2!(pos, d', left)
-            _apply_gate_2!(bra_pos, transpose(d), right)
-        end
-        return real(dot(Δ.data, left) + dot(Δ.data, right))
+function _density_gate_gradient!(left::Vector{T}, right::Vector{T},
+                                 Δ::DensityMatrix, item::Gate, x::DensityMatrix) where {T}
+    # D = (dU)'U, hence d(U*x*U') in the input frame is D'*x + x*D.
+    # Both buffers must be reset for every parameter, including multi-parameter gates.
+    copyto!(left, x.data)
+    copyto!(right, x.data)
+    pos = ordered_positions(item)
+    bra_pos = ntuple(i -> pos[i] + nqubits(x), length(pos))
+    d = ordered_mat(item)
+    if length(left) >= 32
+        _apply_gate_threaded2!(pos, d', left)
+        _apply_gate_threaded2!(bra_pos, transpose(d), right)
+    else
+        _apply_gate_2!(pos, d', left)
+        _apply_gate_2!(bra_pos, transpose(d), right)
     end
+    return real(dot(Δ.data, left) + dot(Δ.data, right))
 end
 
-function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix)
+function _density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix,
+                                 workspace::_DensityGradientWorkspace)
+    nparameters(m) == 0 && return nothing
+    return map(differentiate(m)) do item
+        # Retain the original derivative/state arithmetic domain; the seed does
+        # not widen the reconstructed-state workspace.
+        T = promote_type(eltype(item), eltype(x))
+        left, right = _density_gradient_buffers!(workspace, T, length(x.data))
+        _density_gate_gradient!(left, right, Δ, item, x)
+    end
+end
+_density_gate_gradients(Δ::DensityMatrix, m::Gate, x::DensityMatrix) =
+    _density_gate_gradients(Δ, m, x, _DensityGradientWorkspace())
+
+function back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix,
+                        workspace::_DensityGradientWorkspace)
     Δ = apply!(m', Δ)
     y = apply!(m', y)
-    ∇θs = _density_gate_gradients(Δ, m, y)
+    ∇θs = _density_gate_gradients(Δ, m, y, workspace)
     return Δ, ∇θs, y
 end
+back_propagate(Δ::DensityMatrix, m::Gate, y::DensityMatrix) =
+    back_propagate(Δ, m, y, _DensityGradientWorkspace())
 
 function _flatten_gradients(grads, ::Type{RT}) where RT
     all_grads = RT[]
@@ -155,4 +193,15 @@ function back_propagate_util(Δ, circuit::QCircuit, y)
 end
 
 back_propagate(Δ::StateVector, circuit::QCircuit, y::StateVector) = back_propagate_util(Δ, circuit, y)
-back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix) = back_propagate_util(Δ, circuit, y)
+function back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix,
+                        workspace::_DensityGradientWorkspace)
+    RT = real(eltype(y))
+    grads = Vector{RT}[]
+    for item in reverse(circuit)
+        Δ, parameters, y = back_propagate(Δ, item, y, workspace)
+        !isnothing(parameters) && push!(grads, parameters)
+    end
+    return Δ, _flatten_gradients(grads, RT), y
+end
+back_propagate(Δ::DensityMatrix, circuit::QCircuit, y::DensityMatrix) =
+    back_propagate(Δ, circuit, y, _DensityGradientWorkspace())

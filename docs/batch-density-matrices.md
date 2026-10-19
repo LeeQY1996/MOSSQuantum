@@ -79,8 +79,10 @@ tolerance for Float32 states after earlier rounding. Explicit typed constructors
 and `convert` select another precision. Channels preserve the input trace rather
 than automatically normalizing it.
 
-The baseline reuses existing dense kernels on each contiguous density slice.
-It introduces no GPU storage, compiled execution plan, or batch throughput claim.
+Gate and channel execution continues to reuse existing dense kernels on each
+contiguous density slice. The [CPU batch measurements](performance/cpu-batch-2026-10-20.md)
+record observation and gradient allocation improvements, with separate timing
+results and limitations. GPU storage and compiled execution plans remain future work.
 
 ## Observations, normalization, and partial trace
 
@@ -167,6 +169,14 @@ Unitary paths use one batch forward with per-sample reverse reconstruction.
 Paths containing channels reuse the single-state checkpoint reverse pass for each
 sample, including singular channels such as complete damping; they require no
 inverse channel. Prepared pullbacks own private data and can be reused independently.
+Density gate gradients reuse two scratch vectors within each reverse invocation,
+including nested circuits; each call and sample owns its buffers. Density-batch
+observation retains a private adjoint observable. Each pullback call builds its
+own seeded operator action, reuses it for consecutive equal seeds, and creates
+independent cotangent storage. Applying the seed before the operator action
+preserves precision and underflow behavior. For a `BatchDensityMatrix` initial
+state, the same prepared CPU adjoint may be called concurrently; other paths follow
+the [general ownership rules](conventions.md#repeated-evaluation-and-pullback-ownership).
 
 Core evaluation and explicit gradients load no AD framework. Optional AD uses the
 selected numerical method through the existing adapter:

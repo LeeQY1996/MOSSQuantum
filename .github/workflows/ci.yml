@@ -85,3 +85,7 @@ jobs:
         run: julia --project=benchmark --startup-file=no benchmark/batch_evaluation.jl --steady-only --seconds 0.01 --qubits 2 --depth 2
       - name: Check optional batch AD workloads in a fresh process
         run: julia --project=benchmark --startup-file=no benchmark/batch_evaluation.jl --steady-only --with-zygote --seconds 0.01 --qubits 2 --depth 2
+      - name: Check pure and mixed batch execution workloads without AD
+        run: julia --project=benchmark --startup-file=no benchmark/batch_execution.jl --steady-only --seconds 0.01 --qubits 2 --depth 2 --batches 1,4
+      - name: Check optional mixed batch AD adapter in a fresh process
+        run: julia --project=benchmark --startup-file=no benchmark/batch_execution.jl --steady-only --with-zygote --seconds 0.01 --qubits 2 --depth 2 --batches 1,4

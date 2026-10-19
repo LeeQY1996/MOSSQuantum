@@ -1,0 +1,21 @@
+{
+  "julia_version": "1.13.1",
+  "julia_threads": 1,
+  "blas_threads": 1,
+  "qubits": [
+    4,
+    6
+  ],
+  "batch_count": 16,
+  "method": "Minimum of three warmed @allocated calls; Profile.Allocs sample_rate=1.0 for n=6 prepared pullback.",
+  "command": "julia --project=. --threads=1 allocation_profile.jl",
+  "environment": {
+    "JULIA_DEPOT_PATH": "/tmp/moss-review-depot",
+    "JULIA_PKG_OFFLINE": "true",
+    "JULIA_NUM_PRECOMPILE_TASKS": "1",
+    "GKSwstype": "100"
+  },
+  "before_source_sha256": "f9258904e49ee2fdda4849bfea0487a57d978bb343afc9e3393e2503880f5ae0",
+  "after_source_sha256": "89688ba280c9626a0d022947eea8db973aabaee0bf18b3963acbb35b04eead33",
+  "note": "Gate/channel diagnostics include copy(initial); formal microbenchmarks exclude reset copy. Only allocation evidence, no timing comparison."
+}
