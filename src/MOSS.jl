@@ -28,6 +28,7 @@ include("utils/index_ops.jl")
 
 # State representations.
 include("api/state_protocols.jl")
+include("states/array_storage.jl")
 include("states/state_vector.jl")
 include("states/batch_state_vector.jl")
 include("states/density_matrix.jl")

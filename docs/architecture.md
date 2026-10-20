@@ -61,6 +61,29 @@ Public parameter writers may return replacement instructions. Circuit traversal 
 
 `ParameterMap` is owned by MOSS and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
 
+## Dense storage and backend selection
+
+The four dense state containers separate element type `T` from concrete array
+type `A`. Array construction keeps its CPU default unless
+`preserve_storage=true` is requested. State copies and conversions preserve the
+array family; the single-density representation retains vectorized backing
+storage and a matrix-shaped public `storage` view.
+
+Backend selection and capability checks inspect storage eligibility before
+entering CPU numerical code. Ordinary arrays and supported contiguous host views
+can use the existing CPU executor. Unknown storage needs a companion backend;
+preserving an array neither selects CPU fallback nor establishes a device kernel.
+Gate/circuit execution, nonmutating observable action through qualified
+`MOSS.apply`, and basis probabilities have backend hooks. Forward objectives use
+those hooks while gradient methods retain independent support checks.
+
+The independent `MOSSDemoArrayBackend` fixture attaches a backend to the existing
+four container types and forbids scalar indexing and implicit host conversions.
+Its numerical implementation accesses only its own private storage and public
+MOSS operation descriptions. Device implementations can follow that boundary
+without importing private CPU kernels. See the
+[array extension guide](extending.md#preserve-array-storage).
+
 ## Pure and mixed batches
 
 `StateVector` and `DensityMatrix` remain single-state representations.
@@ -114,7 +137,7 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step, compare gradients with analytic and finite-difference results, and verify pure/mixed batch circuit gradients with fixed noise.
 
-`test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. CI resolves and tests all three fixtures independently on Julia 1.10 and Julia 1.13.
+`test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. Together with `MOSSDemoArrayBackend`, CI resolves and tests all four fixtures independently on Julia 1.10 and Julia 1.13.
 
 The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. `batch_evaluation.jl` compares batch objectives of size 1/4/16 with explicit single-state loops, including gradients and optional AD. The [repeated-evaluation report](performance/repeated-evaluation-2026-10-19.md) records measured single-state scalar-objective comparisons, trial summaries, environment metadata, and the first CPU allocation reduction. Those measurements do not establish a baseline for every dense-kernel workload. CI exercises benchmark harnesses without timing thresholds.
 
@@ -126,4 +149,4 @@ The ownership and parameter milestone preserves existing constructor-sharing def
 
 Explicit shared-value maps add reuse of independent parameter values and gradient accumulation on the existing supported dense CPU circuit path. They preserve two-argument binding and mutating reset, and introduce no symbolic algebra or general backend differentiation contract. The [parameter conventions](conventions.md#explicit-shared-parameter-maps) define their validation and lifecycle.
 
-Dense state fields still use concrete CPU vectors, matrices, and three-dimensional arrays. Array-generic storage, GPU kernels, per-sample circuit parameter vectors, trainable noise parameters, symbolic parameter expressions, and broader legacy ChainRules migration remain future work. The method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`, or every operation supported by forward batching.
+Dense state fields now record concrete array implementations while retaining their vector, matrix, and three-dimensional logical layouts. Hardware-specific GPU kernels, per-sample circuit parameter vectors, symbolic parameter expressions, and broader legacy ChainRules migration remain follow-up work. Additional numerical gradient methods and trainable noise are explicitly deferred. The method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`, or every operation supported by forward batching.

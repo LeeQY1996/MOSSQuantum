@@ -42,8 +42,11 @@ constructors default to `copy=false`, permitting compatible storage reuse.
 Batch-to-batch construction defaults to `copy=true`. Explicit `copy=true` always
 guarantees independent storage; views and scalar conversions can allocate with
 `copy=false`. Extracting `DensityMatrix(batch, b)` always materializes independent
-vector storage under the current single-density representation, including with
-`copy=false`.
+storage in the batch array family, including with `copy=false`. Array inputs
+can opt into that family with `preserve_storage=true`; the historical default
+continues to materialize CPU arrays. Storage preservation and backend execution
+support are separate; see the
+[array extension guide](extending.md#preserve-array-storage).
 
 Converting a pure sample forms `psi * psi'`; converting a pure batch does this
 separately for each column and always allocates. Samples are never averaged.
@@ -82,7 +85,8 @@ than automatically normalizing it.
 Gate and channel execution continues to reuse existing dense kernels on each
 contiguous density slice. The [CPU batch measurements](performance/cpu-batch-2026-10-20.md)
 record observation and gradient allocation improvements, with separate timing
-results and limitations. GPU storage and compiled execution plans remain future work.
+results and limitations. Generic storage and backend routing are available;
+GPU kernels and compiled execution plans remain companion or subsequent work.
 
 ## Observations, normalization, and partial trace
 

@@ -5,7 +5,7 @@
 	apply!(x::QuantumMap, state::DensityMatrix)
 	apply a generc quantum channel on the quantum state
 """
-function apply!(x::QuantumMap, state::DensityMatrix)
+function _cpu_apply!(x::QuantumMap, state::DensityMatrix)
 	@assert _check_pos_range(x, nqubits(state))
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
@@ -15,7 +15,7 @@ function apply!(x::QuantumMap, state::DensityMatrix)
 	return state
 end
 
-apply!(x::QuantumMap, state::StateVector) = apply!(x, DensityMatrix(state))
+_cpu_apply!(x::QuantumMap, state::StateVector) = _cpu_apply!(x, DensityMatrix(state))
 
 """
 	apply_dagger!(x::QuantumMap, state::DensityMatrix)
@@ -23,6 +23,7 @@ apply!(x::QuantumMap, state::StateVector) = apply!(x, DensityMatrix(state))
 	this function is needed for auto-differentiation
 """
 function apply_dagger!(x::QuantumMap, state::DensityMatrix)
+    _require_cpu_storage(state, x)
 	@assert _check_pos_range(x, nqubits(state))
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
@@ -38,6 +39,7 @@ end
 	this function is needed for auto-differentiation
 """
 function apply_inverse!(x::QuantumMap, state::DensityMatrix)
+    _require_cpu_storage(state, x)
 	@assert _check_pos_range(x, nqubits(state))
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)

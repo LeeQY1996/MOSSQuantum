@@ -32,7 +32,7 @@ A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, 
 
 `QCircuit` accepts external `AbstractInstruction` subtypes, including instructions outside the gate/channel hierarchy. Observable descriptions such as `QubitsOperator` are not instructions. Instructions are parameterless by default. `storage` is optional for external states, and neither `.data` nor MOSS private helpers belong to the extension contract.
 
-The dense CPU types keep single and batch representation separate:
+The dense state containers keep single and batch representation separate:
 `StateVector` has one vector, while `BatchStateVector` has one sample
 per matrix column. `DensityMatrix` has one matrix; `BatchDensityMatrix` has axes
 `(2^n, 2^n, B)`, with one independent matrix per final-axis slice. Reuse public
@@ -47,6 +47,59 @@ the algebraic left action. Preserve floating state component precision during
 dense gate and channel execution, including promotion from real `T` to
 `Complex{T}`. Density normalization uses trace, rather than matrix norm.
 
+## Preserve array storage
+
+The four built-in dense containers carry both an element type and a concrete
+array type: `StateVector{T,A}`, `DensityMatrix{T,A}`, `BatchStateVector{T,A}`,
+and `BatchDensityMatrix{T,A}`. They can hold another array family without a new
+state hierarchy. `DensityMatrix` retains a vectorized backing array; its public
+`storage` is a reshape to `(2^n, 2^n)` in the same family.
+
+Array inputs opt in explicitly:
+
+```julia
+using MOSS
+
+amplitude_data = ComplexF64[1, 0, 0, 0]
+input = view(amplitude_data, 1:4)
+state = StateVector(input; preserve_storage=true)
+@assert storage(state) === input
+@assert backend(state) isa CPUBackend
+independent = copy(state)
+@assert !Base.mightalias(storage(independent), input)
+```
+
+Ordinary array constructors still materialize compatible CPU arrays, including
+when `copy=false`. `preserve_storage=true` retains an input with the same element
+type unless copying is requested. State-to-state construction, `copy(state)`,
+scalar-type conversion, and pure-to-mixed conversion retain the selected family.
+An owned copy of a view can use an owning array of its parent's family. Sample
+extraction remains independent even with `copy=false`. Shape, register, and
+one-based-axis checks precede payload conversion or copying.
+
+An array implementation supplies metadata, `similar`, `copyto!`, and `reshape`;
+views and broadcast are needed for sample extraction, arithmetic, and outer
+products. Independent allocations must not alias the input. Unsupported
+same-family allocation is rejected rather than materializing an unknown array
+through `Array`. Device transfers and device-specific array operations belong
+to the companion package.
+
+Storage construction, execution, and differentiation are separate capabilities.
+CPU execution accepts ordinary arrays and a conservative set of contiguous,
+one-based views rooted in them, including supported reshapes. Stepped or
+permuted layouts and unknown wrappers do not gain CPU execution merely by
+implementing `AbstractArray`. Register `backend(state)` and the operations below
+for another storage family. Without a registered backend, backend selection
+raises `ArgumentError`; explicit unsupported CPU execution raises
+`UnsupportedOperation` before touching the payload. No path implicitly copies
+such a state to the host to execute it.
+
+Code that tested an exact old type must account for `A`. Prefer
+`state isa StateVector{ComplexF64}` and inspect `typeof(storage(state))` when
+layout matters. `StateVector{T}` remains a valid constructor and dispatch family,
+but is now a partially specified type; it is not the exact concrete type of an
+instance. The same applies to the other three containers.
+
 ## Backend and observation contracts
 
 Implement these methods for the combinations the backend supports:
@@ -56,11 +109,23 @@ MOSS.supports(my_backend, instruction, state; action=:apply)
 MOSS.apply!(my_backend, instruction, state)
 MOSS.supports(my_backend, observable, state; action=:expectation)
 MOSS.expectation(my_backend, observable, state)
+# Nonmutating observable action, used by observable * state:
+MOSS.supports(my_backend, observable, state; action=:apply)
+MOSS.apply(my_backend, observable, state)
+# Computational-basis readout:
+MOSS.supports(my_backend, MOSS.probabilities, state; action=:probabilities)
+MOSS.probabilities(my_backend, state; qubits=1:MOSS.nqubits(state))
 ```
 
 `supports` returns a Boolean and defaults to `false` for unknown capabilities. Check register bounds with `MOSS.validate_positions(instruction, MOSS.nqubits(state))` separately. Instruction application returns the resulting state and may replace it with another representation. Unsupported execution or observation should raise `MOSS.UnsupportedOperation(backend, operation, state, action)`.
 
 The two-argument methods `apply!(instruction, state)` and `expectation(observable, state)` select `backend(state)`. Generic backend circuit execution visits nested instructions, retains replacement states, and rejects unsupported capabilities. A default circuit capability query checks each instruction against the supplied state. Backends that change representation should specialize that query to follow their state transitions; the dense CPU backend does so for pure-to-mixed channel application.
+
+An explicit CPU instruction call uses the core CPU matrix implementation.
+Specialized legacy two-argument instruction methods still participate in direct
+calls and CPU circuit traversal. Put custom backend behavior in the
+three-argument methods so explicitly selecting that backend selects its intended
+implementation too.
 
 The existing CPU measurement adapters retain metadata return values for `QMeasure` and `QSelect`. To support stochastic measurement through `simulate`, a custom backend implements `measure!(backend, state, position; auto_reset, rng)` returning `(outcome, probability)`, and advertises support for the corresponding `QMeasure`. Generic `simulate` records those outcomes; it does not invent a backend's measurement algorithm or AD rule.
 
@@ -73,7 +138,57 @@ mixed batch representations. It returns `BatchSimulationResult`, whose
 returns one probability per sample. Recorded batch measurements keep the register
 size; separate nonmutating `measure`/`post_select` calls support qubit removal.
 
-Sampling is a separate capability: external representations can implement `probabilities(state; qubits=...)`, or supply their own `sample` and `counts` methods. Preserve the documented readout ordering, normalization, RNG, and shape conventions. Implementing `apply!` alone does not establish readout or differentiation support.
+Sampling is a separate capability. For the four dense containers, implement `MOSS.probabilities(backend, state; qubits=...)`; the ordinary state call selects its backend. Implicit external state types can also implement their own state-level `probabilities`, `sample`, or `counts` methods. Preserve the documented readout ordering, normalization, RNG, and shape conventions. Implementing `apply!` alone does not establish readout or differentiation support.
+
+`MOSS.apply(backend, observable, state)` is the qualified, nonmutating linear
+action hook for matrix and operator multiplication. It returns independent
+output storage; for density matrices this action is `Oρ`, while gate execution
+through `apply!` is `UρU†`. Use `MOSS.apply` with its module qualification; it is
+not exported. Observation continues to use `expectation`. Readout arrays may be
+host metadata if that is the backend's documented convention; this does not
+change the state's storage family.
+
+## Independent array-backend example
+
+The [array-backend fixture](../test/fixtures/MOSSDemoArrayBackend/README.md)
+uses the four public state containers with `DemoArray`. That array rejects scalar
+indexing, `Array(...)`, and `collect(...)`, so its tests detect accidental CPU
+fallback. The example executor owns ordinary CPU arrays privately; it is a
+contract demonstration, not a GPU implementation.
+
+From this repository root, prepare its independent environment:
+
+```bash
+julia --project=test/fixtures/MOSSDemoArrayBackend --startup-file=no -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
+```
+
+Then run the following in that environment:
+
+```julia
+using MOSS, MOSSDemoArrayBackend
+
+initial = StateVector(DemoArray(ComplexF64[1, 0]); preserve_storage=true)
+@assert backend(initial) isa ArrayBackend
+state = apply!(RyGate(1, 0.3), copy(initial))
+@assert real(expectation(ZGate(1), state)) ≈ cos(0.3)
+@assert probabilities(state) ≈ [cos(0.15)^2, sin(0.15)^2]
+
+flipped = MOSS.apply(backend(state), ComplexF64[0 1; 1 0], state)
+mixed = DensityMatrix(state)
+@assert storage(flipped) isa DemoArray
+@assert storage(mixed) isa DemoArray
+
+objective = ExpectationObjective(QCircuit([RyGate(1, 0.0; isparas=true)]),
+    ZGate(1), initial)
+@assert evaluate(objective, [0.3]) ≈ cos(0.3)
+@assert !supports_gradient(AdjointGradient(), objective)
+```
+
+The fixture also supplies a separately selected analytic gradient method for a
+small external objective. That illustrates the public gradient protocol without
+adding numerical estimators or requiring an AD package. GPU kernels, device
+allocation policy, transfers, and any device differentiation belong in companion
+implementations; successful storage adaptation alone establishes none of them.
 
 ## Independent backend example
 
@@ -171,7 +286,11 @@ operation. Batch measurement and post-selection remain forward capabilities.
 The explicit parameter-vector interface below uses a separate optional
 ChainRulesCore extension. Trainable noise parameters and broader migration of
 legacy derivative entrypoints remain planned. Avoid claiming AD support for a
-custom backend until its derivative behavior and error paths are tested.
+custom backend until its derivative behavior and error paths are tested. Optional
+constructor rules accept `preserve_storage` and retain the input shape and scalar
+domain on supported CPU arrays/views; they do not give every array family a
+circuit derivative. The built-in dense adjoint checks CPU storage eligibility
+before entering its numerical reverse pass.
 
 ## Execution and replaceable differentiation
 
@@ -253,6 +372,6 @@ Plots also exports `backend`. When both packages are loaded with `using`, call `
 
 ## Boundaries for future packages
 
-The main package retains instruction descriptions, state/backend contracts, the CPU simulator, observables, parameter binding, and existing reverse passes. GPU support that reuses the existing dense state types needs array-generic storage and device kernels; passing a GPU array to today's dense constructors converts it to CPU storage. A companion package can instead supply its own device-resident state and backend through the public contracts.
+The main package retains instruction descriptions, generic dense state containers, state/backend contracts, the CPU simulator, observables, parameter binding, and existing reverse passes. A device companion can reuse the four dense containers through `preserve_storage=true`, then implement its array operations, transfers, and executor through public hooks. Ordinary array constructors keep their CPU materialization default. Storage preservation does not implement device kernels or device gradients. A companion can also supply an implicit or compressed state with its own backend when a dense container is unsuitable.
 
 MPS, stabilizer simulation, continuous open-system solvers, specialized algorithm workflows, error correction, chemistry, and framework interoperability can live in companion packages. Their dependencies and numerical assumptions can evolve while using the public contracts above. No companion package should rely on private CPU kernels as its public integration path.

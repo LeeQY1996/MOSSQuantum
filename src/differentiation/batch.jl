@@ -12,10 +12,20 @@ _batch_sample(state::BatchDensityMatrix, column::Int, ::Type{T}=eltype(state)) w
 _batch_wrap(data, state::BatchStateVector) = BatchStateVector(data, nqubits(state))
 _batch_wrap(data, state::BatchDensityMatrix) = BatchDensityMatrix(data, nqubits(state))
 
+function _batch_seed_storage(seed)
+    if seed isa Union{BatchStateVector,BatchDensityMatrix}
+        _require_cpu_storage(seed, :cotangent)
+        return storage(seed)
+    end
+    return seed
+end
+
 function _batch_circuit_seed(seed, output)
-    data = seed isa Union{BatchStateVector,BatchDensityMatrix} ? storage(seed) : seed
+    data = _batch_seed_storage(seed)
     data isa AbstractArray{<:Number} && ndims(data) == ndims(storage(output)) ||
         throw(ArgumentError("a batch circuit cotangent must be a numerical array or batch state"))
+    _cpu_storage_supported(data) ||
+        throw(ArgumentError("a CPU batch circuit cotangent requires supported host storage"))
     size(data) == size(storage(output)) ||
         throw(DimensionMismatch("batch circuit cotangent must match the output shape"))
     Base.require_one_based_indexing(data)
@@ -23,6 +33,7 @@ function _batch_circuit_seed(seed, output)
 end
 
 function _batch_circuit_adjoint(circuit::QCircuit, initial::Union{BatchStateVector,BatchDensityMatrix})
+    _require_cpu_storage(initial, circuit)
     _check_batch_circuit_adjoint(circuit)
     saved_circuit = copy_instruction(circuit)
     if _has_quantum_map(saved_circuit)
@@ -116,6 +127,7 @@ _batch_single_expectation_pullback(observable::QubitsOperator, state::DensityMat
 
 function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator},
                                      state::BatchStateVector)
+    _require_cpu_storage(state, observable, :expectation)
     validate_positions(observable, nqubits(state))
     saved_observable = deepcopy(observable)
     T = promote_type(eltype(state), eltype(observable))
@@ -126,6 +138,8 @@ function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator}
             _batch_wrap(zeros(T, size(storage(saved_state))), saved_state)
         seed isa AbstractVector{<:Number} ||
             throw(ArgumentError("a batch expectation cotangent must be a vector"))
+        _cpu_storage_supported(seed) ||
+            throw(ArgumentError("a CPU batch expectation cotangent requires supported host vector storage"))
         length(seed) == batch_size(saved_state) ||
             throw(DimensionMismatch("batch expectation cotangent must have one entry per sample"))
         Base.require_one_based_indexing(seed)
@@ -147,6 +161,7 @@ end
 # independent of rho, so equal consecutive seeds can share one numerical action.
 function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator},
                                      state::BatchDensityMatrix)
+    _require_cpu_storage(state, observable, :expectation)
     validate_positions(observable, nqubits(state))
     saved_observable = deepcopy(observable)
     T = promote_type(eltype(state), eltype(saved_observable))
@@ -160,6 +175,8 @@ function _batch_expectation_adjoint(observable::Union{QubitsTerm,QubitsOperator}
             BatchDensityMatrix(zeros(T, shape), register_size, count)
         seed isa AbstractVector{<:Number} ||
             throw(ArgumentError("a batch expectation cotangent must be a vector"))
+        _cpu_storage_supported(seed) ||
+            throw(ArgumentError("a CPU batch expectation cotangent requires supported host vector storage"))
         length(seed) == count ||
             throw(DimensionMismatch("batch expectation cotangent must have one entry per sample"))
         Base.require_one_based_indexing(seed)
@@ -206,9 +223,11 @@ function _batch_qubit_encoding_adjoint(::Type{T}, inputs::AbstractMatrix{<:Real}
     RT = promote_type(eltype(saved_inputs), typeof(real(zero(T))))
     function back(seed)
         isnothing(seed) && return zeros(RT, size(saved_inputs))
-        data = seed isa BatchStateVector ? storage(seed) : seed
+        data = _batch_seed_storage(seed)
         data isa AbstractMatrix{<:Number} ||
             throw(ArgumentError("a batch encoding cotangent must be a matrix or BatchStateVector"))
+        _cpu_storage_supported(data) ||
+            throw(ArgumentError("a CPU batch encoding cotangent requires supported host matrix storage"))
         size(data) == size(storage(output)) ||
             throw(DimensionMismatch("batch encoding cotangent must match the output shape"))
         Base.require_one_based_indexing(data)

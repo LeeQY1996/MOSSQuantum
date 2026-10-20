@@ -12,7 +12,7 @@ MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.co
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
 - **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
-- **Extension interfaces**: Custom instructions, implicit states, selectable backends, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
+- **Extension interfaces**: Custom instructions, implicit states, selectable backends, opt-in generic storage in all four dense containers, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
 ## Installation
@@ -65,6 +65,30 @@ measured.measurements # outcome and probability, including nested circuits
 ```
 
 `simulate` copies its input state. A single-state result describes one trajectory; a batch result contains one trajectory and record list per sample. Sampling the final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
+
+### Array storage and external backends
+
+The four dense state types can retain another array family without introducing
+another state hierarchy. Ordinary array constructors keep their CPU default;
+preservation is explicit:
+
+```julia
+using MOSS
+
+amplitude_data = ComplexF64[1, 0, 0, 0]
+state = StateVector(view(amplitude_data, 1:4); preserve_storage=true)
+independent = copy(state)
+@assert backend(state) isa CPUBackend
+@assert !Base.mightalias(storage(state), storage(independent))
+```
+
+Copies, scalar-type conversions, and pure-to-mixed conversions retain the selected
+family. Execution and gradient support are checked separately. The
+[array-backend example](docs/extending.md#independent-array-backend-example)
+uses all four public containers with an array that forbids scalar indexing and
+implicit host conversion. Device kernels belong to companion implementations.
+Existing `StateVector{T}` constructor and dispatch syntax remains valid; exact
+instance types now also include a storage parameter `A`.
 
 ### Independent parameter binding
 
@@ -318,7 +342,7 @@ Run the test suite through the package entrypoint:
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
-Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, and `expectation(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage.
+Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, qualified `MOSS.apply(backend, ...)`, `expectation(backend, ...)`, and `probabilities(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage. The [array-backend package](test/fixtures/MOSSDemoArrayBackend/README.md) instead reuses the four dense containers with its own array family and executor.
 
 The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single and batch pure/mixed circuits, including fixed channels. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
 

@@ -12,18 +12,43 @@
 
 # State pullbacks use state wrappers internally; an array constructor must
 # return an array cotangent, with the original shape and real/complex domain.
+function _check_cpu_array_cotangent(data, values)
+    if MOSS._state_storage_template(data) isa Array
+        values isa AbstractArray && MOSS._cpu_storage_supported(values) ||
+            throw(ArgumentError("a CPU array cotangent requires supported host storage"))
+    end
+    return nothing
+end
+
 function _array_cotangent(data, z)
     isnothing(z) && return nothing
     values = z isa Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix} ? storage(z) : z
+    _check_cpu_array_cotangent(data, values)
     return Zygote.ProjectTo(data)(reshape(values, size(data)))
 end
 
-@adjoint BatchStateVector(data::AbstractMatrix{<:Number}, n::Int, count::Int; copy::Bool=false) = BatchStateVector(data, n, count; copy=copy), z -> (_array_cotangent(data, z), nothing, nothing)
-@adjoint BatchStateVector(data::AbstractMatrix{<:Number}, n::Int; copy::Bool=false) = BatchStateVector(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint BatchStateVector(data::AbstractMatrix{<:Number}; copy::Bool=false) = BatchStateVector(data; copy=copy), z -> (_array_cotangent(data, z),)
-@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}, n::Int, count::Int; copy::Bool=false) where {T<:Number} = BatchStateVector{T}(data, n, count; copy=copy), z -> (_array_cotangent(data, z), nothing, nothing)
-@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}, n::Int; copy::Bool=false) where {T<:Number} = BatchStateVector{T}(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}; copy::Bool=false) where {T<:Number} = BatchStateVector{T}(data; copy=copy), z -> (_array_cotangent(data, z),)
+_state_cotangent(x::StateVector, z) = isnothing(z) ? nothing :
+    StateVector(_array_cotangent(storage(x), z), nqubits(x); preserve_storage=true)
+_state_cotangent(x::DensityMatrix, z) = isnothing(z) ? nothing :
+    DensityMatrix(_array_cotangent(storage(x), z), nqubits(x); preserve_storage=true)
+_state_cotangent(x::BatchStateVector, z) = isnothing(z) ? nothing :
+    BatchStateVector(_array_cotangent(storage(x), z), nqubits(x); preserve_storage=true)
+_state_cotangent(x::BatchDensityMatrix, z) = isnothing(z) ? nothing :
+    BatchDensityMatrix(_array_cotangent(storage(x), z), nqubits(x); preserve_storage=true)
+
+@adjoint StateVector{T}(x::StateVector; copy::Bool=false) where {T<:Number} =
+    StateVector{T}(x; copy=copy), z -> (_state_cotangent(x, z),)
+@adjoint DensityMatrix{T}(x::DensityMatrix; copy::Bool=false) where {T<:Number} =
+    DensityMatrix{T}(x; copy=copy), z -> (_state_cotangent(x, z),)
+@adjoint BatchStateVector{T}(x::BatchStateVector; copy::Bool=true) where {T<:Number} =
+    BatchStateVector{T}(x; copy=copy), z -> (_state_cotangent(x, z),)
+
+@adjoint BatchStateVector(data::AbstractMatrix{<:Number}, n::Int, count::Int; copy::Bool=false, preserve_storage::Bool=false) = BatchStateVector(data, n, count; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing, nothing)
+@adjoint BatchStateVector(data::AbstractMatrix{<:Number}, n::Int; copy::Bool=false, preserve_storage::Bool=false) = BatchStateVector(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint BatchStateVector(data::AbstractMatrix{<:Number}; copy::Bool=false, preserve_storage::Bool=false) = BatchStateVector(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
+@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}, n::Int, count::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchStateVector{T}(data, n, count; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing, nothing)
+@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}, n::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchStateVector{T}(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint BatchStateVector{T}(data::AbstractMatrix{<:Number}; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchStateVector{T}(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
 
 @adjoint BatchStateVector(::Type{T}, n::Int, count::Int) where {T<:Number} = BatchStateVector(T, n, count), z -> (nothing, nothing, nothing)
 @adjoint BatchStateVector{T}(n::Int, count::Int) where {T<:Number} = BatchStateVector{T}(n, count), z -> (nothing, nothing)
@@ -31,7 +56,12 @@ end
 
 @adjoint BatchStateVector(x::StateVector; copy::Bool=false) = begin
     result = BatchStateVector(x; copy=copy)
-    return result, z -> (isnothing(z) ? nothing : StateVector(_array_cotangent(storage(x), z), nqubits(x)),)
+    return result, z -> (_state_cotangent(x, z),)
+end
+
+function _zero_state_cotangent(data, ::Type{T}) where {T<:Number}
+    gradient = MOSS._state_similar(data, T, size(data))
+    return fill!(gradient, zero(T))
 end
 
 @adjoint StateVector(x::BatchStateVector, column::Int; copy::Bool=true) = begin
@@ -39,27 +69,27 @@ end
     return result, z -> begin
         isnothing(z) && return nothing, nothing
         values = z isa StateVector ? storage(z) : z
-        gradient = zeros(eltype(values), size(storage(x)))
+        _check_cpu_array_cotangent(storage(x), values)
+        gradient = _zero_state_cotangent(storage(x), eltype(values))
         gradient[:, column] .= values
-        return BatchStateVector(Zygote.ProjectTo(storage(x))(gradient), nqubits(x)), nothing
+        return BatchStateVector(Zygote.ProjectTo(storage(x))(gradient), nqubits(x); preserve_storage=true), nothing
     end
 end
 
 @adjoint Base.convert(::Type{BatchStateVector{T}}, x::BatchStateVector) where {T<:Number} = begin
     result = convert(BatchStateVector{T}, x)
-    return result, z -> (nothing, isnothing(z) ? nothing :
-        BatchStateVector(_array_cotangent(storage(x), z), nqubits(x)))
+    return result, z -> (nothing, _state_cotangent(x, z))
 end
 
-@adjoint StateVector(data::AbstractVector{<:Number}, n::Int; copy::Bool=false) = StateVector(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint StateVector(data::AbstractVector{<:Number}; copy::Bool=false) = StateVector(data; copy=copy), z -> (_array_cotangent(data, z),)
-@adjoint DensityMatrix(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}, n::Int; copy::Bool=false) = DensityMatrix(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint DensityMatrix(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}; copy::Bool=false) = DensityMatrix(data; copy=copy), z -> (_array_cotangent(data, z),)
+@adjoint StateVector(data::AbstractVector{<:Number}, n::Int; copy::Bool=false, preserve_storage::Bool=false) = StateVector(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint StateVector(data::AbstractVector{<:Number}; copy::Bool=false, preserve_storage::Bool=false) = StateVector(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
+@adjoint DensityMatrix(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}, n::Int; copy::Bool=false, preserve_storage::Bool=false) = DensityMatrix(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint DensityMatrix(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}; copy::Bool=false, preserve_storage::Bool=false) = DensityMatrix(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
 
-@adjoint StateVector{T}(data::AbstractVector{<:Number}, n::Int; copy::Bool=false) where {T<:Number} = StateVector{T}(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint StateVector{T}(data::AbstractVector{<:Number}; copy::Bool=false) where {T<:Number} = StateVector{T}(data; copy=copy), z -> (_array_cotangent(data, z),)
-@adjoint DensityMatrix{T}(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}, n::Int; copy::Bool=false) where {T<:Number} = DensityMatrix{T}(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint DensityMatrix{T}(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}; copy::Bool=false) where {T<:Number} = DensityMatrix{T}(data; copy=copy), z -> (_array_cotangent(data, z),)
+@adjoint StateVector{T}(data::AbstractVector{<:Number}, n::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = StateVector{T}(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint StateVector{T}(data::AbstractVector{<:Number}; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = StateVector{T}(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
+@adjoint DensityMatrix{T}(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}, n::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = DensityMatrix{T}(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint DensityMatrix{T}(data::Union{AbstractVector{<:Number}, AbstractMatrix{<:Number}}; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = DensityMatrix{T}(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
 
 # Zero-state initializers have only discrete/type arguments. Their internal
 # array mutation must not become part of a surrounding differentiable loss.
@@ -80,12 +110,12 @@ end
 # @adjoint dot(x::StateVectorBatch, y::StateVectorBatch) = Zygote.pullback(dot, storage(x), storage(y))
 
 
-@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}, n::Int, count::Int; copy::Bool=false) = BatchDensityMatrix(data, n, count; copy=copy), z -> (_array_cotangent(data, z), nothing, nothing)
-@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}, n::Int; copy::Bool=false) = BatchDensityMatrix(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}; copy::Bool=false) = BatchDensityMatrix(data; copy=copy), z -> (_array_cotangent(data, z),)
-@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}, n::Int, count::Int; copy::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data, n, count; copy=copy), z -> (_array_cotangent(data, z), nothing, nothing)
-@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}, n::Int; copy::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data, n; copy=copy), z -> (_array_cotangent(data, z), nothing)
-@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}; copy::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data; copy=copy), z -> (_array_cotangent(data, z),)
+@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}, n::Int, count::Int; copy::Bool=false, preserve_storage::Bool=false) = BatchDensityMatrix(data, n, count; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing, nothing)
+@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}, n::Int; copy::Bool=false, preserve_storage::Bool=false) = BatchDensityMatrix(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint BatchDensityMatrix(data::AbstractArray{<:Number,3}; copy::Bool=false, preserve_storage::Bool=false) = BatchDensityMatrix(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
+@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}, n::Int, count::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data, n, count; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing, nothing)
+@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}, n::Int; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data, n; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z), nothing)
+@adjoint BatchDensityMatrix{T}(data::AbstractArray{<:Number,3}; copy::Bool=false, preserve_storage::Bool=false) where {T<:Number} = BatchDensityMatrix{T}(data; copy=copy, preserve_storage=preserve_storage), z -> (_array_cotangent(data, z),)
 
 @adjoint BatchDensityMatrix(::Type{T}, n::Int, count::Int) where {T<:Number} = BatchDensityMatrix(T, n, count), z -> (nothing, nothing, nothing)
 @adjoint BatchDensityMatrix{T}(n::Int, count::Int) where {T<:Number} = BatchDensityMatrix{T}(n, count), z -> (nothing, nothing)
@@ -94,18 +124,19 @@ end
 
 @adjoint Base.convert(::Type{BatchDensityMatrix{T}}, x::BatchDensityMatrix) where {T<:Number} = begin
     result = convert(BatchDensityMatrix{T}, x)
-    return result, z -> (nothing, isnothing(z) ? nothing :
-        BatchDensityMatrix(_array_cotangent(storage(x), z), nqubits(x)))
+    return result, z -> (nothing, _state_cotangent(x, z))
 end
 
 @adjoint DensityMatrix(x::BatchDensityMatrix, column::Int; copy::Bool=true) = begin
     result = DensityMatrix(x, column; copy=copy)
     return result, z -> begin
         isnothing(z) && return nothing, nothing
-        values = z isa DensityMatrix ? storage(z) : reshape(z, size(storage(result)))
-        gradient = zeros(eltype(values), size(storage(x)))
+        values = z isa DensityMatrix ? storage(z) : z
+        _check_cpu_array_cotangent(storage(x), values)
+        values = reshape(values, size(storage(result)))
+        gradient = _zero_state_cotangent(storage(x), eltype(values))
         gradient[:, :, column] .= values
-        return BatchDensityMatrix(Zygote.ProjectTo(storage(x))(gradient), nqubits(x)), nothing
+        return BatchDensityMatrix(Zygote.ProjectTo(storage(x))(gradient), nqubits(x); preserve_storage=true), nothing
     end
 end
 
@@ -117,35 +148,35 @@ end
 
 @adjoint BatchDensityMatrix(x::DensityMatrix; copy::Bool=false) = begin
     result = BatchDensityMatrix(x; copy=copy)
-    return result, z -> (isnothing(z) ? nothing :
-        DensityMatrix(_array_cotangent(storage(x), z), nqubits(x)),)
+    return result, z -> (_state_cotangent(x, z),)
 end
 
 @adjoint BatchDensityMatrix{T}(x::BatchDensityMatrix; copy::Bool=true) where {T<:Number} = begin
     result = BatchDensityMatrix{T}(x; copy=copy)
-    return result, z -> (isnothing(z) ? nothing :
-        BatchDensityMatrix(_array_cotangent(storage(x), z), nqubits(x)),)
+    return result, z -> (_state_cotangent(x, z),)
 end
 @adjoint BatchDensityMatrix{T}(x::DensityMatrix; copy::Bool=false) where {T<:Number} = begin
     result = BatchDensityMatrix{T}(x; copy=copy)
-    return result, z -> (isnothing(z) ? nothing :
-        DensityMatrix(_array_cotangent(storage(x), z), nqubits(x)),)
+    return result, z -> (_state_cotangent(x, z),)
 end
 
 function _batch_density_pure_back(result, initial::BatchStateVector)
+    MOSS._require_cpu_storage(initial, BatchDensityMatrix)
+    MOSS._require_cpu_storage(result, BatchDensityMatrix)
     saved = Base.copy(initial)
     project = Zygote.ProjectTo(storage(initial))
     function back(z)
         isnothing(z) && return nothing
         values = z isa BatchDensityMatrix ? storage(z) : z
         size(values) == size(storage(result)) || throw(DimensionMismatch("density cotangent must match its batch"))
+        _check_cpu_array_cotangent(storage(result), values)
         T = promote_type(eltype(saved), eltype(values))
         gradient = zeros(T, size(storage(saved)))
         for column in 1:batch_size(saved)
             delta = view(values, :, :, column)
             gradient[:, column] .= (delta + delta') * view(storage(saved), :, column)
         end
-        return BatchStateVector(project(gradient), nqubits(saved))
+        return BatchStateVector(project(gradient), nqubits(saved); preserve_storage=true)
     end
     return back
 end
@@ -179,7 +210,10 @@ end
         isnothing(z) && return (nothing,)
         values = z isa BatchDensityMatrix ? storage(z) : z
         size(values) == size(storage(result)) || throw(DimensionMismatch("density cotangent must match its batch"))
-        return ([DensityMatrix(projects[b](Matrix(view(values, :, :, b))), registers[b])
+        for state in states
+            _check_cpu_array_cotangent(storage(state), values)
+        end
+        return ([DensityMatrix(projects[b](MOSS._copy_state_storage_as(view(values, :, :, b), eltype(values))), registers[b]; preserve_storage=true)
             for b in eachindex(projects)],)
     end
 end

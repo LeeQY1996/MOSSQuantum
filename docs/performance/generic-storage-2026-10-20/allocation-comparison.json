@@ -1,0 +1,542 @@
+[
+  {
+    "case": "pure_unitary_B1",
+    "operation": "gate_apply",
+    "before_bytes": 400,
+    "after_bytes": 400,
+    "delta_bytes": 0,
+    "before_allocations": 6,
+    "after_allocations": 6
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "expectation",
+    "before_bytes": 2256,
+    "after_bytes": 2256,
+    "delta_bytes": 0,
+    "before_allocations": 48,
+    "after_allocations": 48
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "evaluate",
+    "before_bytes": 138960,
+    "after_bytes": 183744,
+    "delta_bytes": 44784,
+    "before_allocations": 3076,
+    "after_allocations": 4075
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "value_and_gradient",
+    "before_bytes": 518976,
+    "after_bytes": 527152,
+    "delta_bytes": 8176,
+    "before_allocations": 11052,
+    "after_allocations": 11358
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "pullback_prepare",
+    "before_bytes": 376768,
+    "after_bytes": 384944,
+    "delta_bytes": 8176,
+    "before_allocations": 8008,
+    "after_allocations": 8314
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "zygote_gradient",
+    "before_bytes": 525104,
+    "after_bytes": 533280,
+    "delta_bytes": 8176,
+    "before_allocations": 11085,
+    "after_allocations": 11391
+  },
+  {
+    "case": "pure_unitary_B1",
+    "operation": "pullback_apply",
+    "before_bytes": 142000,
+    "after_bytes": 142000,
+    "delta_bytes": 0,
+    "before_allocations": 3041,
+    "after_allocations": 3041
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "gate_apply",
+    "before_bytes": 960,
+    "after_bytes": 960,
+    "delta_bytes": 0,
+    "before_allocations": 14,
+    "after_allocations": 14
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "expectation",
+    "before_bytes": 1968,
+    "after_bytes": 2016,
+    "delta_bytes": 48,
+    "before_allocations": 40,
+    "after_allocations": 42
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "evaluate",
+    "before_bytes": 201848,
+    "after_bytes": 247768,
+    "delta_bytes": 45920,
+    "before_allocations": 3099,
+    "after_allocations": 4134
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "value_and_gradient",
+    "before_bytes": 1148944,
+    "after_bytes": 1157152,
+    "delta_bytes": 8208,
+    "before_allocations": 10712,
+    "after_allocations": 11019
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "pullback_prepare",
+    "before_bytes": 506208,
+    "after_bytes": 514416,
+    "delta_bytes": 8208,
+    "before_allocations": 8121,
+    "after_allocations": 8428
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "zygote_gradient",
+    "before_bytes": 1155408,
+    "after_bytes": 1163616,
+    "delta_bytes": 8208,
+    "before_allocations": 10745,
+    "after_allocations": 11052
+  },
+  {
+    "case": "mixed_unitary_B1",
+    "operation": "pullback_apply",
+    "before_bytes": 642512,
+    "after_bytes": 642512,
+    "delta_bytes": 0,
+    "before_allocations": 2588,
+    "after_allocations": 2588
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "gate_apply",
+    "before_bytes": 400,
+    "after_bytes": 400,
+    "delta_bytes": 0,
+    "before_allocations": 6,
+    "after_allocations": 6
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "channel_apply",
+    "before_bytes": 132368,
+    "after_bytes": 66840,
+    "delta_bytes": -65528,
+    "before_allocations": 30,
+    "after_allocations": 29
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "expectation",
+    "before_bytes": 2256,
+    "after_bytes": 2256,
+    "delta_bytes": 0,
+    "before_allocations": 48,
+    "after_allocations": 48
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "evaluate",
+    "before_bytes": 307664,
+    "after_bytes": 295384,
+    "delta_bytes": -12280,
+    "before_allocations": 3930,
+    "after_allocations": 5139
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "value_and_gradient",
+    "before_bytes": 2676776,
+    "after_bytes": 2677336,
+    "delta_bytes": 560,
+    "before_allocations": 10985,
+    "after_allocations": 11032
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "pullback_prepare",
+    "before_bytes": 1232792,
+    "after_bytes": 1233352,
+    "delta_bytes": 560,
+    "before_allocations": 8059,
+    "after_allocations": 8106
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "zygote_gradient",
+    "before_bytes": 2683688,
+    "after_bytes": 2684248,
+    "delta_bytes": 560,
+    "before_allocations": 11018,
+    "after_allocations": 11065
+  },
+  {
+    "case": "pure_fixed_noise_B1",
+    "operation": "pullback_apply",
+    "before_bytes": 1443728,
+    "after_bytes": 1443728,
+    "delta_bytes": 0,
+    "before_allocations": 2923,
+    "after_allocations": 2923
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "gate_apply",
+    "before_bytes": 960,
+    "after_bytes": 960,
+    "delta_bytes": 0,
+    "before_allocations": 14,
+    "after_allocations": 14
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "channel_apply",
+    "before_bytes": 560,
+    "after_bytes": 560,
+    "delta_bytes": 0,
+    "before_allocations": 12,
+    "after_allocations": 12
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "expectation",
+    "before_bytes": 1968,
+    "after_bytes": 2016,
+    "delta_bytes": 48,
+    "before_allocations": 40,
+    "after_allocations": 42
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "evaluate",
+    "before_bytes": 239688,
+    "after_bytes": 293480,
+    "delta_bytes": 53792,
+    "before_allocations": 3928,
+    "after_allocations": 5155
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "value_and_gradient",
+    "before_bytes": 2866800,
+    "after_bytes": 2868368,
+    "delta_bytes": 1568,
+    "before_allocations": 10994,
+    "after_allocations": 11041
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "pullback_prepare",
+    "before_bytes": 1360680,
+    "after_bytes": 1362248,
+    "delta_bytes": 1568,
+    "before_allocations": 8074,
+    "after_allocations": 8121
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "zygote_gradient",
+    "before_bytes": 2873744,
+    "after_bytes": 2875312,
+    "delta_bytes": 1568,
+    "before_allocations": 11027,
+    "after_allocations": 11074
+  },
+  {
+    "case": "mixed_fixed_noise_B1",
+    "operation": "pullback_apply",
+    "before_bytes": 1505864,
+    "after_bytes": 1505864,
+    "delta_bytes": 0,
+    "before_allocations": 2917,
+    "after_allocations": 2917
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "gate_apply",
+    "before_bytes": 848,
+    "after_bytes": 848,
+    "delta_bytes": 0,
+    "before_allocations": 13,
+    "after_allocations": 13
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "expectation",
+    "before_bytes": 2976,
+    "after_bytes": 2976,
+    "delta_bytes": 0,
+    "before_allocations": 48,
+    "after_allocations": 48
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "evaluate",
+    "before_bytes": 153544,
+    "after_bytes": 198328,
+    "delta_bytes": 44784,
+    "before_allocations": 2937,
+    "after_allocations": 3936
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "value_and_gradient",
+    "before_bytes": 2522456,
+    "after_bytes": 2530632,
+    "delta_bytes": 8176,
+    "before_allocations": 55620,
+    "after_allocations": 55926
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "pullback_prepare",
+    "before_bytes": 422840,
+    "after_bytes": 431016,
+    "delta_bytes": 8176,
+    "before_allocations": 7889,
+    "after_allocations": 8195
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "zygote_gradient",
+    "before_bytes": 2530904,
+    "after_bytes": 2539080,
+    "delta_bytes": 8176,
+    "before_allocations": 55653,
+    "after_allocations": 55959
+  },
+  {
+    "case": "pure_unitary_B16",
+    "operation": "pullback_apply",
+    "before_bytes": 2099280,
+    "after_bytes": 2099280,
+    "delta_bytes": 0,
+    "before_allocations": 47728,
+    "after_allocations": 47728
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "gate_apply",
+    "before_bytes": 6000,
+    "after_bytes": 6000,
+    "delta_bytes": 0,
+    "before_allocations": 44,
+    "after_allocations": 44
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "expectation",
+    "before_bytes": 2208,
+    "after_bytes": 2256,
+    "delta_bytes": 48,
+    "before_allocations": 40,
+    "after_allocations": 42
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "evaluate",
+    "before_bytes": 1452616,
+    "after_bytes": 1498536,
+    "delta_bytes": 45920,
+    "before_allocations": 8829,
+    "after_allocations": 9864
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "value_and_gradient",
+    "before_bytes": 10841104,
+    "after_bytes": 10849312,
+    "delta_bytes": 8208,
+    "before_allocations": 53240,
+    "after_allocations": 53547
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "pullback_prepare",
+    "before_bytes": 2740832,
+    "after_bytes": 2749040,
+    "delta_bytes": 8208,
+    "before_allocations": 13869,
+    "after_allocations": 14176
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "zygote_gradient",
+    "before_bytes": 10849744,
+    "after_bytes": 10857952,
+    "delta_bytes": 8208,
+    "before_allocations": 53273,
+    "after_allocations": 53580
+  },
+  {
+    "case": "mixed_unitary_B16",
+    "operation": "pullback_apply",
+    "before_bytes": 8099920,
+    "after_bytes": 8099920,
+    "delta_bytes": 0,
+    "before_allocations": 39368,
+    "after_allocations": 39368
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "gate_apply",
+    "before_bytes": 848,
+    "after_bytes": 848,
+    "delta_bytes": 0,
+    "before_allocations": 13,
+    "after_allocations": 13
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "channel_apply",
+    "before_bytes": 2099768,
+    "after_bytes": 1049880,
+    "delta_bytes": -1049888,
+    "before_allocations": 75,
+    "after_allocations": 29
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "expectation",
+    "before_bytes": 2976,
+    "after_bytes": 2976,
+    "delta_bytes": 0,
+    "before_allocations": 48,
+    "after_allocations": 48
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "evaluate",
+    "before_bytes": 2423648,
+    "after_bytes": 1427008,
+    "delta_bytes": -996640,
+    "before_allocations": 6771,
+    "after_allocations": 7935
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "value_and_gradient",
+    "before_bytes": 35751016,
+    "after_bytes": 35758296,
+    "delta_bytes": 7280,
+    "before_allocations": 67933,
+    "after_allocations": 68640
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "pullback_prepare",
+    "before_bytes": 14831640,
+    "after_bytes": 14838920,
+    "delta_bytes": 7280,
+    "before_allocations": 23186,
+    "after_allocations": 23893
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "zygote_gradient",
+    "before_bytes": 35759880,
+    "after_bytes": 35767160,
+    "delta_bytes": 7280,
+    "before_allocations": 67966,
+    "after_allocations": 68673
+  },
+  {
+    "case": "pure_fixed_noise_B16",
+    "operation": "pullback_apply",
+    "before_bytes": 20918992,
+    "after_bytes": 20918992,
+    "delta_bytes": 0,
+    "before_allocations": 44744,
+    "after_allocations": 44744
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "gate_apply",
+    "before_bytes": 6000,
+    "after_bytes": 6000,
+    "delta_bytes": 0,
+    "before_allocations": 44,
+    "after_allocations": 44
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "channel_apply",
+    "before_bytes": 560,
+    "after_bytes": 560,
+    "delta_bytes": 0,
+    "before_allocations": 12,
+    "after_allocations": 12
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "expectation",
+    "before_bytes": 2208,
+    "after_bytes": 2256,
+    "delta_bytes": 48,
+    "before_allocations": 40,
+    "after_allocations": 42
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "evaluate",
+    "before_bytes": 1490456,
+    "after_bytes": 1544248,
+    "delta_bytes": 53792,
+    "before_allocations": 9658,
+    "after_allocations": 10885
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "value_and_gradient",
+    "before_bytes": 38791288,
+    "after_bytes": 38814696,
+    "delta_bytes": 23408,
+    "before_allocations": 68061,
+    "after_allocations": 68768
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "pullback_prepare",
+    "before_bytes": 16877352,
+    "after_bytes": 16900760,
+    "delta_bytes": 23408,
+    "before_allocations": 23426,
+    "after_allocations": 24133
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "zygote_gradient",
+    "before_bytes": 38800472,
+    "after_bytes": 38823880,
+    "delta_bytes": 23408,
+    "before_allocations": 68094,
+    "after_allocations": 68801
+  },
+  {
+    "case": "mixed_fixed_noise_B16",
+    "operation": "pullback_apply",
+    "before_bytes": 21913552,
+    "after_bytes": 21913552,
+    "delta_bytes": 0,
+    "before_allocations": 44632,
+    "after_allocations": 44632
+  }
+]

@@ -1,70 +1,86 @@
 """
-    StateVector(data; copy=false)
+    StateVector(data; copy=false, preserve_storage=false)
     StateVector(state::StateVector; copy=false)
 
-Construct a dense pure state. Compatible vector storage is reused by default.
+Construct a dense pure state. Array inputs use compatible CPU storage by default.
+`preserve_storage=true` retains the input array family; execution support is
+queried separately through its backend.
 Use `copy=true` to obtain independent storage, or `Base.copy(state)` to copy an
 existing state. `copy=false` permits reuse; element-type or layout conversion can
 still allocate. `storage(state)` exposes the mutable backing array.
 """
-struct StateVector{T <: Number} <: AbstractQuantumState
-    data::Vector{T}
+struct StateVector{T<:Number,A<:AbstractVector{T}} <: AbstractQuantumState
+    data::A
     nqubits::Int
 
-function StateVector{T}(data::AbstractVector{<:Number}, nqubits::Int; copy::Bool=false) where {T <: Number}
-    @assert length(data) == 2^nqubits
-    converted = convert(Vector{T}, data)
-    new{T}(copy ? Base.copy(converted) : converted, nqubits)
+    function StateVector{T,A}(data::A, n::Int) where {T<:Number,A<:AbstractVector{T}}
+        dimension = _state_dimension(n)
+        Base.require_one_based_indexing(data)
+        length(data) == dimension || throw(DimensionMismatch("state length must equal 2^n"))
+        return new{T,A}(data, n)
+    end
 end
 
+function StateVector{T}(data::AbstractVector{<:Number}, n::Int;
+                         copy::Bool=false, preserve_storage::Bool=false) where {T<:Number}
+    dimension = _state_dimension(n)
+    Base.require_one_based_indexing(data)
+    length(data) == dimension || throw(DimensionMismatch("state length must equal 2^n"))
+    converted = _state_storage(data, T; copy=copy, preserve_storage=preserve_storage)
+    return StateVector{T,typeof(converted)}(converted, n)
 end
 
-StateVector(data::AbstractVector{T}, nqubits::Int; copy::Bool=false) where {T <: Number} = StateVector{T}(data, nqubits; copy=copy)
-StateVector{T}(data::AbstractVector{<:Number}; copy::Bool=false) where T = StateVector{T}(data, _nqubits(data); copy=copy)
-StateVector(data::AbstractVector{T}; copy::Bool=false) where {T <: Number} = StateVector{T}(data; copy=copy)
+StateVector(data::AbstractVector{T}, n::Int; kwargs...) where {T<:Number} = StateVector{T}(data, n; kwargs...)
+StateVector{T}(data::AbstractVector{<:Number}; kwargs...) where {T<:Number} = StateVector{T}(data, _nqubits(data); kwargs...)
+StateVector(data::AbstractVector{T}; kwargs...) where {T<:Number} = StateVector{T}(data; kwargs...)
 function StateVector{T}(nqubits::Int) where {T<:Number} 
-    v = zeros(T, 2^nqubits)
+    v = zeros(T, _state_dimension(nqubits))
     v[1] = 1
     return StateVector{T}(v, nqubits)
 end
 StateVector(::Type{T}, nqubits::Int) where {T<:Number} = StateVector{T}(nqubits)
 StateVector(nqubits::Int) = StateVector(ComplexF64, nqubits)
-StateVector(x::StateVector; copy::Bool=false) = StateVector(x.data, nqubits(x); copy=copy)
+StateVector(x::StateVector; copy::Bool=false) = StateVector(x.data, nqubits(x); copy=copy, preserve_storage=true)
+StateVector{T}(x::StateVector; copy::Bool=false) where {T<:Number} =
+    StateVector{T}(x.data, nqubits(x); copy=copy, preserve_storage=true)
 
 storage(x::StateVector) = x.data
 QuantumCircuits.nqubits(x::StateVector) = x.nqubits
 
-Base.eltype(::Type{StateVector{T}}) where T = T
+Base.eltype(::Type{<:StateVector{T}}) where T = T
 Base.eltype(x::StateVector) = eltype(typeof(x))
 Base.getindex(x::StateVector, j::Int) = getindex(storage(x), j)
 Base.setindex!(x::StateVector, v, j::Int) = setindex!(storage(x), v, j)
 
-Base.convert(::Type{StateVector{T}}, x::StateVector) where {T<:Number} = StateVector(convert(Vector{T}, storage(x)), nqubits(x))
-Base.copy(x::StateVector) = StateVector(copy(storage(x)), nqubits(x))
+Base.convert(::Type{StateVector{T}}, x::StateVector) where {T<:Number} = StateVector{T}(storage(x), nqubits(x); preserve_storage=true)
+Base.copy(x::StateVector) = StateVector(x; copy=true)
 
 Base.cat(v::StateVector) = v
 function Base.cat(v::StateVector...)
+    for state in v
+        _require_cpu_storage(state, cat)
+    end
     a, b = _qcat_util(storage.(v)...)
-    return StateVector(kron(a, b))
+    return StateVector(kron(a, b); preserve_storage=true)
 end
 
 Base.isapprox(x::StateVector, y::StateVector; kwargs...) = isapprox(storage(x), storage(y); kwargs...)
 Base.:(==)(x::StateVector, y::StateVector) = storage(x) == storage(y)
 
 
-Base.:+(x::StateVector, y::StateVector) = StateVector(storage(x) + storage(y), nqubits(x))
-Base.:-(x::StateVector, y::StateVector) = StateVector(storage(x) - storage(y), nqubits(x))
-Base.:*(x::StateVector, y::Number) = StateVector(storage(x) * y, nqubits(x))
+Base.:+(x::StateVector, y::StateVector) = StateVector(_state_broadcast(+, storage(x), storage(y)), nqubits(x); preserve_storage=true)
+Base.:-(x::StateVector, y::StateVector) = StateVector(_state_broadcast(-, storage(x), storage(y)), nqubits(x); preserve_storage=true)
+Base.:*(x::StateVector, y::Number) = StateVector(_state_broadcast(*, storage(x), y), nqubits(x); preserve_storage=true)
 Base.:*(x::Number, y::StateVector) = y * x
-Base.:/(x::StateVector, y::Number) = StateVector(storage(x) / y, nqubits(x))
-Base.:*(m::AbstractMatrix, x::StateVector) = StateVector( m * storage(x), nqubits(x) )
+Base.:/(x::StateVector, y::Number) = StateVector(_state_broadcast(/, storage(x), y), nqubits(x); preserve_storage=true)
+Base.:*(m::AbstractMatrix, x::StateVector) = apply(backend(x), m, x)
 
 
 LinearAlgebra.norm(x::StateVector) = norm(storage(x))
 LinearAlgebra.dot(x::StateVector, y::StateVector) = dot(storage(x), storage(y))
 LinearAlgebra.dot(x::StateVector, m::AbstractVector, y::StateVector) = dot(storage(x), m, storage(y))
 LinearAlgebra.normalize!(x::StateVector) = (normalize!(storage(x)); x)
-LinearAlgebra.normalize(x::StateVector) = StateVector(normalize(storage(x)), nqubits(x))
+LinearAlgebra.normalize(x::StateVector) = normalize!(copy(x))
 
 """
     fidelity(x, y)
@@ -150,11 +166,13 @@ end
 amplitude_encoding(v::AbstractVector; kwargs...) = amplitude_encoding(ComplexF64, v; kwargs...)
 
 function reset!(x::StateVector)
+    _require_cpu_storage(x, reset!)
     fill!(storage(x), zero(eltype(x)))
     x[1] = one(eltype(x))
     return x
 end
 function reset_onehot!(x::StateVector, i::AbstractVector{Int})
+    _require_cpu_storage(x, reset_onehot!)
     @assert nqubits(x) == length(i)
     pos = _sub2ind(i) + 1
     fill!(storage(x), zero(eltype(x)))
@@ -163,6 +181,7 @@ function reset_onehot!(x::StateVector, i::AbstractVector{Int})
 end
 
 function reset_qubit!(x::StateVector, i::AbstractVector{<:Real})
+    _require_cpu_storage(x, reset_qubit!)
     @assert nqubits(x) == length(i)
     if length(i) == 1
         copyto!(storage(x), kernal_mapping(i[1]))
@@ -188,6 +207,7 @@ Return the amplitude of a quantum state at a specific computational basis state.
 The `scaling` parameter is used to scale the amplitude by a factor of `scaling^nqubits(s)`.
 """
 function amplitude(s::StateVector, i::AbstractVector{Int}; scaling::Real=√2)
+    _require_cpu_storage(s, amplitude)
     @assert length(i)==nqubits(s)
     idx = _sub2ind(i) + 1
     return scaling==1 ? s[idx] : s[idx] * scaling^(nqubits(s))
@@ -205,9 +225,10 @@ rand_state(rng::Random.AbstractRNG, n::Int) = rand_state(rng, ComplexF64, n)
 rand_state(n::Int) = rand_state(ComplexF64, n)
 
 function QuantumCircuits.permute(x::StateVector, newindex::Vector{Int})
+    _require_cpu_storage(x, QuantumCircuits.permute)
     n = nqubits(x)
     L = length(storage(x))
-    return StateVector(reshape(permute(reshape(storage(x), ntuple(i->2,n)), newindex), L), n)
+    return StateVector(reshape(permute(reshape(storage(x), ntuple(i->2,n)), newindex), L), n; preserve_storage=true)
 end
 
 
@@ -246,10 +267,11 @@ function _is_valid_indices(i::AbstractVector{Int})
     return true
 end
 
-_nqubits(s::AbstractVector) = begin
-    n = round(Int, log2(length(s)))
-    (2^n == length(s)) || error("state can not be interpretted as a qubit state.")
-    return n
+function _nqubits(s::AbstractVector)
+    Base.require_one_based_indexing(s)
+    dimension = length(s)
+    ispow2(dimension) || throw(ArgumentError("state dimension must be a positive power of two"))
+    return trailing_zeros(dimension)
 end
 
 

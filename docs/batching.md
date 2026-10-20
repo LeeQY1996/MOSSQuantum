@@ -14,7 +14,10 @@ Kraus execution, conditional measurements, and deterministic gradients.
 
 All samples in this implementation share their qubit count, circuit, parameter
 vector, and observable. A different circuit parameter vector per sample is outside this
-API. The implementation uses dense CPU `Matrix` storage.
+API. Ordinary construction uses dense CPU `Matrix` storage. Array inputs can
+retain another matrix family with `preserve_storage=true`; execution capabilities
+come from that family's backend. See the
+[array extension guide](extending.md#preserve-array-storage).
 
 ## Constructing and owning states
 
@@ -32,8 +35,9 @@ Array and single-state constructors permit storage reuse by default;
 `copy=true` guarantees independent storage. Batch-to-batch construction retains
 its historical `copy=true` default. Converting a matrix view or scalar type can
 allocate even with `copy=false`. Extracting `StateVector(batch, i)` currently
-materializes an independent vector, including with `copy=false`. Constructing
-from a list of states owns a new matrix and promotes their scalar types.
+allocates an independent vector in the batch array family, including with
+`copy=false`. Constructing from a list of states owns a new matrix in the first
+sample's family and promotes their scalar types.
 `storage(batch)` exposes the mutable matrix. See the
 [ownership conventions](conventions.md#copying-and-storage-ownership).
 

@@ -79,6 +79,7 @@ end
 function _supports_cpu_adjoint(objective::ExpectationObjective, template::QCircuit=objective.template)
     objective.backend isa CPUBackend || return false
     objective.initial_state isa Union{StateVector,DensityMatrix} || return false
+    _cpu_storage_supported(storage(objective.initial_state)) || return false
     observable = objective.observable
     observable isa Union{QubitsTerm,QubitsOperator} || return false
     try
@@ -154,6 +155,7 @@ end
 
 function _supports_cpu_batch_adjoint(objective::BatchExpectationObjective, template::QCircuit=objective.template)
     objective.backend isa CPUBackend || return false
+    _cpu_storage_supported(storage(objective.initial_state)) || return false
     observable = objective.observable
     observable isa Union{QubitsTerm,QubitsOperator} || return false
     try

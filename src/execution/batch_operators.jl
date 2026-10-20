@@ -13,6 +13,6 @@ function _apply_batch_operator(operator::Union{QubitsTerm,QubitsOperator}, batch
     return BatchStateVector(output, nqubits(batch))
 end
 
-(operator::QubitsTerm)(batch::BatchStateVector) = _apply_batch_operator(operator, batch)
-(operator::QubitsOperator)(batch::BatchStateVector) = _apply_batch_operator(operator, batch)
+(operator::QubitsTerm)(batch::BatchStateVector) = apply(backend(batch), operator, batch)
+(operator::QubitsOperator)(batch::BatchStateVector) = apply(backend(batch), operator, batch)
 Base.:*(operator::Union{QubitsTerm,QubitsOperator}, batch::BatchStateVector) = operator(batch)

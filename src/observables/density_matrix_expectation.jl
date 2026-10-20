@@ -1,5 +1,5 @@
 
-function expectation(m::QubitsTerm, state::DensityMatrix)
+function _cpu_expectation(m::QubitsTerm, state::DensityMatrix)
     isempty(m) && return coeff(m) * tr(state)
     if length(positions(m)) <= 3
         T = promote_type(eltype(m), eltype(state))
@@ -10,7 +10,7 @@ function expectation(m::QubitsTerm, state::DensityMatrix)
     end
 end
 
-function expectation(m::QubitsOperator, state::DensityMatrix)
+function _cpu_expectation(m::QubitsOperator, state::DensityMatrix)
     if _largest_nterm(m) <= 3
         T = promote_type(eltype(m), eltype(state))
         data = convert(Matrix{T}, storage(state))

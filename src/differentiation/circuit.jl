@@ -16,8 +16,27 @@ function _density_gradient_buffers!(workspace::_DensityGradientWorkspace, ::Type
 end
 
 
-_to_sv(x::StateVector, Δ) = Δ isa StateVector ? Δ : StateVector(Δ, nqubits(x))
-_to_sv(x::DensityMatrix, Δ) = Δ isa DensityMatrix ? Δ : DensityMatrix(Δ, nqubits(x))
+function _to_sv(x::StateVector, Δ)
+    _require_cpu_storage(x, :cotangent)
+    if Δ isa StateVector
+        _require_cpu_storage(Δ, :cotangent)
+        return Δ
+    end
+    Δ isa AbstractVector && _cpu_storage_supported(Δ) ||
+        throw(ArgumentError("a CPU state cotangent requires supported host vector storage"))
+    return StateVector(Δ, nqubits(x))
+end
+
+function _to_sv(x::DensityMatrix, Δ)
+    _require_cpu_storage(x, :cotangent)
+    if Δ isa DensityMatrix
+        _require_cpu_storage(Δ, :cotangent)
+        return Δ
+    end
+    Δ isa AbstractArray && _cpu_storage_supported(Δ) ||
+        throw(ArgumentError("a CPU density cotangent requires supported host storage"))
+    return DensityMatrix(Δ, nqubits(x))
+end
 
 _has_quantum_map(circuit::QCircuit) = any(item -> item isa QuantumMap ||
     (item isa QCircuit && _has_quantum_map(item)), circuit)
@@ -56,6 +75,7 @@ function _check_circuit_adjoint(circuit::QCircuit)
 end
 
 function _circuit_adjoint(circuit::QCircuit, x::Union{StateVector, DensityMatrix})
+    _require_cpu_storage(x, circuit)
     _check_circuit_adjoint(circuit)
     if !_has_quantum_map(circuit)
         # Unitary circuits reconstruct their inputs backwards, so the memory
@@ -108,7 +128,7 @@ function _qubit_encoding_adjoint(::Type{T}, mpsstr::Vector{<:Real}) where {T<:Nu
     y = qubit_encoding(T, mpsstr)
     return y, Δ -> begin
         circuit = QCircuit([RyGate(i, theta*pi, isparas=true) for (i, theta) in enumerate(mpsstr)])
-        Δ, grads, _ = back_propagate(copy(StateVector(Δ)), circuit, copy(y))
+        Δ, grads, _ = back_propagate(copy(_to_sv(y, Δ)), circuit, copy(y))
         return nothing, grads .* pi
     end
 end
@@ -125,6 +145,8 @@ end
 
 # This contraction is tr(x * m * y), so m acts only on the row indices.
 function expectation(x::DensityMatrix, m::Gate, y::DensityMatrix)
+    _require_cpu_storage(x, m, :expectation)
+    _require_cpu_storage(y, m, :expectation)
     yc = convert(DensityMatrix{promote_type(eltype(m), eltype(y))}, copy(y))
     apply_threaded!(m, yc.data)
     return dot(storage(x)', storage(yc))

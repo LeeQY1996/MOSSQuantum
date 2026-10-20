@@ -1,15 +1,15 @@
 
 
-function apply!(x::QSelect, qstate::StateVector)
+function _cpu_apply!(x::QSelect, qstate::StateVector)
 	slice = _qubit_slice(qstate, x.position, x.state)
 	p = real(dot(slice, slice))
 	p > 0 || throw(DomainError(p, "cannot post-select an outcome with zero probability"))
-	x.state == 0 ? apply!(gate(x.position, QuantumCircuits.Gates.UP), qstate) : apply!(gate(x.position, QuantumCircuits.Gates.DOWN), qstate)
+	x.state == 0 ? _cpu_apply!(gate(x.position, QuantumCircuits.Gates.UP), qstate) : _cpu_apply!(gate(x.position, QuantumCircuits.Gates.DOWN), qstate)
 	qstate.data ./= sqrt(p)
 	return p
 end
 
-function apply(x::QSelect, qstate::StateVector; keep::Bool=false)
+function _cpu_apply(x::QSelect, qstate::StateVector; keep::Bool=false)
 	r = _apply_impl(x, qstate, keep=keep)
 	p = real(dot(storage(r), storage(r)))
 	p > 0 || throw(DomainError(p, "cannot post-select an outcome with zero probability"))
@@ -41,7 +41,7 @@ end
 
 function _apply_keep_impl(x::QSelect, qstate::StateVector)
 	tmp = copy(qstate)
-	x.state == 0 ? apply!(gate(x.position, QuantumCircuits.Gates.UP), tmp) : apply!(gate(x.position, QuantumCircuits.Gates.DOWN), tmp)
+	x.state == 0 ? _cpu_apply!(gate(x.position, QuantumCircuits.Gates.UP), tmp) : _cpu_apply!(gate(x.position, QuantumCircuits.Gates.DOWN), tmp)
 	return tmp
 end
 
@@ -59,7 +59,7 @@ probability; all columns are checked before any state data is changed.
 post_select!(batch::BatchStateVector, position::Int, outcome::Int=0) =
     apply!(QSelect(position, outcome), batch)
 
-function apply!(instruction::QSelect, batch::BatchStateVector)
+function _cpu_apply!(instruction::QSelect, batch::BatchStateVector)
     probabilities = _batch_postselection_probabilities(batch, instruction)
     for column in 1:batch_size(batch)
         _collapse_batch_column!(batch, column, instruction.position, instruction.state,
@@ -78,7 +78,7 @@ their batch size and return an empty probability vector.
 post_select(batch::BatchStateVector, position::Int, outcome::Int=0; keep::Bool=false) =
     apply(QSelect(position, outcome), batch; keep=keep)
 
-function apply(instruction::QSelect, batch::BatchStateVector; keep::Bool=false)
+function _cpu_apply(instruction::QSelect, batch::BatchStateVector; keep::Bool=false)
     probabilities = _batch_postselection_probabilities(batch, instruction)
     if keep
         result = copy(batch)

@@ -39,7 +39,7 @@ qubit is the least significant bit of the returned vector's zero-based index.
 For a batch, return one probability vector per column. Inputs must be normalized.
 Third-party representations can implement this method without dense storage.
 """
-function probabilities(state::StateVector; qubits=1:nqubits(state))
+function _cpu_probabilities(state::StateVector; qubits=1:nqubits(state))
     indices = _readout_qubits(state, qubits)
     values = zeros(Float64, 2^length(indices))
     for (i, amplitude) in enumerate(storage(state))
@@ -48,7 +48,7 @@ function probabilities(state::StateVector; qubits=1:nqubits(state))
     return _normalize_probabilities!(values, _probability_tolerance(eltype(state)))
 end
 
-function probabilities(state::DensityMatrix; qubits=1:nqubits(state))
+function _cpu_probabilities(state::DensityMatrix; qubits=1:nqubits(state))
     indices = _readout_qubits(state, qubits)
     values = zeros(Float64, 2^length(indices))
     tolerance = _probability_tolerance(eltype(state))
@@ -61,7 +61,7 @@ function probabilities(state::DensityMatrix; qubits=1:nqubits(state))
     return _normalize_probabilities!(values, tolerance)
 end
 
-function probabilities(state::BatchStateVector; qubits=1:nqubits(state))
+function _cpu_probabilities(state::BatchStateVector; qubits=1:nqubits(state))
     indices = _readout_qubits(state, qubits)
     values = zeros(Float64, 2^length(indices), batch_size(state))
     for b in 1:batch_size(state), i in axes(storage(state), 1)
@@ -73,7 +73,7 @@ function probabilities(state::BatchStateVector; qubits=1:nqubits(state))
     return values
 end
 
-function probabilities(state::BatchDensityMatrix; qubits=1:nqubits(state))
+function _cpu_probabilities(state::BatchDensityMatrix; qubits=1:nqubits(state))
     indices = _readout_qubits(state, qubits)
     diagonal = _batch_density_diagonal_probabilities(state; normalized=true)
     values = zeros(Float64, 2^length(indices), batch_size(state))

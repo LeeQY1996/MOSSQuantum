@@ -1,4 +1,4 @@
-function apply!(x::Gate, batch::BatchStateVector)
+function _cpu_apply!(x::Gate, batch::BatchStateVector)
     supports(CPUBackend(), x, batch) || throw(UnsupportedOperation(CPUBackend(), x, batch, :apply))
     validate_positions(x, nqubits(batch))
     register = Tuple(positions(x))
@@ -28,13 +28,14 @@ function _check_batch_cpu_instructions(circuit::QCircuit, batch::_DenseBatchStat
     return nothing
 end
 
-function apply!(circuit::QCircuit, batch::_DenseBatchState;
+function _cpu_apply!(circuit::QCircuit, batch::_DenseBatchState;
                 rng::Random.AbstractRNG=Random.default_rng())
     chosen_backend = backend(batch)
     supports(chosen_backend, circuit, batch) ||
         throw(UnsupportedOperation(chosen_backend, circuit, batch, :apply))
     validate_positions(circuit, nqubits(batch))
     _check_batch_cpu_instructions(circuit, batch)
+    # External dense instruction specializations must still participate.
     for instruction in circuit
         if instruction isa QMeasure
             apply!(instruction, batch; rng=rng)
@@ -51,4 +52,4 @@ function apply!(circuit::QCircuit, batch::_DenseBatchState;
     return batch
 end
 
-Base.:*(circuit::QCircuit, batch::BatchStateVector) = apply!(circuit, copy(batch))
+Base.:*(circuit::QCircuit, batch::BatchStateVector) = _apply_circuit_copy(circuit, batch)

@@ -1,7 +1,7 @@
 """
 	apply!(x::QMeasure, qstate)
 """
-function apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix}; rng::Random.AbstractRNG=Random.default_rng())
+function _cpu_apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix}; rng::Random.AbstractRNG=Random.default_rng())
 	x.keep || error("only keep mode is implemented.")
 	_check_measurement_position(x.position, nqubits(qstate))
 	probability, istate = _local_measure(storage(qstate), x.position, rng)
@@ -12,7 +12,7 @@ function apply!(x::QMeasure, qstate::Union{StateVector, DensityMatrix}; rng::Ran
 		m = kron(op[:, istate], op[:, istate])/sqrt(probability)
 	end
 	m = reshape(m, (2, 2))
-	apply!(gate(x.position, m), qstate)
+	_cpu_apply!(gate(x.position, m), qstate)
 	return istate-1, probability
 end
 
@@ -23,10 +23,10 @@ Measure the i-th qubit of the quantum state, and return a 2-tuple including the 
 and the probability with which we get the outcome. The quantum state is updated inplace. \n 
 If auto_reset=true,the measured qubit is reset to 0, otherwise it will be the same as the measurement outcome.
 """
-measure!(qstate::Union{StateVector, DensityMatrix}, pos::Int; auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng()) = apply!(QMeasure(pos, auto_reset=auto_reset), qstate; rng=rng)
+measure!(qstate::Union{StateVector, DensityMatrix}, pos::Int; auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng()) = measure!(backend(qstate), qstate, pos; auto_reset=auto_reset, rng=rng)
 
 
-function apply(s::QMeasure, qstater::StateVector; rng::Random.AbstractRNG=Random.default_rng())
+function _cpu_apply(s::QMeasure, qstater::StateVector; rng::Random.AbstractRNG=Random.default_rng())
 	_check_measurement_position(s.position, nqubits(qstater))
 	probability, istate = _local_measure(storage(qstater), s.position, rng)
 	r = vec(copy(_qubit_slice(qstater, s.position, istate-1))) / sqrt(probability)
@@ -64,9 +64,9 @@ returns empty vectors; `position` must still name an existing qubit.
 """
 measure!(batch::BatchStateVector, position::Int; auto_reset::Bool=true,
          rng::Random.AbstractRNG=Random.default_rng()) =
-    apply!(QMeasure(position; auto_reset=auto_reset), batch; rng=rng)
+    measure!(backend(batch), batch, position; auto_reset=auto_reset, rng=rng)
 
-function apply!(instruction::QMeasure, batch::BatchStateVector;
+function _cpu_apply!(instruction::QMeasure, batch::BatchStateVector;
                 rng::Random.AbstractRNG=Random.default_rng())
     instruction.keep || throw(ArgumentError("in-place measurement must keep the measured qubit"))
     distributions = _batch_measurement_probabilities(batch, instruction.position)
@@ -92,7 +92,7 @@ remaining qubits retain their relative order, including for the last qubit.
 measure(batch::BatchStateVector, position::Int; rng::Random.AbstractRNG=Random.default_rng()) =
     apply(QMeasure(position), batch; rng=rng)
 
-function apply(instruction::QMeasure, batch::BatchStateVector;
+function _cpu_apply(instruction::QMeasure, batch::BatchStateVector;
                rng::Random.AbstractRNG=Random.default_rng())
     distributions = _batch_measurement_probabilities(batch, instruction.position)
     outcomes = Vector{Int}(undef, batch_size(batch))

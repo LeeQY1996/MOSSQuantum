@@ -9,6 +9,7 @@ nonzero register returns the vector of sample traces. Empty `sites` copies the
 batch; the existing pure-batch return convention remains unchanged.
 """
 function partial_tr(batch::BatchDensityMatrix, sites::Vector{Int})
+    _require_cpu_storage(batch, partial_tr, :partial_trace)
     check_partial_tr_inputs(sites, nqubits(batch))
     isempty(sites) && return copy(batch)
     length(sites) == nqubits(batch) && return tr(batch)
@@ -31,6 +32,7 @@ a batch density-matrix representation. Empty `sites` follows the single-state
 conversion convention. Results own independent storage.
 """
 function partial_tr(batch::BatchStateVector, sites::Vector{Int})
+    _require_cpu_storage(batch, partial_tr, :partial_trace)
     check_partial_tr_inputs(sites, nqubits(batch))
     if !isempty(sites) && length(sites) == nqubits(batch)
         return real.(dot(batch, batch))
@@ -41,6 +43,7 @@ end
 
 
 function partial_tr(state::DensityMatrix, sites::Vector{Int})
+    _require_cpu_storage(state, partial_tr, :partial_trace)
 	isempty(sites) && return state
 	# some checks
 	check_partial_tr_inputs(sites, nqubits(state))
@@ -50,6 +53,7 @@ end
 
 
 function partial_tr(state::StateVector, sites::Vector{Int})
+    _require_cpu_storage(state, partial_tr, :partial_trace)
 	isempty(sites) && return DensityMatrix(state)
 	n = nqubits(state)
 	check_partial_tr_inputs(sites, n)

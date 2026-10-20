@@ -15,7 +15,7 @@ function _batch_density_short_expectation!(values, register::NTuple{N,Int},
 end
 
 """One `tr(O * rho)` per density-matrix sample, in sample order."""
-function expectation(observable::QubitsTerm, batch::BatchDensityMatrix)
+function _cpu_expectation(observable::QubitsTerm, batch::BatchDensityMatrix)
     _check_batch_observable(observable, batch)
     T = promote_type(eltype(observable), eltype(batch))
     values = zeros(T, batch_size(batch))
@@ -41,7 +41,7 @@ function expectation(observable::QubitsTerm, batch::BatchDensityMatrix)
     return values
 end
 
-function expectation(observable::QubitsOperator, batch::BatchDensityMatrix)
+function _cpu_expectation(observable::QubitsOperator, batch::BatchDensityMatrix)
     _check_batch_observable(observable, batch)
     T = promote_type(eltype(observable), eltype(batch))
     values = zeros(T, batch_size(batch))
@@ -61,7 +61,7 @@ function expectation(observable::QubitsOperator, batch::BatchDensityMatrix)
     return values
 end
 
-function expectation(observable::AbstractMatrix, batch::BatchDensityMatrix)
+function _cpu_expectation(observable::AbstractMatrix, batch::BatchDensityMatrix)
     _check_batch_observable(observable, batch)
     T = promote_type(eltype(observable), eltype(batch))
     values = Vector{T}(undef, batch_size(batch))
@@ -71,7 +71,7 @@ function expectation(observable::AbstractMatrix, batch::BatchDensityMatrix)
     return values
 end
 
-function expectation(observable::Gate, batch::BatchDensityMatrix)
+function _cpu_expectation(observable::Gate, batch::BatchDensityMatrix)
     _check_batch_observable(observable, batch)
     T = promote_type(eltype(observable), eltype(batch))
     values = Vector{T}(undef, batch_size(batch))
@@ -96,11 +96,11 @@ function _apply_batch_operator(observable::Union{QubitsTerm,QubitsOperator}, bat
     return BatchDensityMatrix(data, nqubits(batch))
 end
 
-(observable::QubitsTerm)(batch::BatchDensityMatrix) = _apply_batch_operator(observable, batch)
-(observable::QubitsOperator)(batch::BatchDensityMatrix) = _apply_batch_operator(observable, batch)
+(observable::QubitsTerm)(batch::BatchDensityMatrix) = apply(backend(batch), observable, batch)
+(observable::QubitsOperator)(batch::BatchDensityMatrix) = apply(backend(batch), observable, batch)
 Base.:*(observable::Union{QubitsTerm,QubitsOperator}, batch::BatchDensityMatrix) = observable(batch)
 
-function Base.:*(observable::AbstractMatrix, batch::BatchDensityMatrix)
+function _cpu_linear_apply(observable::AbstractMatrix, batch::BatchDensityMatrix)
     _check_batch_observable(observable, batch)
     T = promote_type(eltype(observable), eltype(batch))
     data = Array{T,3}(undef, size(storage(batch)))
@@ -109,3 +109,5 @@ function Base.:*(observable::AbstractMatrix, batch::BatchDensityMatrix)
     end
     return BatchDensityMatrix(data, nqubits(batch))
 end
+
+Base.:*(observable::AbstractMatrix, batch::BatchDensityMatrix) = apply(backend(batch), observable, batch)

@@ -30,6 +30,32 @@ The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, ba
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
 
+## Completed milestone: generic array containers and backend routing
+
+The four existing dense state types now carry a concrete storage parameter.
+Array inputs opt in through `preserve_storage=true`; ordinary constructors keep
+historical CPU materialization and copy defaults. State-to-state construction,
+owned copies, scalar-type conversion, and pure-to-mixed conversion retain the
+selected family. This establishes a storage and dispatch foundation without
+adding a hardware execution dependency.
+
+| Step | Change | Acceptance | Status |
+| --- | --- | --- | --- |
+| 1 Containers | Generic vector/matrix/three-dimensional backing arrays; vectorized single-density storage retained | One-based metadata checks, shape and batch boundaries, opt-in aliasing, owned copies, conversion, and extraction | Verified locally |
+| 2 Execution boundary | Select a backend from storage; reject unsupported CPU layouts; route linear action and probabilities through backend hooks | No scalar indexing or implicit host transfer before rejection; representation transitions stay in the selected family | Verified locally |
+| 3 Differentiation boundary | Keep optional constructor/copy rules and restrict native adjoints to supported CPU storage | Existing CPU gradients and input projection retained; external execution does not select a gradient method | Verified locally |
+| 4 Companion proof | `MOSSDemoArrayBackend` uses the four containers and an array that forbids scalar access and host materialization | Independent package loading, gate/channel execution, observation, readout, objectives, and separately selected analytic method | Verified locally |
+| 5 Compatibility | Full minimum/primary suites, independent packages, documentation, and CPU regression checks | Stable source, unchanged environments/scripts, all loading orders, and recorded allocation costs | Verified locally |
+
+The [array extension guide](extending.md#preserve-array-storage) and
+[ownership conventions](conventions.md#array-storage-and-execution-eligibility)
+describe the public contracts and exact-type migration. The independent
+[array fixture](../test/fixtures/MOSSDemoArrayBackend/README.md) demonstrates a
+storage family and its executor through public methods. It is a CPU-backed
+contract example; device kernels and actual GPU acceptance belong to subsequent
+companion work. Final broad acceptance and allocation costs are retained in the
+[regression report](performance/generic-storage-2026-10-20.md).
+
 ## Completed milestone: measured CPU batch allocation improvements
 
 This milestone measures pure and mixed batch execution and reduces CPU
@@ -169,18 +195,37 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 
 ## Follow-up work
 
-The following features remain distinct follow-up changes:
+The next implementation direction is a device-specific companion using the
+completed storage/backend contracts. Begin with one state-vector execution path,
+its supported gates, expectation, and readout on real device arrays; verify
+transfer policy, unsupported operations, and numerical agreement before extending
+the same implementation to batches, density matrices, and fixed noise. Generic
+storage alone does not establish this hardware support.
 
-1. Design additional numerical gradient methods through the new protocol, including finite differences, parameter shift, and stochastic estimators.
-2. Design trainable noise parameters and their derivative contracts; measure density-batch kernels before further execution optimization.
-3. Array-generic state storage, GPU kernels, reusable execution plans, and measured allocation/performance improvements.
-4. Kraus trajectories, classical control, and richer experiment statistics when their concrete use cases are implemented.
-5. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
-6. Broader ChainRules coverage and migration of legacy circuit/state derivative entrypoints after their tangent contracts are explicitly defined.
+Other follow-up work remains separate:
+
+1. Measured device allocation and execution improvements, followed by reusable execution plans when measurements justify them.
+2. Kraus trajectories, classical control, and richer experiment statistics for concrete use cases.
+3. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
+4. Broader ChainRules coverage and migration of legacy circuit/state derivative entrypoints after their tangent contracts are defined.
+5. Additional numerical gradient estimators and trainable noise parameters are explicitly deferred; they are not prerequisites for storage/backend integration.
 
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Generic array storage and backend routing
+
+Local acceptance completed on 2026-10-20:
+
+- Julia 1.13.1, four threads: standard `Pkg.test(; test_args=["--load-orders"])` passed 7635 assertions across 78 top-level testsets, including all eight fresh-process loading scenarios.
+- Julia 1.10.10, one thread: an independently resolved environment developed the actual checkout and passed standard `Pkg.test("MOSS"; test_args=["--load-orders"])`, with the same 7635 assertions, 78 ordered testsets, and eight loading scenarios. Source, tests, and root/benchmark Project/Manifest hashes remain unchanged during both runs.
+- The 1245 new assertions cover generic storage and ownership (744), backend routing and unsupported-operation atomicity (143), and optional AD domains, views, and foreign cotangents (358). The latter includes 182 boundary checks confirming rejection before foreign scalar access, copying, or host transfer.
+- Independent standard fixture `Pkg.test` passed on both versions: `MOSSDemoArrayBackend` 401, `MOSSDemoBackend` 9, `MOSSDemoGates` 185, and `MOSSDemoDifferentiation` 235 assertions each. The array fixture uses all four public containers and a separately selected analytic gradient without an AD dependency or private numerical kernel.
+- Fourteen fresh benchmark compatibility processes passed: per version, scalar core/AD 16/20 warmed rows, pure-batch 18/21, pure/mixed batch 52/60, and 26 core first-call rows. Documentation examples also passed on both versions.
+- The [regression report](performance/generic-storage-2026-10-20.md) retains 60 before/after allocation pairs against `bbffd9a`, exact source/environment hashes, and final acceptance records. All eight prepared-pullback and gate cases retain allocation bytes and counts. Several forward evaluations incur extra preflight allocations; pure-state channel promotion allocates about half as much. No elapsed-time improvement is claimed.
+
+The final 108-file source snapshot is `dc01e4bc7396eca05f3f330d0bf59613631eba405627f39188706fd88076ed16`. Runtime dependencies, root and benchmark environments, benchmark entrypoints, and historical performance artifacts are unchanged. CI now includes all four independent fixtures on both versions; remote CI has not been run. Device execution, additional numerical gradient algorithms, and trainable noise remain subsequent or deferred work.
 
 ### CPU batch allocation improvements
 
@@ -192,7 +237,7 @@ Local acceptance completed on 2026-10-20:
 - Independent standard fixture `Pkg.test` passed on both versions: `MOSSDemoBackend` 9, `MOSSDemoGates` 185, and `MOSSDemoDifferentiation` 235 assertions each. Fourteen fresh benchmark compatibility processes passed: each version checks scalar core/AD 16/20 warmed rows, pure-batch 18/21, new pure/mixed batch 52/60, and 26 new core first-call rows. Core processes confirm that neither AD package is loaded.
 - The [CPU batch report](performance/cpu-batch-2026-10-20.md) retains 884 formal summaries and the resolved environment, frozen scripts, source patch, diagnostic profile, comparisons, and checksums. Independent review reproduces all 107 optimized source hashes by applying the exact three-file patch to `cd127e6`, verifies every paired control and reported value, and confirms that all 26 independent confirmation operations reproduce allocation bytes/counts for both implementations.
 
-Runtime dependencies, the root Project/Manifest, benchmark environment, older benchmark entrypoints, and public execution/gradient interfaces remain unchanged. CPU allocation work stays internal. New numerical gradient algorithms, trainable noise, generic array storage, and GPU execution remain separate work.
+Runtime dependencies, the root Project/Manifest, benchmark environment, older benchmark entrypoints, and public execution/gradient interfaces remain unchanged. CPU allocation work stays internal. At that milestone, new numerical gradient algorithms, trainable noise, generic array storage, and GPU execution remained separate work; the storage/backend milestone above subsequently adds generic containers.
 
 ### Dense batch density matrices
 
@@ -206,7 +251,7 @@ Local acceptance completed on 2026-10-19:
 - Eight small existing benchmark harness checks passed: both Julia versions, scalar/pure-batch entrypoints, and separate core/optional AD modes. Two-qubit, one-layer, 0.01-second cases produced 32/40 scalar summary rows and 18/21 pure-batch rows with correct version and AD-loading metadata. These are compatibility checks, not new performance measurements. Historical pure-batch reproduction now explicitly selects revision `6017410`.
 - Source and public-interface review, local Markdown links/anchors/fences, TOML files, and whitespace checks passed. The existing CI main/independent-extension matrix covers the new tests on both versions; remote CI has not been run.
 
-Runtime dependencies, the main development Manifest, and the existing benchmark scripts/environment are unchanged. Density batches remain a separate representation in the main package; scalar reductions, result records, execution selection, and replaceable gradient methods retain their public interfaces. Fixed channels are supported without inverse-map assumptions. Trainable noise, stochastic derivatives, array-generic storage, and new numerical gradient estimators remain separate work.
+Runtime dependencies, the main development Manifest, and the existing benchmark scripts/environment are unchanged. Density batches remain a separate representation in the main package; scalar reductions, result records, execution selection, and replaceable gradient methods retain their public interfaces. Fixed channels are supported without inverse-map assumptions. At that stage, trainable noise, stochastic derivatives, array-generic storage, and new numerical gradient estimators remained separate work; generic storage is implemented in the later milestone above.
 
 ### Dense pure-state batch workflows
 

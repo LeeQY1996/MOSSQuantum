@@ -53,7 +53,7 @@ function _batch_density_execution_type(operation, state::BatchDensityMatrix)
     return promote_type(T, eltype(operation))
 end
 
-function apply!(operation::Gate, state::BatchDensityMatrix)
+function _cpu_apply!(operation::Gate, state::BatchDensityMatrix)
     _check_batch_density_gate(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
@@ -63,7 +63,7 @@ function apply!(operation::Gate, state::BatchDensityMatrix)
     return state
 end
 
-function apply!(operation::QuantumMap, state::BatchDensityMatrix)
+function _cpu_apply!(operation::QuantumMap, state::BatchDensityMatrix)
     _check_batch_density_channel(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
@@ -73,12 +73,13 @@ function apply!(operation::QuantumMap, state::BatchDensityMatrix)
     return state
 end
 
-function apply!(operation::QuantumMap, state::BatchStateVector)
+function _cpu_apply!(operation::QuantumMap, state::BatchStateVector)
     _check_batch_density_channel(operation, state)
-    return apply!(operation, BatchDensityMatrix(state))
+    return _cpu_apply!(operation, BatchDensityMatrix(state))
 end
 
 function apply_dagger!(operation::QuantumMap, state::BatchDensityMatrix)
+    _require_cpu_storage(state, operation)
     _check_batch_density_channel(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
@@ -88,4 +89,4 @@ function apply_dagger!(operation::QuantumMap, state::BatchDensityMatrix)
     return state
 end
 
-Base.:*(circuit::QCircuit, state::BatchDensityMatrix) = apply!(circuit, copy(state))
+Base.:*(circuit::QCircuit, state::BatchDensityMatrix) = _apply_circuit_copy(circuit, state)

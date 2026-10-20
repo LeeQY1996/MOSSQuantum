@@ -35,7 +35,8 @@ end
 
 function measure!(b::CPUBackend, state::Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}, position::Int;
                   auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng())
-    return measure!(state, position; auto_reset=auto_reset, rng=rng)
+    _require_cpu_storage(state, QMeasure(position; auto_reset=auto_reset))
+    return _cpu_apply!(QMeasure(position; auto_reset=auto_reset), state; rng=rng)
 end
 
 function _check_simulation_batch_state(state, count::Int, instruction)
@@ -160,6 +161,8 @@ not define automatic derivatives; analytic circuit application remains available
 through `circuit * state` and `expectation`.
 """
 function simulate(circuit::QCircuit, state; backend=MOSS.backend(state), rng::Random.AbstractRNG=Random.default_rng())
+    supports(backend, circuit, state) || throw(UnsupportedOperation(backend, circuit, state, :apply))
+    validate_positions(circuit, nqubits(state))
     records = MeasurementRecord[]
     result = _simulate!(circuit, copy(state), backend, rng, records)
     return SimulationResult(result, records)

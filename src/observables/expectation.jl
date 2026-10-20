@@ -1,4 +1,4 @@
-function expectation(m::QubitsTerm, state::StateVector)
+function _cpu_expectation(m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 	    return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state))
@@ -8,7 +8,7 @@ function expectation(m::QubitsTerm, state::StateVector)
 end
 
 
-function expectation(m::QubitsOperator, state::StateVector)
+function _cpu_expectation(m::QubitsOperator, state::StateVector)
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		r = zero(eltype(state))
 		for (k, v) in m.data
@@ -31,7 +31,7 @@ function expectation(m::QubitsOperator, state::StateVector)
 end
 
 
-function expectation(state_c::StateVector, m::QubitsTerm, state::StateVector)
+function _cpu_cross_expectation(state_c::StateVector, m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state_c, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 		return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state), storage(state_c))
@@ -40,7 +40,7 @@ function expectation(state_c::StateVector, m::QubitsTerm, state::StateVector)
 	end
 end
 
-function expectation(state_c::StateVector, m::QubitsOperator, state::StateVector)
+function _cpu_cross_expectation(state_c::StateVector, m::QubitsOperator, state::StateVector)
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		r = zero(eltype(state))
 		for (k, v) in m.data
@@ -62,9 +62,9 @@ function expectation(state_c::StateVector, m::QubitsOperator, state::StateVector
 	end
 end
 
-expectation(m::Gate, state::StateVector) = expectation_value(ordered_positions(m), ordered_mat(m), storage(state))
-expectation(state_c::StateVector, m::Gate, state::StateVector) = expectation_value(
+_cpu_expectation(m::Gate, state::StateVector) = expectation_value(ordered_positions(m), ordered_mat(m), storage(state))
+_cpu_cross_expectation(state_c::StateVector, m::Gate, state::StateVector) = expectation_value(
 	ordered_positions(m), ordered_mat(m), storage(state), storage(state_c))
 
-expectation(state_c::StateVector, m::AbstractMatrix, state::StateVector) = dot(storage(state_c), m, storage(state))
-expectation(m::AbstractMatrix, state::StateVector) = dot(state, m, state)
+_cpu_cross_expectation(state_c::StateVector, m::AbstractMatrix, state::StateVector) = dot(storage(state_c), m, storage(state))
+_cpu_expectation(m::AbstractMatrix, state::StateVector) = dot(state, m, state)

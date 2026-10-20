@@ -7,9 +7,9 @@ consuming randomness or changing storage.
 """
 measure!(batch::BatchDensityMatrix, position::Int; auto_reset::Bool=true,
          rng::Random.AbstractRNG=Random.default_rng()) =
-    apply!(QMeasure(position; auto_reset=auto_reset), batch; rng=rng)
+    measure!(backend(batch), batch, position; auto_reset=auto_reset, rng=rng)
 
-function apply!(instruction::QMeasure, batch::BatchDensityMatrix;
+function _cpu_apply!(instruction::QMeasure, batch::BatchDensityMatrix;
                 rng::Random.AbstractRNG=Random.default_rng())
     instruction.keep || throw(ArgumentError("in-place measurement must keep the measured qubit"))
     distributions = _batch_measurement_probabilities(batch, instruction.position)
@@ -34,7 +34,7 @@ Remove the measured qubit and preserve the relative order of the remaining ones.
 measure(batch::BatchDensityMatrix, position::Int; rng::Random.AbstractRNG=Random.default_rng()) =
     apply(QMeasure(position), batch; rng=rng)
 
-function apply(instruction::QMeasure, batch::BatchDensityMatrix;
+function _cpu_apply(instruction::QMeasure, batch::BatchDensityMatrix;
                rng::Random.AbstractRNG=Random.default_rng())
     distributions = _batch_measurement_probabilities(batch, instruction.position)
     outcomes = Vector{Int}(undef, batch_size(batch))
@@ -82,7 +82,7 @@ whole batch unchanged. Inputs need not have unit trace.
 post_select!(batch::BatchDensityMatrix, position::Int, outcome::Int=0) =
     apply!(QSelect(position, outcome), batch)
 
-function apply!(instruction::QSelect, batch::BatchDensityMatrix)
+function _cpu_apply!(instruction::QSelect, batch::BatchDensityMatrix)
     probabilities = _batch_postselection_probabilities(batch, instruction)
     for column in 1:batch_size(batch)
         _collapse_batch_density!(batch, column, instruction.position, instruction.state,
@@ -100,7 +100,7 @@ the selected qubit unless `keep=true`; preserve the other qubits' order.
 post_select(batch::BatchDensityMatrix, position::Int, outcome::Int=0; keep::Bool=false) =
     apply(QSelect(position, outcome), batch; keep=keep)
 
-function apply(instruction::QSelect, batch::BatchDensityMatrix; keep::Bool=false)
+function _cpu_apply(instruction::QSelect, batch::BatchDensityMatrix; keep::Bool=false)
     probabilities = _batch_postselection_probabilities(batch, instruction)
     if keep
         result = copy(batch)

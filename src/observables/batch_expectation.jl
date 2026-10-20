@@ -42,7 +42,7 @@ function _check_batch_observable(observable::AbstractMatrix, batch::_DenseBatchS
     return nothing
 end
 
-function expectation(m::QubitsTerm, batch::BatchStateVector)
+function _cpu_expectation(m::QubitsTerm, batch::BatchStateVector)
     _check_batch_observable(m, batch)
     isempty(m) && return coeff(m) .* dot(batch, batch)
 
@@ -64,7 +64,7 @@ function expectation(m::QubitsTerm, batch::BatchStateVector)
     end
 end
 
-function expectation(m::QubitsOperator, batch::BatchStateVector)
+function _cpu_expectation(m::QubitsOperator, batch::BatchStateVector)
     _check_batch_observable(m, batch)
     if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS_BATCH
         bs = batch_size(batch)
@@ -87,14 +87,14 @@ function expectation(m::QubitsOperator, batch::BatchStateVector)
     end
 end
 
-function expectation(m::Gate, batch::BatchStateVector)
+function _cpu_expectation(m::Gate, batch::BatchStateVector)
     _check_batch_observable(m, batch)
     pos = ordered_positions(m)
     mat = ordered_mat(m)
     return expectation_value(pos, mat, batch)
 end
 
-function expectation(m::AbstractMatrix, batch::BatchStateVector)
+function _cpu_expectation(m::AbstractMatrix, batch::BatchStateVector)
     _check_batch_observable(m, batch)
     bs = batch_size(batch)
     results = Vector{promote_type(eltype(batch), eltype(m))}(undef, bs)
@@ -107,7 +107,7 @@ function expectation(m::AbstractMatrix, batch::BatchStateVector)
 end
 
 # Two-state batch expectation
-function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchStateVector)
+function _cpu_cross_expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchStateVector)
     _check_batch_pair(state_c, state)
     _check_batch_observable(m, state)
     isempty(m) && return coeff(m) .* dot(state_c, state)
@@ -130,7 +130,7 @@ function expectation(state_c::BatchStateVector, m::QubitsTerm, state::BatchState
     end
 end
 
-function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchStateVector)
+function _cpu_cross_expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchStateVector)
     _check_batch_pair(state_c, state)
     _check_batch_observable(m, state)
 
@@ -155,7 +155,7 @@ function expectation(state_c::BatchStateVector, m::QubitsOperator, state::BatchS
     end
 end
 
-function expectation(state_c::BatchStateVector, m::Gate, state::BatchStateVector)
+function _cpu_cross_expectation(state_c::BatchStateVector, m::Gate, state::BatchStateVector)
     _check_batch_pair(state_c, state)
     _check_batch_observable(m, state)
     pos = ordered_positions(m)
@@ -163,7 +163,7 @@ function expectation(state_c::BatchStateVector, m::Gate, state::BatchStateVector
     return expectation_value(pos, mat, state, state_c)
 end
 
-function expectation(state_c::BatchStateVector, m::AbstractMatrix, state::BatchStateVector)
+function _cpu_cross_expectation(state_c::BatchStateVector, m::AbstractMatrix, state::BatchStateVector)
     _check_batch_pair(state_c, state)
     _check_batch_observable(m, state)
     bs = batch_size(state)

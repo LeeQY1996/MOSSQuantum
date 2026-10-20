@@ -180,9 +180,43 @@ Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `me
 
 `simulate`, `sample`, and `counts` have no automatic differentiation contract. Use supported deterministic circuit application and expectation APIs for analytic gradients.
 
+## Array storage and execution eligibility
+
+`StateVector{T,A}` and `DensityMatrix{T,A}` keep vector backing storage;
+`storage(density)` reshapes the latter to a matrix. `BatchStateVector{T,A}`
+stores a matrix, and `BatchDensityMatrix{T,A}` a three-dimensional array. The
+extra `A` parameter records the concrete array implementation without changing
+logical state or batch axes.
+
+Array inputs keep the historical CPU materialization default. Pass
+`preserve_storage=true` explicitly to keep another array family or an aliased
+view. With the same element type and `copy=false`, that path retains the input
+array; copying or changing element type allocates through that family's array
+interface. Copying a view may produce an owning array of its parent family.
+State-to-state construction, `copy`, and scalar-type `convert` retain the family.
+A pure-to-mixed conversion always allocates a fresh outer product in that family.
+Constructors check dimensions and one-based axes before copying numerical data.
+They do not certify normalization or positivity.
+
+Generic storage does not imply a compatible executor. The CPU backend accepts
+ordinary arrays and supported contiguous one-based views rooted in them,
+including supported reshapes. It rejects stepped, permuted, or unknown storage
+before numerical execution. A companion registers `backend(state)` and its
+capabilities for other families; unknown default selection raises `ArgumentError`
+and unsupported explicit execution raises `UnsupportedOperation`. Forward
+execution and `AdjointGradient` support are queried independently. The built-in
+adjoint remains restricted to supported CPU storage and deterministic operations.
+
+For type checks, use `state isa StateVector{T}` rather than comparing
+`typeof(state)` with `StateVector{T}`. The latter now denotes a family with an
+unspecified array type. Fully specified instance types include `A`; existing
+one-parameter constructor calls remain valid. See the
+[array extension guide](extending.md#preserve-array-storage) for runnable examples
+and the array/backend requirements.
+
 ## Copying and storage ownership
 
-`storage(state)` exposes mutable backing data. Dense constructors taking arrays or existing states, and circuit constructors, accept an explicit `copy` keyword while preserving their existing defaults. For dense states, `copy=true` guarantees independent numeric storage. `copy=false` permits reuse, but element-type or layout conversion may still allocate. Same-element-type `convert` can retain backing storage.
+`storage(state)` exposes mutable backing data. Dense constructors taking arrays or existing states, and circuit constructors, accept an explicit `copy` keyword while preserving their existing defaults. Array state inputs additionally accept `preserve_storage`, independently of ownership. For dense states, `copy=true` guarantees independent numeric storage. `copy=false` permits reuse, but element-type or layout conversion may still allocate. Same-element-type `convert` can retain backing storage.
 
 | Expression | Ownership |
 | --- | --- |
@@ -191,13 +225,13 @@ Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `me
 | `DensityMatrix(pure_state; copy=...)` | Always creates independent density-matrix storage |
 | `BatchStateVector(data_or_single_state; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
 | `BatchStateVector(existing_batch; copy=true)` | Copies by default; `copy=false` permits reuse |
-| `StateVector(batch, i; copy=true)` | Copies the column; the current representation also materializes it with `copy=false` |
+| `StateVector(batch, i; copy=true)` | Allocates an independent sample in the batch array family, including with `copy=false` |
 | `BatchDensityMatrix(data_or_single_density; copy=false)` | Reuses compatible storage by default; `copy=true` copies it |
 | `BatchDensityMatrix(existing_batch; copy=true)` | Copies by default; `copy=false` permits reuse |
 | `BatchDensityMatrix(pure_state_or_pure_batch; copy=...)` | Always allocates independent per-sample outer products |
 | `BatchDensityMatrix(density_list; copy=...)` | Always allocates independent sample storage |
-| `DensityMatrix(density_batch, i; copy=true)` | Materializes independent storage even with `copy=false` |
-| `copy(state)` for the four dense state types | Copies numeric storage |
+| `DensityMatrix(density_batch, i; copy=true)` | Allocates an independent sample in the batch array family, including with `copy=false` |
+| `copy(state)` for the four dense state types | Copies numeric storage in the selected array family |
 | `QCircuit(operations; copy=false)` | Reuses a `Vector{AbstractInstruction}`; converting other vector types allocates a container |
 | `copy(circuit)` or `QCircuit(existing_circuit; copy=true)` | Copies the container and retains instruction objects; `QCircuit(...; copy=false)` can share the container |
 | `copy_instruction(instruction_or_circuit)` | Independently copies mutable instruction data, recursively per occurrence for circuits |
@@ -241,4 +275,4 @@ The density overload previously performed only left multiplication. Code requiri
 
 `supports(b, operation, state; action=:apply)` checks execution support. `action=:expectation` checks observation support. Unknown actions or unsupported combinations return `false`. Unsupported public backend execution or observation raises `UnsupportedOperation`; `validate_positions(operation, nqubits(state))` checks register bounds independently of backend arity or representation support.
 
-The dense CPU backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits for single and batch states. Channels convert pure to mixed states while preserving sample independence. Retained `QMeasure` supports all four dense representations; `QSelect` supports single pure states and both batch types. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support covers documented deterministic unitary/fixed-channel, observable, encoding, and constructor paths; it does not extend to stochastic execution, trainable noise, or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.
+For eligible CPU storage, the dense backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits for single and batch states. Channels convert pure to mixed states while preserving sample independence. Retained `QMeasure` supports all four dense representations; `QSelect` supports single pure states and both batch types. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support covers documented deterministic unitary/fixed-channel, observable, encoding, and constructor paths; it does not extend to stochastic execution, trainable noise, or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.

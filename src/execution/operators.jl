@@ -1,6 +1,6 @@
 # Multiplication by a Hamiltonian means left multiplication H * rho. In the
 # column-major vectorization, the first n qubits are the row indices of rho.
-function (h::QubitsTerm)(dm::DensityMatrix)
+function _cpu_linear_apply(h::QubitsTerm, dm::DensityMatrix)
     T = promote_type(eltype(h), eltype(dm))
     v = convert(Vector{T}, dm.data)
     vout = similar(v)
@@ -8,7 +8,7 @@ function (h::QubitsTerm)(dm::DensityMatrix)
     return DensityMatrix(vout, nqubits(dm))
 end
 
-function (h::QubitsOperator)(dm::DensityMatrix)
+function _cpu_linear_apply(h::QubitsOperator, dm::DensityMatrix)
     T = promote_type(eltype(h), eltype(dm))
     v = convert(Vector{T}, dm.data)
     vout = zeros(T, length(v))
@@ -30,14 +30,14 @@ Base.:*(h::QubitsOperator, dm::DensityMatrix) = h(dm)
 Base.:*(h::QubitsTerm, dm::DensityMatrix) = h(dm)
 
 
-function (m::QubitsTerm)(vr::StateVector)
+function _cpu_linear_apply(m::QubitsTerm, vr::StateVector)
 	v = storage(vr)
 	vout = similar(v)
 	_apply_qterm_util!(m, v, vout)
 	return StateVector(vout, nqubits(vr))
 end
 
-function (m::QubitsOperator)(vr::StateVector)
+function _cpu_linear_apply(m::QubitsOperator, vr::StateVector)
 	v = storage(vr)
 	vout = zeros(eltype(v), length(v))
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
@@ -57,3 +57,6 @@ end
 
 Base.:*(m::QubitsOperator, v::StateVector) = m(v)
 Base.:*(m::QubitsTerm, v::StateVector) = m(v)
+
+(operator::Union{QubitsTerm,QubitsOperator})(state::Union{StateVector,DensityMatrix}) =
+    apply(backend(state), operator, state)
