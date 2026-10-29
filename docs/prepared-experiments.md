@@ -171,7 +171,7 @@ fields as read-only and use `remaining_shots` to query it. Plans and bindings ma
 be prepared before a budget refusal; the cap concerns shots, not preparation
 CPU time or memory.
 
-The [optimization workflow](../algorithm_zoo/optimization/README.md) accepts
+The [optimization workflow](../examples/optimization/README.md) accepts
 `max_shots`. It reserves room for one fresh final estimate, completes only whole
 gradient/update steps that fit, and returns `status=:shot_budget` when the next
 step cannot fit. A budget smaller than the final estimate is rejected. It never

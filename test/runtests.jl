@@ -80,11 +80,7 @@ end
 end
 
 
-@testset "test quantum algorithm" begin
-    include("integration/algorithms.jl")
-end
-
-include("integration/sqd.jl")
+include("integration/simulation_utilities.jl")
 
 @testset "test utility" begin
     include("integration/utilities.jl")

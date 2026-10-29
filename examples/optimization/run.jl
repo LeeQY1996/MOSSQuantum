@@ -1,6 +1,5 @@
 using MOSSQuantum, Random
-include("optimization.jl")
-using .MOSSQuantumOptimization
+using MOSSQuantum.Optimization
 
 # A two-qubit variational energy with fixed noise and actual finite shots.
 # Shared classical/quantum execution interfaces also allow feedback circuits.

@@ -49,7 +49,7 @@ using Random
     @test a.shots==200
 end
 
-@testset "Gradient budget preflight and optimizer cap" begin
+@testset "Gradient budget preflight" begin
     c=QCircuit([RyGate(1,0.;isparas=true)])
     o=ShotExpectationObjective(c,QubitsTerm(1=>Z),StateVector(1);shots=100)
     @test required_shots(o)==100
@@ -65,22 +65,4 @@ end
         shots=100,allocation=VarianceAllocation(pilot_shots=8))
     g=estimate_gradient(ParameterShift(),adaptive,[.3];budget=ShotBudget(300),rng=Xoshiro(2))
     @test g.shots==300 && isfinite(g.gradient[1])
-    # The optimizer module is included by integration/shot_optimization.jl earlier.
-    r=MOSSQuantumOptimization.minimize(o,[.3];iterations=100,max_shots=750,rng=Xoshiro(4))
-    @test r.status==:shot_budget && length(r.history)==2
-    @test r.shots==700 && r.evaluations==7
-    r=MOSSQuantumOptimization.minimize(o,[.3];iterations=100,max_shots=100,rng=Xoshiro(4))
-    @test isempty(r.history) && r.shots==100 && r.status==:shot_budget
-    @test_throws ShotBudgetExceeded MOSSQuantumOptimization.minimize(o,[.3];max_shots=99)
-end
-
-@testset "Adaptive optimizer final statistics" begin
-    c=QCircuit([RyGate(1,0.;isparas=true)])
-    o=ShotExpectationObjective(c,QubitsTerm(1=>Z)+.2QubitsTerm(1=>X),StateVector(1);
-        shots=100,allocation=VarianceAllocation(pilot_shots=8))
-    r=MOSSQuantumOptimization.minimize(o,[.3];iterations=10,max_shots=750,rng=Xoshiro(9))
-    @test r.estimate isa AdaptiveEstimate
-    @test r.estimate.shots==100 && r.estimate.pilot_shots==16
-    @test r.shots==700 && r.status==:shot_budget
-    @test isfinite(r.estimate.value) && isfinite(r.estimate.variance)
 end

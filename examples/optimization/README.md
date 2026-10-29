@@ -3,18 +3,17 @@
 Run from the repository root:
 
 ```sh
-julia --project=. algorithm_zoo/optimization/run.jl
+julia --project=. examples/optimization/run.jl
 ```
 
 The example optimizes a two-qubit noisy energy using 2,000 shots per objective
 call and 60 Adam updates. It prints a fresh final energy estimate, its sampling
 standard error, and total shots. No additional dependencies are required.
 
-To reuse the workflow, load `optimization.jl`, then call:
+To reuse the workflow, import the optimization module:
 
 ```julia
-include("algorithm_zoo/optimization/optimization.jl")
-using .MOSSQuantumOptimization
+using MOSSQuantum.Optimization
 result = minimize(objective, initial_parameters;
     method=SPSAGradient(step=.2, directions=4), optimizer=:sgd,
     iterations=100, learning_rate=.2, decay=.602,
@@ -44,6 +43,6 @@ and returns `status=:shot_budget` when another gradient would exceed the cap.
 A cap smaller than the final estimate is rejected before sampling. The per-call
 `shots` value remains unchanged. See [prepared experiments and budgets](../../docs/prepared-experiments.md).
 
-Run `julia --project=. algorithm_zoo/optimization/prepared_run.jl` for a complete
+Run `julia --project=. examples/optimization/prepared_run.jl` for a complete
 prepared parameter scan followed by adaptive-shot optimization capped at 100,000
 shots. The scan uses its own separate 12,000-shot budget.

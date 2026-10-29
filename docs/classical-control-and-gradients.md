@@ -125,10 +125,10 @@ existing `evaluate` protocol. Batch objectives require an explicit reduction.
 
 ## Optimization workflow
 
-The [optimization example](../algorithm_zoo/optimization/README.md) provides SGD
+The [optimization example](../examples/optimization/README.md) provides SGD
 and Adam updates, SPSA perturbation decay, seeded execution, callbacks, history,
-and total shot accounting. It lives in the algorithm zoo; the core package owns
-the reusable objective and gradient interfaces.
+and total shot accounting. The reusable optimizer lives in `MOSSQuantum.Optimization`; the core package also owns
+the objective and gradient interfaces.
 
 Concept references: [Cirq classical controls](https://quantumai.google/cirq/build/classical_control),
 [PennyLane parameter shift](https://docs.pennylane.ai/en/stable/code/api/pennylane.gradients.param_shift.html),

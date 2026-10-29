@@ -102,8 +102,12 @@ include("differentiation/objectives.jl")
 include("differentiation/sampled_gradients.jl")
 include("observables/partial_trace.jl")
 
-# Utilities retains its existing public module and import behavior.
+
+# Simulation utilities and variational circuit builders.
 include("utilities/Utilities.jl")
 import .Utilities: variational_circuit_1d, real_variational_circuit_1d
+
+# Reusable classical optimization for finite-shot objectives.
+include("optimization/Optimization.jl")
 
 end

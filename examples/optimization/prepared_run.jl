@@ -1,6 +1,5 @@
 using MOSSQuantum, Random
-include("optimization.jl")
-using .MOSSQuantumOptimization
+using MOSSQuantum.Optimization
 
 circuit = QCircuit([RyGate(1,0.;isparas=true),Depolarizing(1;p=.02)])
 hamiltonian = QubitsTerm(1=>Z) + .2QubitsTerm(1=>X)

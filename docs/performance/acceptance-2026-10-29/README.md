@@ -88,6 +88,7 @@ From the repository root with the dependencies installed:
 export OPENBLAS_NUM_THREADS=1 JULIA_NUM_THREADS=4 GKSwstype=100
 julia --project=. --startup-file=no -e 'using Pkg; Pkg.test(;test_args=["--load-orders"])'
 julia --project=. --startup-file=no docs/performance/acceptance-2026-10-29/fixtures.jl
+# Historical command before the optimization example moved to examples/optimization.
 julia --project=. --startup-file=no algorithm_zoo/optimization/prepared_run.jl
 ```
 

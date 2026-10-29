@@ -9,16 +9,15 @@ MOSSQuantum merges the circuit representation of [QuantumCircuits.jl](https://gi
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).
 - **State simulation**: Dense state vectors and density matrices, with dedicated batch representations, gate execution, and Kraus noise. CPU pure-state trajectories provide independent noisy shots and optional threaded execution.
 - **Differentiation**: Replaceable explicit gradient methods and optional Zygote integration, including shared-parameter pure/mixed batches with unitary gates and fixed noise, supported expectations, and pure-state qubit encoding. Stochastic execution and trainable noise parameters have no AD contract.
-- **Dynamic circuits and sampled gradients**: Named classical bits, conditional branches, readout-aware feedback, parameter-shift/finite-difference/SPSA estimates with uncertainty and shot budgets. See the [guide](docs/classical-control-and-gradients.md) and [optimization workflow](algorithm_zoo/optimization/README.md).
+- **Dynamic circuits and sampled gradients**: Named classical bits, conditional branches, readout-aware feedback, parameter-shift/finite-difference/SPSA estimates with uncertainty and shot budgets. See the [guide](docs/classical-control-and-gradients.md) and [optimization workflow](examples/optimization/README.md).
 - **Prepared experiments**: Reusable CPU execution/estimation plans, reproducible parallel parameter sweeps, variance-based shot allocation and hard sampling budgets. See the [prepared experiment guide](docs/prepared-experiments.md).
-- **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
-- **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
+- **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation values, Trotterization, and variational circuit builders.
+- **Simulation utilities**: Ground-state solvers, time evolution, spin Hamiltonian builders, and finite-shot optimization (`MOSSQuantum.Optimization`). MOSSAlgorithmZoo is a separate collection of runnable quantum algorithm examples.
 - **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
 - **Extension interfaces**: Custom instructions, implicit states, selectable backends, opt-in generic storage in all four dense containers, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
-The [algorithm zoo](algorithm_zoo/README.md) contains runnable, self-contained
-examples built with MOSSQuantum, starting with sample-based quantum diagonalization.
+`MOSSAlgorithmZoo` is an independent collection of examples that use the public interfaces of MOSSQuantum and its companion packages.
 
 ## Installation
 
@@ -344,18 +343,19 @@ savefig(plt, "circuit.png")
 
 ## Utilities module
 
-`MOSSQuantum.Utilities` provides pre-built algorithms and Hamiltonians:
+`MOSSQuantum.Utilities` provides simulation utilities and Hamiltonians:
 
 - **Spin Hamiltonians**: `heisenberg_1d`, `heisenberg_2d`, `ising_1d`, `ising_2d`
 - **Ground state & evolution**: `ground_state`, `time_evolution`
 - **Trotterization**: `trotter_propagator`, `fuse_gates`
-- **Quantum algorithms**: `QFT`, `order_finding`
 - **Variational circuits**: `variational_circuit_1d`, `real_variational_circuit_1d`
+
+QFT and Shor order finding are no longer exported from `MOSSQuantum.Utilities`; quantum algorithm examples are maintained separately in `MOSSAlgorithmZoo`.
 
 ## Dependencies
 
-- [StaticArrays](https://github.com/JuliaArrays/StaticArrays.jl) — efficient small arrays
 - [KrylovKit](https://github.com/Jutho/KrylovKit.jl) — Krylov subspace methods
+- [StaticArrays](https://github.com/JuliaArrays/StaticArrays.jl) — efficient small arrays
 - [TensorOperations](https://github.com/Jutho/TensorOperations.jl) — tensor contractions
 
 ChainRulesCore is an optional rule dependency for the explicit-method scalar interface; Zygote is an optional AD consumer and also supports the legacy circuit/state interfaces. Neither is required for forward execution or explicit numerical `value_and_gradient` calls. Plots and LaTeXStrings are optional plotting dependencies and must both be loaded to enable circuit diagrams. All supported Julia versions use native package extensions; the Requires bridge has been removed. FiniteDifferences is a test dependency. See the [verification record](docs/roadmap.md#verification-record) for measured Julia-version coverage.

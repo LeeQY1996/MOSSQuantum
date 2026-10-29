@@ -218,7 +218,6 @@ const PUBLIC_API_BASELINE = Dict(
         "sqrtY",
     ],
     "Utilities" => [
-        "QFT",
         "Utilities",
         "fuse_gates",
         "ground_state",
@@ -226,7 +225,6 @@ const PUBLIC_API_BASELINE = Dict(
         "heisenberg_2d",
         "ising_1d",
         "ising_2d",
-        "order_finding",
         "real_variational_circuit_1d",
         "time_evolution",
         "trotter_propagator",

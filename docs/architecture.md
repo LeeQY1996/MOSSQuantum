@@ -1,6 +1,6 @@
 # MOSSQuantum architecture
 
-MOSSQuantum owns circuit descriptions, dense quantum states, the CPU simulator, observables, and public interfaces for companion simulators and application packages. These interfaces now allow an external instruction and an implicit state to execute without exposing dense amplitudes. The `MOSSQuantum`, `MOSSQuantum.QuantumCircuits`, `MOSSQuantum.QuantumCircuits.Gates`, and `MOSSQuantum.Utilities` namespaces form the public module boundary.
+MOSSQuantum owns circuit descriptions, dense quantum states, the CPU simulator, observables, and public interfaces for companion simulators and application packages. These interfaces now allow an external instruction and an implicit state to execute without exposing dense amplitudes. The `MOSSQuantum`, `MOSSQuantum.QuantumCircuits`, `MOSSQuantum.QuantumCircuits.Gates`, `MOSSQuantum.Utilities`, and `MOSSQuantum.Optimization` namespaces form the public module boundary.
 
 ## Source ownership
 
@@ -17,7 +17,8 @@ Directories group responsibilities; they do not each introduce a Julia module.
 | `src/backends/cpu/` | Dense gate, channel, operator, and expectation kernels | `MOSSQuantum` |
 | `src/observables/` | Expectation interfaces, partial trace, and state diagnostics | `MOSSQuantum` |
 | `src/differentiation/` | Numerical single/batch circuit reverse passes and expectation/encoding derivatives | `MOSSQuantum` |
-| `src/utilities/` | Model builders, evolution helpers, and algorithms | `MOSSQuantum.Utilities` |
+| `src/utilities/` | Model builders, variational circuits, ground-state and evolution helpers | `MOSSQuantum.Utilities` |
+| `src/optimization/` | Classical finite-shot optimizer for quantum objectives | `MOSSQuantum.Optimization` |
 | `src/utils/` | Internal indexing, tensor, distance, and parallel helpers | `MOSSQuantum` |
 | `ext/` | Optional ChainRulesCore/Zygote registrations and plotting integration | Extension modules |
 
@@ -37,7 +38,7 @@ instruction and observable descriptions
 
 Operation descriptions do not depend on concrete state types, CPU kernels, or AD frameworks. `AbstractInstruction` distinguishes executable circuit elements from the broader operation hierarchy: Hamiltonian terms are observables and cannot be inserted as circuit instructions. `AbstractQuantumState` imposes no dense storage requirement. Backend methods connect these descriptions to a representation.
 
-The CPU simulator implements the public execution interfaces while retaining existing dense entrypoints. Utilities imports the MOSSQuantum functions it uses explicitly. The core retains reverse-pass algorithms; Zygote method registration lives in its optional extension. Companion packages use documented public methods rather than files under `src/backends/`, `.data` fields, or private helper functions.
+The CPU simulator implements the public execution interfaces while retaining existing dense entrypoints. The core retains reverse-pass algorithms; Zygote method registration lives in its optional extension. Companion packages use documented public methods rather than files under `src/backends/`, `.data` fields, or private helper functions.
 
 ## Public interfaces
 
@@ -146,7 +147,7 @@ The independent `benchmark/` environment keeps BenchmarkTools out of runtime dep
 
 ## Compatibility and remaining work
 
-The directory migration preserves existing namespaces, exported names, signatures, and execution order. Two intentional numerical changes follow it: squared Uhlmann fidelity replaces the former inconsistent mixed-state expression, and density-matrix evolution now applies the propagator on both sides. The [conventions](conventions.md#physical-quantities-and-migration-notes) describe the migration.
+QFT and Shor order finding are no longer exported by `MOSSQuantum.Utilities`. Simulation utilities and variational circuit builders remain in the core package. `MOSSAlgorithmZoo` is an independent collection of examples that uses MOSS family package interfaces. Earlier numerical changes include: squared Uhlmann fidelity replaces the former inconsistent mixed-state expression, and density-matrix evolution now applies the propagator on both sides. The [conventions](conventions.md#physical-quantities-and-migration-notes) describe the migration.
 
 The ownership and parameter milestone preserves existing constructor-sharing defaults, adds explicit copy controls, and makes circuit `push!`, `append!`, and `empty!` return the circuit. Callers of parameter reset and activation retain the returned instruction when it may be replaced. The [ownership conventions](conventions.md#copying-and-storage-ownership) explain these changes.
 

@@ -1,5 +1,6 @@
-module MOSSQuantumOptimization
-using MOSSQuantum, Random, LinearAlgebra
+module Optimization
+using ..MOSSQuantum
+using Random, LinearAlgebra
 export minimize, OptimizationResult, OptimizationStep
 
 struct OptimizationStep
