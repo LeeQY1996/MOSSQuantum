@@ -1,4 +1,4 @@
-using Test, MOSS, Zygote, FiniteDifferences, Random
+using Test, MOSSQuantum, Zygote, FiniteDifferences, Random
 
 @testset "Shared circuit parameter gradients" begin
     @testset "Noncommuting analytic circuit" begin

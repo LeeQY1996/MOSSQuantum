@@ -10,7 +10,7 @@ function _check_batch_observable(observable, batch::_DenseBatchState)
     if observable isa Gate
         length(register) == nqubits(observable) ||
             throw(ArgumentError("gate observable positions must match its qubit count"))
-        1 <= nqubits(observable) <= 5 ||
+        0 <= nqubits(observable) <= 5 ||
             throw(UnsupportedOperation(CPUBackend(), observable, batch, :expectation))
         dimension = 2^nqubits(observable)
         size(mat(observable)) == (dimension, dimension) ||

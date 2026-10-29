@@ -1,4 +1,4 @@
-using Test, MOSS, Zygote, LinearAlgebra, Random
+using Test, MOSSQuantum, Zygote, LinearAlgebra, Random
 
 function _batch_gradient_finite_difference(loss, values; step=1e-6)
     gradient = similar(values, promote_type(eltype(values), Float64))
@@ -147,7 +147,7 @@ end
         end
 
         values = copy(angles)
-        output, back = MOSS._batch_qubit_encoding_adjoint(ComplexF64, values)
+        output, back = MOSSQuantum._batch_qubit_encoding_adjoint(ComplexF64, values)
         @test output ≈ batch_qubit_encoding(values)
         seed = randn(rng, ComplexF64, size(storage(output)))
         expected = back(seed)
@@ -171,11 +171,11 @@ end
             @test gradient == zeros(Float32, dims)
             @test size(storage(batch_qubit_encoding(values))) == (2^dims[1], dims[2])
         end
-        @test_throws ArgumentError MOSS._batch_qubit_encoding_adjoint(ComplexF64, fill(Inf, 1, 1))
+        @test_throws ArgumentError MOSSQuantum._batch_qubit_encoding_adjoint(ComplexF64, fill(Inf, 1, 1))
 
         # The batch rule reuses this single-sample reverse pass. Its retained
         # forward state must survive more than one invocation as well.
-        _, single_back = MOSS._qubit_encoding_adjoint(ComplexF64, [0.12, -0.21])
+        _, single_back = MOSSQuantum._qubit_encoding_adjoint(ComplexF64, [0.12, -0.21])
         single_seed = randn(rng, ComplexF64, 4)
         single_gradient = single_back(single_seed)[2]
         @test single_back(single_seed)[2] ≈ single_gradient
@@ -185,7 +185,7 @@ end
     @testset "Prepared pullbacks retain independent snapshots" begin
         circuit = copy_instruction(template)
         batch = copy(initial)
-        output, back = MOSS._batch_circuit_adjoint(circuit, batch)
+        output, back = MOSSQuantum._batch_circuit_adjoint(circuit, batch)
         seed = randn(rng, ComplexF64, size(storage(output)))
         first_parameters, first_state = back(seed)
         @test back(2 .* seed)[1] ≈ 2 .* first_parameters
@@ -206,7 +206,7 @@ end
 
         observed = QubitsTerm(1 => [1.0 0; 0 -1])
         batch = BatchStateVector(1, 2)
-        values, expectation_back = MOSS._batch_expectation_adjoint(observed, batch)
+        values, expectation_back = MOSSQuantum._batch_expectation_adjoint(observed, batch)
         expected = copy(expectation_back([0.2, -0.7])[2])
         storage(batch) .= 0
         values .= 99
@@ -228,14 +228,14 @@ end
         empty_loss(values) = real(sum(expectation(z_observable, BatchStateVector(values))))
         @test size(Zygote.gradient(empty_loss, zeros(ComplexF64, 2, 0))[1]) == (2, 0)
         zero_qubit = BatchStateVector(zeros(ComplexF64, 1, 2), 0)
-        output, back = MOSS._batch_circuit_adjoint(QCircuit(), zero_qubit)
+        output, back = MOSSQuantum._batch_circuit_adjoint(QCircuit(), zero_qubit)
         @test output == zero_qubit
         @test isempty(back(ones(1, 2))[1])
         @test storage(back(ones(1, 2))[2]) == ones(1, 2)
         for instruction in (QMeasure(1), QSelect(1),
                             QuantumGate(1, [1.0 0; 0 0.5]))
             for rejected in (QCircuit([instruction]), QCircuit([QCircuit([instruction])]))
-                @test_throws ArgumentError MOSS._batch_circuit_adjoint(rejected, BatchStateVector(1, 2))
+                @test_throws ArgumentError MOSSQuantum._batch_circuit_adjoint(rejected, BatchStateVector(1, 2))
             end
         end
     end

@@ -1,5 +1,5 @@
 using Test
-using MOSS
+using MOSSQuantum
 
 @testset "BatchStateVector gate application" begin
     # Test single-qubit gate on batch

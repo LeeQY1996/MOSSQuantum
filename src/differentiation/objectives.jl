@@ -107,8 +107,7 @@ _cpu_observation_state(state::DensityMatrix, observable) =
 
 function _cpu_objective_expectation_pullback(observable::QubitsTerm, state::Union{StateVector,DensityMatrix})
     if isempty(observable)
-        # A constant term has no tensor factors. The legacy pure-state helper
-        # otherwise builds a QubitsOperator, whose keys require a nonempty site.
+        # The scalar pullback needs no tensor-product operator workspace.
         value = expectation(observable, state)
         return value, (seed::Real) -> (nothing,
             state isa StateVector ? (2seed * real(coeff(observable))) * state :

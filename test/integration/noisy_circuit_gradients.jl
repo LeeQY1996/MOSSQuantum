@@ -22,7 +22,8 @@ end
 
 function check_noisy_circuit_expec_grad(L, depth)
 	circuit = noisy_circuit(L, depth)
-	m = QubitsTerm(1=>"+", L-1=>"-", coeff=0.7) + QubitsTerm(1=>"-", L-1=>"+", coeff=0.77) + QubitsTerm(1=>"X", L=>"Y", coeff=0.36)
+	# Endpoints remain distinct for the smallest tested register, L = 2.
+	m = QubitsTerm(1=>"+", L=>"-", coeff=0.7) + QubitsTerm(1=>"-", L=>"+", coeff=0.77) + QubitsTerm(1=>"X", L=>"Y", coeff=0.36)
 	initial_state = DensityMatrix(ComplexF64, L)
 
 	loss(x) = real(expectation(m, x * initial_state))
@@ -37,7 +38,7 @@ end
 function check_ham_term_grad(::Type{T}, L) where T
 	state = rand_densitymatrix(T, L)
 
-	m = QubitsTerm(1=>"+", L-1=>"Y", coeff=0.36)
+	m = QubitsTerm(1=>"+", L=>"Y", coeff=0.36)
 
 	loss(x) = abs(expectation(m, x))
 	loss_fd(θs) = loss(DensityMatrix(θs))

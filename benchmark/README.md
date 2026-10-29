@@ -1,4 +1,4 @@
-# MOSS benchmarks
+# MOSSQuantum benchmarks
 
 This independent environment measures the existing dense CPU simulator. BenchmarkTools is a development dependency here and is not added to the main package environment.
 
@@ -19,13 +19,13 @@ The generated `benchmark/Manifest.toml` records the resolved dependencies for a 
 ### Repeated scalar objectives and replaceable gradients
 
 `repeated_evaluation.jl` measures the public execution/gradient interfaces in an
-independent entrypoint. It loads MOSS and BenchmarkTools without loading Zygote
+independent entrypoint. It loads MOSSQuantum and BenchmarkTools without loading Zygote
 or ChainRulesCore. For comparable before/after measurements, use the same Julia
 version, resolved benchmark environment, thread counts, sizes, and trial duration:
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --latency-only --qubits 6 --depth 2 --output /tmp/moss-before-first.tsv
-julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --seconds 1 --qubits 6 --depth 2 --output /tmp/moss-before-steady.tsv
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --latency-only --qubits 6 --depth 2 --output /tmp/mossquantum-before-first.tsv
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --seconds 1 --qubits 6 --depth 2 --output /tmp/mossquantum-before-steady.tsv
 ```
 
 After the change, rerun the same commands with `after` output names. Use a fresh
@@ -54,7 +54,7 @@ the input/state, and pullback independence after interleaved evaluations.
 To additionally measure the optional Zygote adapter, opt in explicitly:
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --with-zygote --seconds 1 --output /tmp/moss-adapter.tsv
+julia --project=benchmark --threads=1 benchmark/repeated_evaluation.jl --steady-only --with-zygote --seconds 1 --output /tmp/mossquantum-adapter.tsv
 ```
 
 Only that invocation loads Zygote. It adds a `zygote_gradient` row for gradients
@@ -92,8 +92,8 @@ The scalar objective is the mean of the sample expectations. Use a fresh process
 for each thread configuration:
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-threads1.tsv
-julia --project=benchmark --threads=4 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-threads4.tsv
+julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/mossquantum-batch-threads1.tsv
+julia --project=benchmark --threads=4 benchmark/batch_evaluation.jl --steady-only --qubits 6 --depth 2 --seconds 1 --output /tmp/mossquantum-batch-threads4.tsv
 ```
 
 The core run loads neither Zygote nor ChainRulesCore. The six operations per
@@ -113,7 +113,7 @@ pullback ownership. `--with-zygote` adds a seventh operation through the generic
 `differentiable_value` adapter and compares it with the selected explicit method:
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --with-zygote --qubits 6 --depth 2 --seconds 1 --output /tmp/moss-batch-adapter.tsv
+julia --project=benchmark --threads=1 benchmark/batch_evaluation.jl --steady-only --with-zygote --qubits 6 --depth 2 --seconds 1 --output /tmp/mossquantum-batch-adapter.tsv
 ```
 
 The entrypoint accepts the same size, duration, BLAS-thread, and latency flags
@@ -139,8 +139,8 @@ Use the same frozen script, helper, environment, sizes, and thread counts for
 before/after measurements:
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/moss-batch-execution-before-threads1.tsv
-julia --project=benchmark --threads=4 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/moss-batch-execution-before-threads4.tsv
+julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/mossquantum-batch-execution-before-threads1.tsv
+julia --project=benchmark --threads=4 benchmark/batch_execution.jl --steady-only --qubits 6 --depth 2 --batches 1,4,16,64 --seconds 1 --output /tmp/mossquantum-batch-execution-before-threads4.tsv
 ```
 
 Run each command in a fresh process without competing benchmark or test jobs.
@@ -198,7 +198,7 @@ For a small harness check, use the following command; its timings are not a
 performance baseline. Add `--with-zygote` separately to check the adapter.
 
 ```bash
-julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 2 --depth 1 --batches 1 --seconds 0.01 --output /tmp/moss-batch-execution-smoke.tsv
+julia --project=benchmark --threads=1 benchmark/batch_execution.jl --steady-only --qubits 2 --depth 1 --batches 1 --seconds 0.01 --output /tmp/mossquantum-batch-execution-smoke.tsv
 ```
 
 CI checks this entrypoint on Julia 1.10 and 1.13 using two-qubit, two-layer
@@ -250,3 +250,26 @@ Do not compare different sizes as if they were the same workload. The smoke mode
 ## Record a comparison
 
 Record the revision, Julia version, CPU, memory, OS, Julia thread count, BLAS thread count, resolved environment, workload sizes, and command. Compare timings and allocations on the same machine and environment. Repeat only when a result is unstable or a concrete regression needs investigation; avoid treating noisy differences as improvements.
+
+## CPU noise simulation
+
+Run `julia --project=. benchmark/noise_execution.jl /tmp/noise.toml` from the
+repository root. This standalone harness compares density and trajectory shots,
+full and streaming results, serial/threaded trajectories and batch sizes. It
+records warmed timings, cumulative allocations, retained result size, process
+peak RSS and source hashes. Set `JULIA_NUM_THREADS` before starting Julia.
+
+## Prepared execution and sweeps
+
+Run `julia --project=. benchmark/prepared_execution.jl /tmp/prepared.toml` from the
+repository root. This dependency-free comparison measures fixed noisy sampling,
+classical feedback, parameter sweeps and finite-shot VQE gradients, with separate
+preparation cases. See [the report](../docs/performance/prepared-2026-10-29/README.md)
+for warm-up, allocation and amortization caveats.
+
+## End-to-end acceptance snapshot
+
+The [2026-10-29 acceptance report](../docs/performance/acceptance-2026-10-29/README.md)
+records a fresh full-suite run, independent extension fixtures, the budgeted
+optimization workflow, and isolated one/four-thread prepared/noise benchmarks.
+It includes raw logs, source hashes, dependency snapshots and reproduction commands.

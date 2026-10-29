@@ -1,4 +1,4 @@
-using Test, MOSS, Zygote
+using Test, MOSSQuantum, Zygote
 
 @testset "Gradients through explicit constructor copy controls" begin
     observable = QubitsTerm(1 => "Z")

@@ -1,32 +1,32 @@
-using Test, MOSS
+using Test, MOSSQuantum
 
 module GradientProtocolFixtures
-import MOSS
+import MOSSQuantum
 struct Objective
     forward_calls::Base.RefValue{Int}
 end
-struct AnalyticMethod <: MOSS.AbstractGradientMethod
+struct AnalyticMethod <: MOSSQuantum.AbstractGradientMethod
     calls::Base.RefValue{Int}
     scratch::Vector{Float64}
 end
-struct UnsupportedMethod <: MOSS.AbstractGradientMethod end
-struct MissingMethod <: MOSS.AbstractGradientMethod end
-struct MalformedMethod <: MOSS.AbstractGradientMethod
+struct UnsupportedMethod <: MOSSQuantum.AbstractGradientMethod end
+struct MissingMethod <: MOSSQuantum.AbstractGradientMethod end
+struct MalformedMethod <: MOSSQuantum.AbstractGradientMethod
     value
     gradient
 end
-MOSS.evaluate(objective::Objective, values::AbstractVector{<:Real}) =
+MOSSQuantum.evaluate(objective::Objective, values::AbstractVector{<:Real}) =
     (objective.forward_calls[] += 1; sum(abs2, values))
-MOSS.supports_gradient(::AnalyticMethod, ::Objective) = true
-MOSS.supports_gradient(::MissingMethod, ::Objective) = true
-MOSS.supports_gradient(::MalformedMethod, ::Objective) = true
-function MOSS.value_and_gradient(method::AnalyticMethod, ::Objective, values::AbstractVector{<:Real})
+MOSSQuantum.supports_gradient(::AnalyticMethod, ::Objective) = true
+MOSSQuantum.supports_gradient(::MissingMethod, ::Objective) = true
+MOSSQuantum.supports_gradient(::MalformedMethod, ::Objective) = true
+function MOSSQuantum.value_and_gradient(method::AnalyticMethod, ::Objective, values::AbstractVector{<:Real})
     method.calls[] += 1
     resize!(method.scratch, length(values))
     method.scratch .= 2 .* values
     return sum(abs2, values), method.scratch
 end
-MOSS.value_and_gradient(method::MalformedMethod, ::Objective, ::AbstractVector{<:Real}) =
+MOSSQuantum.value_and_gradient(method::MalformedMethod, ::Objective, ::AbstractVector{<:Real}) =
     (method.value, method.gradient)
 end
 

@@ -1,0 +1,3 @@
+Sweep: 12 parameter points, 12000 shots
+Optimization: shot_budget, 33 updates, 100000 shots
+Fresh final energy: -0.9272777273602296 ± 0.02407217396552329

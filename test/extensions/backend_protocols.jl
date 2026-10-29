@@ -1,16 +1,38 @@
 # Keep the normal test suite independent of package resolution. The same fixture
 # is also tested with its own Project.toml in an isolated environment.
-include(joinpath(@__DIR__, "..", "fixtures", "MOSSDemoBackend", "src", "MOSSDemoBackend.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "MOSSQuantumDemoBackend", "src", "MOSSQuantumDemoBackend.jl"))
 
 module BackendContractFailures
-import MOSS
-import ..MOSSDemoBackend
+import MOSSQuantum
+import ..MOSSQuantumDemoBackend
 
-struct BadReturn <: MOSS.AbstractInstruction end
-MOSS.positions(::BadReturn) = ()
-MOSS.supports(::MOSSDemoBackend.DemoBackend, ::BadReturn, ::MOSSDemoBackend.DemoState; action::Symbol=:apply) =
+struct BadReturn <: MOSSQuantum.AbstractInstruction end
+MOSSQuantum.positions(::BadReturn) = ()
+MOSSQuantum.supports(::MOSSQuantumDemoBackend.DemoBackend, ::BadReturn, ::MOSSQuantumDemoBackend.DemoState; action::Symbol=:apply) =
     action === :apply
-MOSS.apply!(::MOSSDemoBackend.DemoBackend, ::BadReturn, ::MOSSDemoBackend.DemoState) = nothing
+MOSSQuantum.apply!(::MOSSQuantumDemoBackend.DemoBackend, ::BadReturn, ::MOSSQuantumDemoBackend.DemoState) = nothing
+
+struct PreflightBackend <: MOSSQuantum.AbstractBackend end
+const seen = Ref{Any}(nothing)
+function MOSSQuantum.validate_backend_execution(::PreflightBackend, circuit::MOSSQuantum.QCircuit,
+                                                state::MOSSQuantum.AbstractQuantumState; mode::Symbol=:apply)
+    seen[] = (mode, circuit)
+    throw(ArgumentError("preflight rejected circuit"))
+end
+end
+
+@testset "backend preflight hook" begin
+    b = BackendContractFailures.PreflightBackend()
+    state = StateVector(1)
+    before = copy(storage(state))
+    circuit = QCircuit([HGate(1), QSelect(1)])
+    for (mode, run) in ((:apply, () -> apply!(b, circuit, state)),
+                        (:simulate, () -> simulate(circuit, state; backend=b)),
+                        (:execute, () -> execute(circuit, state; backend=b, shots=1)))
+        @test_throws ArgumentError run()
+        @test BackendContractFailures.seen[] == (mode, circuit)
+        @test storage(state) == before
+    end
 end
 
 @testset "public backend and instruction protocols" begin
@@ -19,7 +41,7 @@ end
     @test state isa AbstractQuantumState
     @test DensityMatrix(1) isa AbstractQuantumState
     @test BatchStateVector(1, 2) isa AbstractQuantumState
-    @test MOSS.backend(state) isa CPUBackend
+    @test MOSSQuantum.backend(state) isa CPUBackend
     @test supports(cpu, HGate(1), state)
     @test supports(cpu, ZGate(1), state; action=:expectation)
     @test !supports(cpu, HGate(1), state; action=:gradient)
@@ -70,34 +92,34 @@ end
 end
 
 @testset "external implicit-state backend" begin
-    DemoState = MOSSDemoBackend.DemoState
-    DemoBackend = MOSSDemoBackend.DemoBackend
-    DemoFlip = MOSSDemoBackend.DemoFlip
+    DemoState = MOSSQuantumDemoBackend.DemoState
+    DemoBackend = MOSSQuantumDemoBackend.DemoBackend
+    DemoFlip = MOSSQuantumDemoBackend.DemoFlip
     state = DemoState(6)
     @test state isa AbstractQuantumState
     @test DemoFlip(1) isa AbstractInstruction
-    @test MOSS.backend(state) isa DemoBackend
+    @test MOSSQuantum.backend(state) isa DemoBackend
     @test !hasmethod(storage, Tuple{DemoState})
     @test !hasfield(DemoState, :data)
     @test copy(state).bits == state.bits
     @test copy(state).bits !== state.bits
     wide_state = DemoState(6)
     wide_operation = DemoFlip((1, 2, 3, 4, 5, 6))
-    @test supports(MOSS.backend(wide_state), wide_operation, wide_state)
+    @test supports(MOSSQuantum.backend(wide_state), wide_operation, wide_state)
     @test apply!(wide_operation, wide_state).bits == trues(6)
     circuit = QCircuit([DemoFlip(1), XGate(6), QCircuit([DemoFlip(3)])])
     @test nparameters(circuit) == 0
     @test parameters(circuit) == []
-    @test supports(MOSS.backend(state), circuit, state)
+    @test supports(MOSSQuantum.backend(state), circuit, state)
     @test apply!(circuit, state) === state
     @test state.bits == [true, false, true, false, false, true]
     @test expectation(ZGate(1), state) == -1
-    @test expectation(MOSS.backend(state), ZGate(2), state) == 1
+    @test expectation(MOSSQuantum.backend(state), ZGate(2), state) == 1
     @test_throws ArgumentError apply!(DemoFlip(7), state)
     @test !supports(CPUBackend(), DemoFlip(1), StateVector(1))
-    @test !supports(MOSS.backend(state), HGate(1), state)
-    @test !supports(MOSS.backend(state), AmplitudeDamping(1; γ=0.1), state)
-    @test !supports(MOSS.backend(state), ZGate(1), state; action=:gradient)
+    @test !supports(MOSSQuantum.backend(state), HGate(1), state)
+    @test !supports(MOSSQuantum.backend(state), AmplitudeDamping(1; γ=0.1), state)
+    @test !supports(MOSSQuantum.backend(state), ZGate(1), state; action=:gradient)
     @test_throws UnsupportedOperation apply!(HGate(1), state)
     @test_throws UnsupportedOperation apply!(AmplitudeDamping(1; γ=0.1), state)
     @test_throws UnsupportedOperation expectation(XGate(1), state)

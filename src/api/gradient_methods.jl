@@ -3,7 +3,7 @@
 
 A replaceable numerical differentiation strategy. Execution is a separate
 `evaluate(objective, values)` operation. External objectives need not subtype a
-MOSS type or expose quantum states, and external strategies implement public
+MOSSQuantum type or expose quantum states, and external strategies implement public
 `supports_gradient` and `value_and_gradient` methods. A strategy may additionally
 specialize `value_and_pullback` to reuse a forward execution.
 

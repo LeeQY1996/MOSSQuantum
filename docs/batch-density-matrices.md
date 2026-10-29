@@ -14,7 +14,7 @@ an ensemble average.
 ## Construction and ownership
 
 ```julia
-using MOSS, Random, LinearAlgebra
+using MOSSQuantum, Random, LinearAlgebra
 
 pure = rand_batch(MersenneTwister(12), 2, 3)
 mixed = BatchDensityMatrix(pure)

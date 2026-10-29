@@ -1,27 +1,27 @@
-using Test, MOSS, ChainRulesCore, Zygote
+using Test, MOSSQuantum, ChainRulesCore, Zygote
 
 module DifferentiationRuleFixtures
-import MOSS
+import MOSSQuantum
 
-mutable struct CountingGradient <: MOSS.AbstractGradientMethod
+mutable struct CountingGradient <: MOSSQuantum.AbstractGradientMethod
     calls::Int
 end
-MOSS.supports_gradient(::CountingGradient, ::MOSS.ExpectationObjective) = true
-function MOSS.value_and_gradient(method::CountingGradient, objective::MOSS.ExpectationObjective,
+MOSSQuantum.supports_gradient(::CountingGradient, ::MOSSQuantum.ExpectationObjective) = true
+function MOSSQuantum.value_and_gradient(method::CountingGradient, objective::MOSSQuantum.ExpectationObjective,
                                  values::AbstractVector{<:Real})
     method.calls += 1
-    return MOSS.evaluate(objective, values), -sin.(values)
+    return MOSSQuantum.evaluate(objective, values), -sin.(values)
 end
 
-mutable struct CountingPullback <: MOSS.AbstractGradientMethod
+mutable struct CountingPullback <: MOSSQuantum.AbstractGradientMethod
     forward_calls::Int
     pullback_calls::Int
 end
-MOSS.supports_gradient(::CountingPullback, ::MOSS.ExpectationObjective) = true
-function MOSS.value_and_pullback(method::CountingPullback, objective::MOSS.ExpectationObjective,
+MOSSQuantum.supports_gradient(::CountingPullback, ::MOSSQuantum.ExpectationObjective) = true
+function MOSSQuantum.value_and_pullback(method::CountingPullback, objective::MOSSQuantum.ExpectationObjective,
                                  values::AbstractVector{<:Real})
     method.forward_calls += 1
-    value = MOSS.evaluate(objective, values)
+    value = MOSSQuantum.evaluate(objective, values)
     gradient = -sin.(values)
     function pullback(seed::Real)
         method.pullback_calls += 1
@@ -30,31 +30,31 @@ function MOSS.value_and_pullback(method::CountingPullback, objective::MOSS.Expec
     return value, pullback
 end
 
-struct MissingGradient <: MOSS.AbstractGradientMethod end
+struct MissingGradient <: MOSSQuantum.AbstractGradientMethod end
 
 struct ScalarObjective
     scale::Float64
 end
-MOSS.evaluate(objective::ScalarObjective, values::AbstractVector{<:Real}) =
+MOSSQuantum.evaluate(objective::ScalarObjective, values::AbstractVector{<:Real}) =
     objective.scale * sum(abs2, values)
 
-mutable struct ScalarGradient <: MOSS.AbstractGradientMethod
+mutable struct ScalarGradient <: MOSSQuantum.AbstractGradientMethod
     calls::Int
 end
-MOSS.supports_gradient(::ScalarGradient, ::ScalarObjective) = true
-function MOSS.value_and_gradient(method::ScalarGradient, objective::ScalarObjective,
+MOSSQuantum.supports_gradient(::ScalarGradient, ::ScalarObjective) = true
+function MOSSQuantum.value_and_gradient(method::ScalarGradient, objective::ScalarObjective,
                                  values::AbstractVector{<:Real})
     method.calls += 1
-    return MOSS.evaluate(objective, values), 2 .* objective.scale .* values
+    return MOSSQuantum.evaluate(objective, values), 2 .* objective.scale .* values
 end
 
-struct InvalidGradient <: MOSS.AbstractGradientMethod
+struct InvalidGradient <: MOSSQuantum.AbstractGradientMethod
     kind::Symbol
 end
-MOSS.supports_gradient(::InvalidGradient, ::MOSS.ExpectationObjective) = true
-function MOSS.value_and_gradient(method::InvalidGradient, objective::MOSS.ExpectationObjective,
+MOSSQuantum.supports_gradient(::InvalidGradient, ::MOSSQuantum.ExpectationObjective) = true
+function MOSSQuantum.value_and_gradient(method::InvalidGradient, objective::MOSSQuantum.ExpectationObjective,
                                  values::AbstractVector{<:Real})
-    value = MOSS.evaluate(objective, values)
+    value = MOSSQuantum.evaluate(objective, values)
     method.kind === :length && return value, zeros(length(values) + 1)
     method.kind === :complex && return value, complex.(-sin.(values))
     method.kind === :scalar && return value, 1.0
@@ -62,13 +62,13 @@ function MOSS.value_and_gradient(method::InvalidGradient, objective::MOSS.Expect
     error("unknown fixture mode")
 end
 
-struct InvalidPullback <: MOSS.AbstractGradientMethod
+struct InvalidPullback <: MOSSQuantum.AbstractGradientMethod
     kind::Symbol
 end
-MOSS.supports_gradient(::InvalidPullback, ::MOSS.ExpectationObjective) = true
-function MOSS.value_and_pullback(method::InvalidPullback, objective::MOSS.ExpectationObjective,
+MOSSQuantum.supports_gradient(::InvalidPullback, ::MOSSQuantum.ExpectationObjective) = true
+function MOSSQuantum.value_and_pullback(method::InvalidPullback, objective::MOSSQuantum.ExpectationObjective,
                                  values::AbstractVector{<:Real})
-    value = MOSS.evaluate(objective, values)
+    value = MOSSQuantum.evaluate(objective, values)
     method.kind === :value && return complex(value), (seed::Real) -> -seed .* sin.(values)
     function pullback(seed::Real)
         method.kind === :length && return zeros(length(values) + 1)
@@ -81,7 +81,7 @@ end
 end
 
 @testset "Scalar objective ChainRules interface" begin
-    @test Base.get_extension(MOSS, :MOSSChainRulesCoreExt) !== nothing
+    @test Base.get_extension(MOSSQuantum, :MOSSQuantumChainRulesCoreExt) !== nothing
 
     @testset "Mapped circuit values and scalar cotangents" begin
         template = QCircuit([RyGate(1, 0.1; isparas=true),
@@ -209,7 +209,7 @@ end
         @test values == [0.37]
     end
 
-    @testset "External objectives need no MOSS base type" begin
+    @testset "External objectives need no MOSSQuantum base type" begin
         objective = DifferentiationRuleFixtures.ScalarObjective(3.0)
         method = DifferentiationRuleFixtures.ScalarGradient(0)
         values = Float32[1, 2]

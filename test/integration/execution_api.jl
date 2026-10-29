@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra
 using Random
-using MOSS
+using MOSSQuantum
 
 @testset "Explicit RNG initialization" begin
     @test rand_state(MersenneTwister(42), 3) == rand_state(MersenneTwister(42), 3)

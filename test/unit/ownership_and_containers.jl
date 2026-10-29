@@ -137,13 +137,13 @@ end
     @test shallow[1] === nested
     reset_parameters!(shallow, [0.7])
     @test active_parameters(source) ≈ [0.7]
-    independent = MOSS.copy_instruction(source)
+    independent = MOSSQuantum.copy_instruction(source)
     @test independent[1] !== nested
     reset_parameters!(independent, [0.9])
     @test active_parameters(source) ≈ [0.7]
     @test active_parameters(independent) ≈ [0.9]
     repeated = QCircuit([gate, gate])
-    independently_repeated = MOSS.copy_instruction(repeated)
+    independently_repeated = MOSSQuantum.copy_instruction(repeated)
     reset_parameters!(independently_repeated, [0.1, 0.3])
     @test active_parameters(independently_repeated) ≈ [0.1, 0.3]
     @test active_parameters(repeated) ≈ [0.7, 0.7]

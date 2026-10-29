@@ -13,8 +13,8 @@
 # State pullbacks use state wrappers internally; an array constructor must
 # return an array cotangent, with the original shape and real/complex domain.
 function _check_cpu_array_cotangent(data, values)
-    if MOSS._state_storage_template(data) isa Array
-        values isa AbstractArray && MOSS._cpu_storage_supported(values) ||
+    if MOSSQuantum._state_storage_template(data) isa Array
+        values isa AbstractArray && MOSSQuantum._cpu_storage_supported(values) ||
             throw(ArgumentError("a CPU array cotangent requires supported host storage"))
     end
     return nothing
@@ -60,7 +60,7 @@ _state_cotangent(x::BatchDensityMatrix, z) = isnothing(z) ? nothing :
 end
 
 function _zero_state_cotangent(data, ::Type{T}) where {T<:Number}
-    gradient = MOSS._state_similar(data, T, size(data))
+    gradient = MOSSQuantum._state_similar(data, T, size(data))
     return fill!(gradient, zero(T))
 end
 
@@ -161,8 +161,8 @@ end
 end
 
 function _batch_density_pure_back(result, initial::BatchStateVector)
-    MOSS._require_cpu_storage(initial, BatchDensityMatrix)
-    MOSS._require_cpu_storage(result, BatchDensityMatrix)
+    MOSSQuantum._require_cpu_storage(initial, BatchDensityMatrix)
+    MOSSQuantum._require_cpu_storage(result, BatchDensityMatrix)
     saved = Base.copy(initial)
     project = Zygote.ProjectTo(storage(initial))
     function back(z)
@@ -213,7 +213,7 @@ end
         for state in states
             _check_cpu_array_cotangent(storage(state), values)
         end
-        return ([DensityMatrix(projects[b](MOSS._copy_state_storage_as(view(values, :, :, b), eltype(values))), registers[b]; preserve_storage=true)
+        return ([DensityMatrix(projects[b](MOSSQuantum._copy_state_storage_as(view(values, :, :, b), eltype(values))), registers[b]; preserve_storage=true)
             for b in eachindex(projects)],)
     end
 end

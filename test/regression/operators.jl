@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra
-using MOSS
-using MOSS.Utilities
+using MOSSQuantum
+using MOSSQuantum.Utilities
 
 @testset "channel targets and Kraus ordering" begin
     for channel in (AmplitudeDamping(2; γ=1.0), PhaseDamping(2; γ=1.0), Depolarizing(2; p=1.0))
@@ -25,8 +25,8 @@ using MOSS.Utilities
     @test eltype(phase_channel) == ComplexF64
     @test eltype(typeof(phase_channel)) == ComplexF64
     @test storage(apply!(phase_channel, copy(real_rho))) ≈ S * storage(real_rho) * S'
-    @test storage(MOSS.apply_dagger!(phase_channel, copy(real_rho))) ≈ S' * storage(real_rho) * S
-    @test storage(MOSS.apply_inverse!(phase_channel, copy(real_rho))) ≈ S' * storage(real_rho) * S
+    @test storage(MOSSQuantum.apply_dagger!(phase_channel, copy(real_rho))) ≈ S' * storage(real_rho) * S
+    @test storage(MOSSQuantum.apply_inverse!(phase_channel, copy(real_rho))) ≈ S' * storage(real_rho) * S
 end
 
 @testset "parameter management and remapping of non-gate operations" begin
@@ -68,7 +68,7 @@ end
     @test matrix(1, a + a) ≈ 2 * a_matrix
     @test matrix(1, a) == a_matrix
     copied = copy(a)
-    MOSS.QuantumCircuits.add!(copied, QubitsTerm(1 => "Y"))
+    MOSSQuantum.QuantumCircuits.add!(copied, QubitsTerm(1 => "Y"))
     @test matrix(1, a) == a_matrix
 end
 
@@ -91,7 +91,7 @@ end
 end
 
 @testset "two-parameter FSIM" begin
-    fsim = MOSS.QuantumCircuits.Gates.FSIM
+    fsim = MOSSQuantum.QuantumCircuits.Gates.FSIM
     @test fsim(0.3, 0.2) ≈ fsim(0.3, 0.2, 0.0, 0.0, 0.0)
     @test fsim(0.3, 0.2)' * fsim(0.3, 0.2) ≈ Matrix{ComplexF64}(I, 4, 4)
 end

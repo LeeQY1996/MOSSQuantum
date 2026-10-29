@@ -1,13 +1,13 @@
 using LinearAlgebra, Random
 
 module BatchDensityExecutionFixtures
-using MOSS, LinearAlgebra
+using MOSSQuantum, LinearAlgebra
 struct MalformedGate{N} <: Gate{N}
     pos::NTuple{N,Int}
     data::Matrix{ComplexF64}
 end
-MOSS.mat(gate::MalformedGate) = gate.data
-MOSS.ordered_mat(gate::MalformedGate) = gate.data
+MOSSQuantum.mat(gate::MalformedGate) = gate.data
+MOSSQuantum.ordered_mat(gate::MalformedGate) = gate.data
 
 # Expand a local matrix directly in the public little-endian qubit convention.
 # This reference does not call the execution kernels being checked.
@@ -75,7 +75,7 @@ end
     @test tr(noisy) ≈ ones(3)
     @test apply!(CPUBackend(), channel, copy(initial)) ≈ noisy
     cotangent = rand_batch_densitymatrix(rng, 3, 3)
-    dual = MOSS.apply_dagger!(channel, copy(cotangent))
+    dual = MOSSQuantum.apply_dagger!(channel, copy(cotangent))
     @test dot(cotangent, noisy) ≈ dot(dual, initial)
     for b in 1:3
         @test storage(dual)[:, :, b] ≈ sum(k' * storage(cotangent)[:, :, b] * k for k in fullkraus)

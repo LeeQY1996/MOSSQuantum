@@ -1,4 +1,4 @@
-using Test, MOSS, LinearAlgebra
+using Test, MOSSQuantum, LinearAlgebra
 
 module GenericStateStorageFixtures
 mutable struct Activity

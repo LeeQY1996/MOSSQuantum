@@ -6,7 +6,8 @@
 	apply a generc quantum channel on the quantum state
 """
 function _cpu_apply!(x::QuantumMap, state::DensityMatrix)
-	@assert _check_pos_range(x, nqubits(state))
+	validate_positions(x, nqubits(state))
+    QuantumCircuits._validate_channel_data(x)
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
 		state = convert(DensityMatrix{Complex{T}}, state)
@@ -24,7 +25,8 @@ _cpu_apply!(x::QuantumMap, state::StateVector) = _cpu_apply!(x, DensityMatrix(st
 """
 function apply_dagger!(x::QuantumMap, state::DensityMatrix)
     _require_cpu_storage(state, x)
-	@assert _check_pos_range(x, nqubits(state))
+	validate_positions(x, nqubits(state))
+    QuantumCircuits._validate_channel_data(x)
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
 		state = convert(DensityMatrix{Complex{T}}, state)
@@ -40,7 +42,8 @@ end
 """
 function apply_inverse!(x::QuantumMap, state::DensityMatrix)
     _require_cpu_storage(state, x)
-	@assert _check_pos_range(x, nqubits(state))
+	validate_positions(x, nqubits(state))
+    QuantumCircuits._validate_channel_data(x)
 	T = eltype(state)
 	if (eltype(x) <: Complex) && (T <: Real)
 		state = convert(DensityMatrix{Complex{T}}, state)

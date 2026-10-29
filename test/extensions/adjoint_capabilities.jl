@@ -1,7 +1,7 @@
-using Test, MOSS, Zygote
+using Test, MOSSQuantum, Zygote
 
-struct UnsupportedAdjointInstruction <: MOSS.AbstractInstruction end
-MOSS.positions(::UnsupportedAdjointInstruction) = (1,)
+struct UnsupportedAdjointInstruction <: MOSSQuantum.AbstractInstruction end
+MOSSQuantum.positions(::UnsupportedAdjointInstruction) = (1,)
 
 @testset "circuit differentiation capabilities" begin
     initial = qstate(1)

@@ -1,5 +1,5 @@
 using Test
-using MOSS
+using MOSSQuantum
 
 @testset "BatchStateVector basic construction" begin
     # Test basic constructor

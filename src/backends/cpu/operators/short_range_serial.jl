@@ -96,3 +96,12 @@ function _apply_serial_util!(m::QubitsOperator, v::AbstractVector, vout::Abstrac
 end
 
 
+function _apply_gate_2!(::Tuple{}, matrix::AbstractMatrix, state::AbstractVector,
+                      output::AbstractVector)
+    coefficient = _zero_qubit_matrix_value(matrix)
+    @. output += coefficient * state
+    return output
+end
+_apply_gate_threaded2!(positions::Tuple{}, matrix::AbstractMatrix, state::AbstractVector,
+                      output::AbstractVector) = _apply_gate_2!(positions, matrix, state, output)
+

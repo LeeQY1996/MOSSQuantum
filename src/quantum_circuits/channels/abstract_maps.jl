@@ -22,7 +22,7 @@ change_positions(x::AbstractQuantumMap, m::AbstractDict) = error("change_positio
 
 shift(x::AbstractQuantumMap, j::Int) = _shift_gate_util!(x, j, Dict{Int, Int}())
 
-is_tp(x::AbstractQuantumMap) = _is_tp(kraus_matrices(x))
+is_tp(x::AbstractQuantumMap; kwargs...) = _is_tp(kraus_matrices(x); kwargs...)
 
 
 # QuantumMap can not contain parameters
@@ -35,12 +35,19 @@ deactivate_parameter!(x::AbstractQuantumMap, j::Int) = x
 deactivate_parameters!(x::AbstractQuantumMap) = x
 reset_parameters_util!(x::AbstractQuantumMap, p::Vector{<:Real}, pos::Int) = pos
 
-function _is_tp(m::Vector{<:AbstractMatrix})
-	isempty(m) && error("no kraus operators.")
+function _channel_tolerance(::Type{T}, atol) where T
+    value = isnothing(atol) ? 100eps(typeof(float(real(zero(T))))) : atol
+    value isa Real && isfinite(value) && value >= 0 || throw(ArgumentError("atol must be finite and nonnegative"))
+    return value
+end
+
+function _is_tp(m::Vector{<:AbstractMatrix}; atol=nothing)
+    isempty(m) && return false
+    tolerance = _channel_tolerance(eltype(first(m)), atol)
 	out = m[1]' * m[1]
 	for i in 2:length(m)
 		out .+= m[i]' * m[i]
 	end
-	return out ≈ I
+	return isapprox(out, Matrix{eltype(out)}(I, size(out)...); atol=tolerance, rtol=0)
 end
 

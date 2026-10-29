@@ -127,14 +127,24 @@ Sample terminal readout without collapsing `state`. Rows are shots and columns
 follow `qubits` in the requested order. For a batch the third axis is the batch
 index. Reusing equally seeded RNGs reproduces draws in the same Julia environment.
 """
-function sample(rng::Random.AbstractRNG, state, shots::Integer; qubits=1:nqubits(state))
+function sample(rng::Random.AbstractRNG, state, shots::Integer; qubits=1:nqubits(state),readout=nothing)
+    !isnothing(readout) && return execute(QCircuit(),state;shots=shots,qubits=qubits,rng=rng,readout=readout).samples
     shots >= 0 || throw(ArgumentError("shots must be nonnegative"))
     indices = _readout_qubits(state, qubits)
     distribution = probabilities(state; qubits=indices)
     return _draw_samples!(Matrix{Int}(undef, shots, length(indices)), rng, distribution, shots, length(indices))
 end
 
-function sample(rng::Random.AbstractRNG, state::Union{BatchStateVector,BatchDensityMatrix}, shots::Integer; qubits=1:nqubits(state))
+function sample(rng::Random.AbstractRNG, state::Union{BatchStateVector,BatchDensityMatrix}, shots::Integer; qubits=1:nqubits(state),readout=nothing)
+    if !isnothing(readout)
+        indices = _readout_qubits(state,qubits)
+        results = execute(QCircuit(),state;shots=shots,qubits=indices,rng=rng,readout=readout)
+        output = Array{Int}(undef,Int(shots),length(indices),batch_size(state))
+        for b in eachindex(results)
+            output[:,:,b] .= results[b].samples
+        end
+        return output
+    end
     shots >= 0 || throw(ArgumentError("shots must be nonnegative"))
     indices = _readout_qubits(state, qubits)
     distributions = probabilities(state; qubits=indices)

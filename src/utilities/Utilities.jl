@@ -1,9 +1,9 @@
 module Utilities
 
-using ..MOSS: StateVector, DensityMatrix, storage, qstate, rand_state
-using ..MOSS: apply!, expectation, onehot_encoding, amplitude, amplitudes
-using ..MOSS: norm, dot, normalize!, normalize, partial_tr, permute
-using ..MOSS: ishermitian
+using ..MOSSQuantum: StateVector, DensityMatrix, storage, qstate, rand_state
+using ..MOSSQuantum: apply!, expectation, onehot_encoding, amplitude, amplitudes
+using ..MOSSQuantum: norm, dot, normalize!, normalize, partial_tr, permute
+using ..MOSSQuantum: ishermitian
 using ..QuantumCircuits, ..QuantumCircuits.Gates
 
 export heisenberg_1d, heisenberg_2d, ising_1d, ising_2d, ground_state, time_evolution

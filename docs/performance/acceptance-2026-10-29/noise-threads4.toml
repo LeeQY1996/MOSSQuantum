@@ -1,0 +1,158 @@
+julia = "1.13.1"
+process_peak_rss_bytes = 0x2a61a000
+timestamp_utc = "2026-10-29T04:31:38.891"
+notes = "Warmed medians of 3 trials; allocations are cumulative, retained size is not peak memory. Both methods use the same shots for sampling; this is not a speedup claim at equal observable error. Process RSS includes compilation and all cases."
+cpu = "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S"
+threads = 4
+blas_threads = 1
+
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.000640077
+retained_result_bytes = 209904
+case = "n=4/pauli/density/full/shots=1000"
+allocated_bytes = 808024
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.000500529
+retained_result_bytes = 1496
+case = "n=4/pauli/density/counts/shots=1000"
+allocated_bytes = 481944
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.003707016
+retained_result_bytes = 209904
+case = "n=4/pauli/trajectory/full/shots=1000"
+allocated_bytes = 4981984
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.003398332
+retained_result_bytes = 1496
+case = "n=4/pauli/trajectory/counts/shots=1000"
+allocated_bytes = 4717600
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002876889
+retained_result_bytes = 1496
+case = "n=4/pauli/trajectory/threaded/counts/shots=1000"
+allocated_bytes = 4736400
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.000740963
+retained_result_bytes = 209904
+case = "n=4/damping/density/full/shots=1000"
+allocated_bytes = 789080
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.000483258
+retained_result_bytes = 1496
+case = "n=4/damping/density/counts/shots=1000"
+allocated_bytes = 463000
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.004006086
+retained_result_bytes = 209904
+case = "n=4/damping/trajectory/full/shots=1000"
+allocated_bytes = 4956368
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.00395671
+retained_result_bytes = 1496
+case = "n=4/damping/trajectory/counts/shots=1000"
+allocated_bytes = 4691984
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002606171
+retained_result_bytes = 1496
+case = "n=4/damping/trajectory/threaded/counts/shots=1000"
+allocated_bytes = 4710544
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002293593
+retained_result_bytes = 262112
+case = "n=8/pauli/density/full/shots=1000"
+allocated_bytes = 2386424
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002280843
+retained_result_bytes = 21704
+case = "n=8/pauli/density/counts/shots=1000"
+allocated_bytes = 2034192
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.013519141
+retained_result_bytes = 262112
+case = "n=8/pauli/trajectory/full/shots=1000"
+allocated_bytes = 11243864
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.013635722
+retained_result_bytes = 21704
+case = "n=8/pauli/trajectory/counts/shots=1000"
+allocated_bytes = 10915480
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.005371449
+retained_result_bytes = 21704
+case = "n=8/pauli/trajectory/threaded/counts/shots=1000"
+allocated_bytes = 11049720
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002358527
+retained_result_bytes = 262128
+case = "n=8/damping/density/full/shots=1000"
+allocated_bytes = 2348536
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.0017153
+retained_result_bytes = 21720
+case = "n=8/damping/density/counts/shots=1000"
+allocated_bytes = 1996304
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.019047229
+retained_result_bytes = 262080
+case = "n=8/damping/trajectory/full/shots=1000"
+allocated_bytes = 11192648
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.018452431
+retained_result_bytes = 21672
+case = "n=8/damping/trajectory/counts/shots=1000"
+allocated_bytes = 10864264
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.008083759
+retained_result_bytes = 21672
+case = "n=8/damping/trajectory/threaded/counts/shots=1000"
+allocated_bytes = 10998264
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.05199871
+retained_result_bytes = 24034536
+case = "n=8/density/full/shots=100000"
+allocated_bytes = 114461024
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.042079314
+retained_result_bytes = 21752
+case = "n=8/density/counts/shots=100000"
+allocated_bytes = 79310864
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.002464203
+retained_result_bytes = 552
+case = "batch=1/trajectory/counts/shots=1000"
+allocated_bytes = 3289360
+[[cases]]
+gc_seconds = 0.0
+seconds = 0.013719917
+retained_result_bytes = 2088
+case = "batch=4/trajectory/counts/shots=1000"
+allocated_bytes = 13122960
+
+[source_sha256]
+"src/quantum_circuits/channels/one_qubit.jl" = "81f632ecf3e975322687984566bc37ac4af4b9d90d9b18e8eb040b5d04638835"
+"src/execution/noisy_execution.jl" = "4b53c35ffd811d2867f0f40f9522178f59250ce8f21d797fb8a3e07de5a131ce"
+"src/execution/noise_models.jl" = "6f2f296b3c65003035a1a9f299a3c71263b760e6f4b11a5b26161a6f7e8742c9"
+"src/execution/shot_execution.jl" = "ce0f29354cd88398f1a1124617a5c555ed0c562bc922f7f87831959a481cd973"

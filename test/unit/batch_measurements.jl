@@ -1,14 +1,14 @@
 using Test
 using Random
 using LinearAlgebra
-using MOSS
+using MOSSQuantum
 
 module BatchSimulationContractFailures
-using MOSS
+using MOSSQuantum
 using Random
 
 struct ResizeState <: AbstractInstruction end
-MOSS.positions(::ResizeState) = ()
+MOSSQuantum.positions(::ResizeState) = ()
 
 mutable struct DemoBackend <: AbstractBackend
     mode::Symbol
@@ -17,10 +17,10 @@ mutable struct DemoBackend <: AbstractBackend
 end
 DemoBackend(mode) = DemoBackend(mode, Any[], Bool[])
 
-MOSS.supports(::DemoBackend, ::Union{ResizeState,Gate,QMeasure,QSelect}, ::BatchStateVector;
+MOSSQuantum.supports(::DemoBackend, ::Union{ResizeState,Gate,QMeasure,QSelect}, ::BatchStateVector;
               action::Symbol=:apply) = action === :apply
 
-function MOSS.apply!(backend::DemoBackend, ::ResizeState, state::BatchStateVector)
+function MOSSQuantum.apply!(backend::DemoBackend, ::ResizeState, state::BatchStateVector)
     backend.mode === :increase_batch && return BatchStateVector(nqubits(state), batch_size(state) + 1)
     backend.mode === :decrease_batch && return BatchStateVector(nqubits(state), batch_size(state) - 1)
     backend.mode === :increase_register && return BatchStateVector(nqubits(state) + 1, batch_size(state))
@@ -28,7 +28,7 @@ function MOSS.apply!(backend::DemoBackend, ::ResizeState, state::BatchStateVecto
     return state
 end
 
-MOSS.apply!(::DemoBackend, instruction::Gate, state::BatchStateVector) = apply!(CPUBackend(), instruction, state)
+MOSSQuantum.apply!(::DemoBackend, instruction::Gate, state::BatchStateVector) = apply!(CPUBackend(), instruction, state)
 
 function _metadata(mode::Symbol, count::Int)
     outcomes, probabilities = zeros(Int, count), ones(Float64, count)
@@ -50,7 +50,7 @@ function _metadata(mode::Symbol, count::Int)
     return outcomes, probabilities
 end
 
-function MOSS.measure!(backend::DemoBackend, state::BatchStateVector, position::Int;
+function MOSSQuantum.measure!(backend::DemoBackend, state::BatchStateVector, position::Int;
                        auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng())
     push!(backend.observed_rngs, rng)
     push!(backend.observed_resets, auto_reset)
@@ -58,7 +58,7 @@ function MOSS.measure!(backend::DemoBackend, state::BatchStateVector, position::
     return _metadata(backend.mode, batch_size(state))
 end
 
-function MOSS.apply!(backend::DemoBackend, instruction::QSelect, state::BatchStateVector)
+function MOSSQuantum.apply!(backend::DemoBackend, instruction::QSelect, state::BatchStateVector)
     backend.mode === :real_measurement && return apply!(CPUBackend(), instruction, state)
     return _metadata(backend.mode, batch_size(state))[2]
 end
@@ -182,7 +182,7 @@ end
     circuit = QCircuit([HGate(2), TGate(2), QMeasure(2), nested, XGate(2)])
     first_result = simulate(circuit, initial; rng=MersenneTwister(41))
     repeated = simulate(circuit, initial; rng=MersenneTwister(41))
-    @test first_result isa MOSS.BatchSimulationResult
+    @test first_result isa MOSSQuantum.BatchSimulationResult
     @test first_result.state isa BatchStateVector{ComplexF32}
     @test storage(initial) == snapshot
     @test !Base.mightalias(storage(initial), storage(first_result.state))
@@ -251,7 +251,7 @@ end
     @test size(storage(selected)) == (8, 0)
     @test probabilities == Float64[]
     result = simulate(QCircuit([HGate(1), QMeasure(2), QSelect(3, 1)]), empty)
-    @test result isa MOSS.BatchSimulationResult
+    @test result isa MOSSQuantum.BatchSimulationResult
     @test size(storage(result.state)) == (8, 0)
     @test isempty(result.measurements)
 

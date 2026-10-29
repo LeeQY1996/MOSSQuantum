@@ -1,10 +1,10 @@
-using Test, MOSS, Random, LinearAlgebra
+using Test, MOSSQuantum, Random, LinearAlgebra
 
 module BatchContractFixtures
-import MOSS
-struct MalformedGate <: MOSS.Gate{1} end
-MOSS.positions(::MalformedGate) = (1,)
-MOSS.mat(::MalformedGate) = ones(3, 3)
+import MOSSQuantum
+struct MalformedGate <: MOSSQuantum.Gate{1} end
+MOSSQuantum.positions(::MalformedGate) = (1,)
+MOSSQuantum.mat(::MalformedGate) = ones(3, 3)
 end
 
 @testset "Pure-state batch shape, ownership, and input contracts" begin

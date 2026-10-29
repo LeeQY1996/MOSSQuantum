@@ -1,7 +1,7 @@
 using Test
 using Random
 using LinearAlgebra
-using MOSS
+using MOSSQuantum
 
 function _test_mixed_batch(n, count; T=ComplexF64, seed=61)
     rng = MersenneTwister(seed)
@@ -30,26 +30,26 @@ function _test_density_projection(matrix, position, outcome; keep=true, reset=fa
 end
 
 module BatchDensitySimulationContracts
-using MOSS
+using MOSSQuantum
 using Random
 
 struct Transition <: AbstractInstruction end
-MOSS.positions(::Transition) = ()
+MOSSQuantum.positions(::Transition) = ()
 struct ContractBackend <: AbstractBackend
     mode::Symbol
 end
-MOSS.supports(::ContractBackend, ::Union{Transition,Gate,QMeasure,QSelect},
+MOSSQuantum.supports(::ContractBackend, ::Union{Transition,Gate,QMeasure,QSelect},
               ::Union{BatchStateVector,BatchDensityMatrix}; action::Symbol=:apply) = action === :apply
-function MOSS.apply!(backend::ContractBackend, ::Transition, state::Union{BatchStateVector,BatchDensityMatrix})
+function MOSSQuantum.apply!(backend::ContractBackend, ::Transition, state::Union{BatchStateVector,BatchDensityMatrix})
     backend.mode === :increase_batch && return BatchDensityMatrix(nqubits(state), batch_size(state) + 1)
     backend.mode === :increase_register && return BatchDensityMatrix(nqubits(state) + 1, batch_size(state))
     backend.mode === :single_state && return DensityMatrix(nqubits(state))
     backend.mode === :pure && return BatchStateVector(nqubits(state), batch_size(state))
     return BatchDensityMatrix(state)
 end
-MOSS.apply!(::ContractBackend, instruction::Gate, state::Union{BatchStateVector,BatchDensityMatrix}) =
+MOSSQuantum.apply!(::ContractBackend, instruction::Gate, state::Union{BatchStateVector,BatchDensityMatrix}) =
     apply!(CPUBackend(), instruction, state)
-function MOSS.measure!(backend::ContractBackend, state::Union{BatchStateVector,BatchDensityMatrix}, position::Int;
+function MOSSQuantum.measure!(backend::ContractBackend, state::Union{BatchStateVector,BatchDensityMatrix}, position::Int;
                        auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng())
     count = batch_size(state)
     backend.mode === :short && return zeros(Int, count - 1), ones(count)
@@ -58,7 +58,7 @@ function MOSS.measure!(backend::ContractBackend, state::Union{BatchStateVector,B
     backend.mode === :rounded && return zeros(Int8, count), fill(nextfloat(1f0), count)
     return measure!(state, position; auto_reset=auto_reset, rng=rng)
 end
-MOSS.apply!(::ContractBackend, instruction::QSelect, state::Union{BatchStateVector,BatchDensityMatrix}) =
+MOSSQuantum.apply!(::ContractBackend, instruction::QSelect, state::Union{BatchStateVector,BatchDensityMatrix}) =
     apply!(CPUBackend(), instruction, state)
 end
 
@@ -115,7 +115,7 @@ end
         batch = copy(original)
         distributions = probabilities(original; qubits=[position])
         reference_rng = MersenneTwister(90)
-        expected_outcomes = [MOSS.discrete_sample(reference_rng, view(distributions, :, column)) - 1
+        expected_outcomes = [MOSSQuantum.discrete_sample(reference_rng, view(distributions, :, column)) - 1
                              for column in 1:4]
         outcomes, weights = measure!(batch, position; auto_reset=auto_reset, rng=MersenneTwister(90))
         @test outcomes == expected_outcomes

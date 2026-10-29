@@ -1,5 +1,5 @@
 using Test, LinearAlgebra, Zygote
-using MOSS
+using MOSSQuantum
 
 function regression_gradient_fd(f, x; step=1e-6)
     result = similar(x)

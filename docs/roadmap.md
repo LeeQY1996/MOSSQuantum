@@ -1,10 +1,10 @@
-# MOSS core foundation roadmap
+# MOSSQuantum core foundation roadmap
 
 The foundation work establishes maintainable source ownership, consistent physical definitions, and public interfaces for companion packages. Directory migration, numerical changes, optional integrations, and external-package verification are reviewed independently.
 
 ## Supported Julia versions
 
-MOSS requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version, with Julia 1.10 covering the minimum supported version. Every supported version uses native package extensions. The Requires bridge has been removed. Local acceptance for this version-policy migration passed on Julia 1.13.1 and Julia 1.10.10; historical Julia 1.12 results are retained separately below.
+MOSSQuantum requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version, with Julia 1.10 covering the minimum supported version. Every supported version uses native package extensions. The Requires bridge has been removed. Local acceptance for this version-policy migration passed on Julia 1.13.1 and Julia 1.10.10; historical Julia 1.12 results are retained separately below.
 
 ## Stages and acceptance criteria
 
@@ -16,7 +16,7 @@ MOSS requires Julia 1.10 or later. Julia 1.13 is the primary development and acc
 | 4 Numerical semantics | Squared Uhlmann fidelity and two-sided mixed-state evolution | Verified locally | Analytic, representation-equivalence, noncommuting, rank-deficient, trace, Hermiticity, and positivity checks |
 | 5 Extension contracts | Instructions, states, backend capabilities, binding, results, RNG | Verified locally | External types use public entrypoints; unsupported capabilities fail clearly; ownership, parameter order, readout axes, and RNG are tested |
 | 6 Optional integrations | Native AD/plotting extensions and test-only dependencies | Verified locally on Julia 1.10/1.13 | Minimal and optional-integration environments load and native extension loading orders pass on the minimum and primary versions |
-| 7 Independent extension and release preparation | Separate fixture package, CI, documentation, migration notes | Local acceptance verified; CI configured for Julia 1.10/1.13 | Fixture resolves independently, imports MOSS normally, executes and observes without private kernels; Julia 1.10/1.13 final results are recorded |
+| 7 Independent extension and release preparation | Separate fixture package, CI, documentation, migration notes | Local acceptance verified; CI configured for Julia 1.10/1.13 | Fixture resolves independently, imports MOSSQuantum normally, executes and observes without private kernels; Julia 1.10/1.13 final results are recorded |
 
 No release or publication is implied by these statuses. A benchmark harness is not a measured performance baseline. Julia compatibility declarations do not substitute for testing the declared versions.
 
@@ -26,9 +26,76 @@ Source responsibilities now live in `api/`, `quantum_circuits/`, `states/`, `exe
 
 Physical corrections establish squared Uhlmann fidelity across pure and mixed representations and `exp(tH)ρexp(conj(t)H)` for mixed-state evolution. The existing exponential-coefficient convention is retained; physical time requires `t=-im*τ`. Real-coefficient imaginary-time evolution is explicitly unnormalized. Ownership of existing constructors remains documented rather than silently changed.
 
-The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, backend selection and capability queries, backend execution/observation, `bind_parameters` with explicit `ParameterMap` sharing and gradient accumulation, terminal probabilities/samples/counts, explicit execution RNGs, and single-trajectory simulation results with intermediate records. The independent `MOSSDemoBackend` fixture demonstrates an implicit state and a custom instruction without dense storage assumptions.
+The public foundation includes `AbstractInstruction`, `AbstractQuantumState`, backend selection and capability queries, backend execution/observation, `bind_parameters` with explicit `ParameterMap` sharing and gradient accumulation, terminal probabilities/samples/counts, explicit execution RNGs, and single-trajectory simulation results with intermediate records. The independent `MOSSQuantumDemoBackend` fixture demonstrates an implicit state and a custom instruction without dense storage assumptions.
 
 Zygote registrations and plotting integration have moved into optional extensions. The core retains its existing deterministic reverse-pass algorithms. All supported Julia releases use native package extensions; the Requires bridge is removed under the Julia 1.10 minimum policy. FiniteDifferences remains test-only.
+
+## Operator and finite-shot measurement foundation
+
+The [operator and finite-shot measurement foundation](operators-and-measurement.md)
+adds scalar/zero operator semantics, tensor-product algebra, exact term
+simplification, repeated circuit execution with explicit post-selection
+acceptance, and Pauli-group expectation estimates with standard errors.
+Molecular chemistry will be implemented subsequently as a separate
+`MOSSQuantumChemistry` companion, reusing these core interfaces.
+
+## Gate-level noise simulation
+
+The [noise simulation guide](noise-simulation.md) describes physical channel
+validation, common one/two-qubit noise, explicit `NoiseModel` expansion, classical
+readout errors, and CPU `KrausTrajectory` execution through `simulate`, `execute`
+and `estimate`. Density-matrix evolution remains the default. Classical reported
+outcomes are separate from physical collapse and post-selection acceptance.
+
+| Stage | Delivered scope | Verification |
+| --- | --- | --- |
+| P0 Contracts | Physical parameter checks, optional TP check for general maps, owned Kraus inputs, stale-cache rejection | Constructor, precision, ownership and malformed-input tests |
+| P1 Channels | Flip/Pauli, 1–2 qubit depolarizing, generalized damping, thermal relaxation, reset, mixed unitary | Analytic decay, equilibrium, positivity, position-order and batch references |
+| P2 Readout | Non-symmetric one-qubit errors, correlated two-qubit terminal errors, physical/reported records | Exact distributions, correlated marginals, reset/selection semantics |
+| P3 Configuration | Ordered before/after rules, preparation/terminal stages, explicit idle durations, inspectable expansion | Hand-written circuit equivalence, no implicit re-expansion |
+| P4 Trajectories | CPU pure states/batches, independent shot paths, recorded execution and noisy estimates | Multiple-seed statistics, empirical estimator variance, RNG and backend boundaries |
+| P5 Performance | Mixed-unitary branch shortcut, reusable trajectory buffers, threaded shots, streaming counts/statistics | [24-case CPU measurements](performance/noise-2026-10-28/README.md) |
+
+Local acceptance on Julia 1.13.1 with four Julia threads passed standard
+`Pkg.test(; test_args=["--load-orders"])`: **9,409 assertions in 107 reported
+testsets**, including **419 new noise assertions** and eight fresh-process
+optional-integration loading checks. The four fixture packages independently
+passed **830 assertions**. All three Julia examples in the noise guide ran.
+`git diff --check` passed. Julia 1.10 and remote CI were not rerun for this
+milestone; GPU noise is neither implemented nor claimed by these CPU results.
+
+Kraus trajectories require explicit method selection. Density input trajectories,
+GPU noise, continuous-time Lindblad/non-Markovian dynamics,
+leakage and trainable noise remain separate work. Measurement basis rotations
+inside the estimator are ideal; classical readout errors are included afterward.
+
+## CUDA device arrays and single-state execution
+
+The first real-device companion is [MOSSQuantumCUDA](../packages/MOSSQuantumCUDA/README.md),
+developed independently under `packages/MOSSQuantumCUDA`. It combines actual CUDA
+device-memory arrays with an executor selected through the existing backend
+protocol. The implementation targets NVIDIA CUDA; quantum hardware integration
+is a separate direction.
+
+| Step | Scope | Status |
+| --- | --- | --- |
+| Device storage | Explicit upload/download, direct zero-state allocation, CuVector routing, owned copies and precision conversions | Implemented; hardware acceptance pending |
+| Single pure-state execution | Local 1–5-qubit gates, arbitrary position order, nested gate-only circuits, complete host preflight | Implemented; hardware acceptance pending |
+| Observation and readout | Gate/term/operator expectations, GPU marginals with host distributions, terminal sampling and scalar objectives | Implemented; hardware acceptance pending |
+| Verification | Independent host arithmetic tests, device suite with scalar access forbidden, strict `--require-gpu`, manual GPU workflow | Julia 1.10/1.13 host checks and offline PTX checks passed; hardware acceptance pending |
+| Performance | Warmed CPU/GPU comparison separating execution, readout and explicit transfers | Harness provided; no measurements or speedup claims |
+
+The companion synchronizes its CUDA work and owns scratch per invocation.
+It does not introduce shared workspaces, persistent execution plans or an
+automatic CPU fallback. Capability checks reject unsupported batch/density,
+noise, measurement and gradient execution. Existing four-container storage
+conversions remain distinct from execution capabilities.
+
+Local verification on 2026-10-22 passed 154 companion host assertions on each
+supported Julia version, 887 existing storage/backend assertions with the
+companion loaded, and 45 offline gate-kernel PTX compilation configurations.
+No GPU was available. The [validation record](../packages/MOSSQuantumCUDA/VALIDATION.md)
+separates these checks from pending hardware execution and performance tests.
 
 ## Completed milestone: generic array containers and backend routing
 
@@ -44,13 +111,13 @@ adding a hardware execution dependency.
 | 1 Containers | Generic vector/matrix/three-dimensional backing arrays; vectorized single-density storage retained | One-based metadata checks, shape and batch boundaries, opt-in aliasing, owned copies, conversion, and extraction | Verified locally |
 | 2 Execution boundary | Select a backend from storage; reject unsupported CPU layouts; route linear action and probabilities through backend hooks | No scalar indexing or implicit host transfer before rejection; representation transitions stay in the selected family | Verified locally |
 | 3 Differentiation boundary | Keep optional constructor/copy rules and restrict native adjoints to supported CPU storage | Existing CPU gradients and input projection retained; external execution does not select a gradient method | Verified locally |
-| 4 Companion proof | `MOSSDemoArrayBackend` uses the four containers and an array that forbids scalar access and host materialization | Independent package loading, gate/channel execution, observation, readout, objectives, and separately selected analytic method | Verified locally |
+| 4 Companion proof | `MOSSQuantumDemoArrayBackend` uses the four containers and an array that forbids scalar access and host materialization | Independent package loading, gate/channel execution, observation, readout, objectives, and separately selected analytic method | Verified locally |
 | 5 Compatibility | Full minimum/primary suites, independent packages, documentation, and CPU regression checks | Stable source, unchanged environments/scripts, all loading orders, and recorded allocation costs | Verified locally |
 
 The [array extension guide](extending.md#preserve-array-storage) and
 [ownership conventions](conventions.md#array-storage-and-execution-eligibility)
 describe the public contracts and exact-type migration. The independent
-[array fixture](../test/fixtures/MOSSDemoArrayBackend/README.md) demonstrates a
+[array fixture](../test/fixtures/MOSSQuantumDemoArrayBackend/README.md) demonstrates a
 storage family and its executor through public methods. It is a CPU-backed
 contract example; device kernels and actual GPU acceptance belong to subsequent
 companion work. Final broad acceptance and allocation costs are retained in the
@@ -195,24 +262,50 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 
 ## Follow-up work
 
-The next implementation direction is a device-specific companion using the
-completed storage/backend contracts. Begin with one state-vector execution path,
-its supported gates, expectation, and readout on real device arrays; verify
-transfer policy, unsupported operations, and numerical agreement before extending
-the same implementation to batches, density matrices, and fixed noise. Generic
-storage alone does not establish this hardware support.
+The next implementation step is a separate `MOSSQuantumChemistry` companion,
+building molecular Hamiltonians on the operator and measurement interfaces above.
+Chemistry engines and fermionic mappings remain outside the main package.
+
+For the CUDA companion, complete strict acceptance on a real NVIDIA GPU,
+including transfer policy, unsupported
+operations and numerical agreement, before claiming hardware support or
+performance. Then extend GPU execution to pure-state batches and a separately
+selected GPU gradient method; density matrices and fixed noise follow the
+validated pure-state path. Generic storage and host arithmetic tests alone do
+not establish device execution correctness.
 
 Other follow-up work remains separate:
 
-1. Measured device allocation and execution improvements, followed by reusable execution plans when measurements justify them.
-2. Kraus trajectories, classical control, and richer experiment statistics for concrete use cases.
+1. Measured device allocation and execution improvements. Reusable dense CPU execution plans are implemented in the prepared-experiment milestone below.
+2. Richer experiment statistics and classical loops/arithmetic; basic named registers and conditional feedback are implemented in the classical-control milestone below.
 3. Companion frontends for symbolic parameter expressions and names, consuming the explicit parameter-map contracts.
 4. Broader ChainRules coverage and migration of legacy circuit/state derivative entrypoints after their tangent contracts are defined.
-5. Additional numerical gradient estimators and trainable noise parameters are explicitly deferred; they are not prerequisites for storage/backend integration.
+5. Trainable noise parameters remain deferred. Parameter-shift, central-difference and SPSA estimators are implemented in the sampled-gradient milestone below.
 
 The main package should keep the common contracts and CPU implementation. MPS, stabilizer simulation, continuous open-system solvers, algorithm workflows, error correction, chemistry, and external framework interoperability can consume those contracts from companion packages. Empty companion packages are not required to complete the core foundation.
 
 ## Verification record
+
+### Operator and measurement acceptance, 2026-10-28
+
+On Julia 1.13.1 with four threads, standard
+`Pkg.test(; test_args=["--load-orders"])` passed 8,990 assertions across 97
+reported testsets, including 1,300 new operator and measurement assertions and
+eight fresh-process optional-integration loading checks. This covers constant
+and zero operators, scalar gates, analytic gradients, operator algebra,
+finite-shot execution, post-selection acceptance, grouped estimates and batches.
+
+The four independent fixture packages also passed standard `Pkg.test()` in
+isolated temporary copies: Backend 9, Gates 185, Differentiation 235 and
+ArrayBackend 401 assertions (830 total). All three Julia examples in the
+[operator and measurement guide](operators-and-measurement.md) executed
+successfully. This acceptance used cached dependencies; Julia 1.10 and remote CI
+were not rerun for this change.
+
+### Earlier verification
+
+The records below predate the rename from MOSS to MOSSQuantum. Package names,
+commands, assertion counts, and source hashes are retained as historical evidence.
 
 ### Generic array storage and backend routing
 
@@ -347,3 +440,51 @@ The earlier foundation acceptance completed locally on 2026-10-16:
 The current version-policy results are recorded above. These older checks document the foundation before the minimum-version change.
 
 BenchmarkTools workloads are supplied in a separate environment. The repeated-evaluation report above records a measured allocation improvement; the older foundation stage supplied only a harness. Compare concrete workloads with the same Julia version, dependencies, hardware, thread count, and inputs; do not count dependency downloads or package precompilation as warmed execution time.
+
+## Classical control and finite-shot gradients
+
+Implemented named measurement bits, independent classical registers, conditional
+branches, readout-aware feedback, static definite-assignment checks, and batch/
+trajectory execution. Implemented shot objectives, occurrence-wise parameter
+shift with shared parameters, central differences, SPSA, covariance and budget
+reporting. The algorithm zoo supplies Adam/SGD workflows with independent final
+energy estimates. See the [guide](classical-control-and-gradients.md).
+
+Classical loops/arithmetic, differentiable noise parameters, and implicit batch
+gradient reductions remain outside this increment.
+
+Local acceptance on 2026-10-28, Julia 1.13.1, four Julia threads and one BLAS
+thread: standard `Pkg.test(; test_args=["--load-orders"])` passed 9,665 assertions
+across 116 reported testsets, including 256 new classical/gradient/optimization
+assertions and eight optional-integration loading assertions. All four standalone
+fixture packages passed another 830 assertions. Both executable guide blocks and
+the two-qubit optimization script ran successfully; the latter used 602,000 shots
+across 301 objective evaluations. Julia 1.10 and remote CI were not rerun locally
+for this increment. No new runtime dependencies were introduced.
+
+## Prepared experiments and shot budgets
+
+Implemented reusable dense CPU execution/estimation plans, parameter-only binding,
+frozen noise compilation, cached deterministic distributions and optional reusable
+trajectory workspaces. Ordered parameter sweeps return unified experiment results
+and use point-indexed RNGs for serial/threaded reproducibility. Independent pilot
+allocation and atomic hard budgets are integrated into sampled gradients and the
+optimizer; capped optimization preserves a fresh final estimate.
+
+The [guide](prepared-experiments.md) defines snapshot ownership, CPU-only scope,
+concurrency and statistical semantics. [Measured workloads](performance/prepared-2026-10-29/README.md)
+cover noisy repeated execution, feedback, parameter scans and variational gradients.
+Large-scale MPS/stabilizer backends are explicitly deferred to a separate round.
+
+Local acceptance on 2026-10-29, Julia 1.13.1, four Julia threads and one BLAS
+thread: standard `Pkg.test(; test_args=["--load-orders"])` passed 9,860 assertions
+across 121 reported testsets, including the initial 195 new plan/sweep/budget
+assertions. A subsequently found adaptive-optimizer result-container mismatch was
+fixed by accepting `AdaptiveEstimate`; the final optimizer/budget run passed 143
+assertions, including four new regression assertions for that fix. All four
+standalone fixture packages passed 830 assertions. Four executable documentation
+blocks and the prepared/adaptive optimization script passed; the script completed
+a separate 12,000-shot scan and a 100,000-shot optimization with 33 updates and a
+fresh final estimate. Julia 1.10 and remote CI were not rerun for this increment.
+Runtime dependencies are unchanged. Final performance measurements run separately
+after the regression processes finish, with preparation/binding cost recorded.

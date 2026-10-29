@@ -1,0 +1,147 @@
+     Testing MOSSCUDA
+┌ Warning: could not download https://pkg.julialang.org/registries
+│   exception = RequestError: failed to open socket: Operation not permitted while requesting https://pkg.julialang.org/registries
+└ @ Pkg.Registry ~/.julia/juliaup/julia-1.13.1+0.x64.linux.gnu/share/julia/stdlib/v1.13/Pkg/src/Registry/Registry.jl:121
+      Status `/tmp/jl_4uV0NQ/Project.toml`
+  [052768ef] CUDA v6.4.2
+  [a9444a5f] MOSS v0.1.0 `~/Code/Quantum/MOSS`
+  [69838448] MOSSCUDA v0.1.0 `~/Code/Quantum/MOSS/packages/MOSSCUDA`
+  [90137ffa] StaticArrays v1.9.24
+  [37e2e46d] LinearAlgebra v1.13.0
+  [9a3f8284] Random v1.11.0
+  [8dfed614] Test v1.11.0
+      Status `/tmp/jl_4uV0NQ/Manifest.toml`
+  [621f4979] AbstractFFTs v1.5.0
+  [79e6a3ab] Adapt v4.7.4
+⌃ [a9b6321e] Atomix v1.5.0
+  [ab4f0b2a] BFloat16s v0.6.2
+⌅ [fa961155] CEnum v0.5.0
+  [052768ef] CUDA v6.4.2
+  [bd0ed864] CUDACore v6.4.2
+  [9ec180c6] CUDATools v6.4.2
+  [1af6417a] CUDA_Runtime_Discovery v2.1.1
+  [9e67e8f6] CUPTI v6.4.2
+  [9db33cc3] CompilerCaching v0.5.1
+  [a8cc5b0e] Crayons v4.2.0
+  [9a962f9c] DataAPI v1.16.0
+  [e2d170a0] DataValueInterfaces v1.0.0
+  [e2ba6199] ExprTools v0.1.11
+⌅ [0c68f7d7] GPUArrays v11.5.16
+  [46192b85] GPUArraysCore v0.2.1
+  [61eb1bfa] GPUCompiler v2.16.0
+  [096a3bc2] GPUToolbox v3.4.2
+  [076d061b] HashArrayMappedTries v0.2.0
+  [82899510] IteratorInterfaceExtensions v1.0.0
+  [692b3bcd] JLLWrappers v1.8.0
+⌅ [63c18a36] KernelAbstractions v0.9.45
+  [0b1a1467] KrylovKit v0.10.4
+  [929cbde3] LLVM v10.3.2
+  [8b046642] LLVMLoopInfo v1.0.0
+  [11f193de] LMDB v3.0.1
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.1
+  [a9444a5f] MOSS v0.1.0 `~/Code/Quantum/MOSS`
+  [69838448] MOSSCUDA v0.1.0 `~/Code/Quantum/MOSS/packages/MOSSCUDA`
+  [1914dd2f] MacroTools v0.5.16
+  [611af6d1] NVML v6.4.2
+  [5da4648a] NVTX v1.0.3
+  [bac558e1] OrderedCollections v2.0.3
+  [65ce6f38] PackageExtensionCompat v1.0.2
+  [aea7be01] PrecompileTools v1.3.4
+  [21216c6a] Preferences v1.6.1
+  [08abe8d2] PrettyTables v3.5.0
+  [43287f4e] PtrArrays v1.4.0
+  [74087812] Random123 v1.7.1
+  [e6cf234a] RandomNumbers v1.6.0
+  [189a3867] Reexport v1.2.2
+  [ae029012] Requires v1.3.1
+  [7e506255] ScopedValues v1.6.2
+  [6c6a2e73] Scratch v1.3.0
+  [90137ffa] StaticArrays v1.9.24
+  [1e83bf80] StaticArraysCore v1.4.4
+  [10745b16] Statistics v1.11.5
+  [5e0ebb24] Strided v2.6.6
+  [4db3bf67] StridedViews v0.5.5
+  [892a3eda] StringManipulation v0.6.1
+  [3783bdb8] TableTraits v1.0.1
+  [bd369af6] Tables v1.14.0
+  [6aa20fa7] TensorOperations v5.8.2
+  [e689c965] Tracy v0.1.6
+  [9d95972d] TupleTools v1.6.1
+  [013be700] UnsafeAtomics v0.4.0
+⌅ [409d34a3] VectorInterface v0.6.1
+  [182d3088] cuBLAS v6.4.2
+  [533571aa] cuFFT v6.4.2
+  [20fd9a0b] cuRAND v6.4.2
+  [887afef0] cuSOLVER v6.4.2
+  [b26da814] cuSPARSE v6.4.2
+  [d1e2174e] CUDA_Compiler_jll v0.6.3+2
+  [4ee394cb] CUDA_Driver_jll v13.3.5+0
+  [76a88914] CUDA_Runtime_jll v0.25.0+3
+  [9c1d0b0a] JuliaNVTXCallbacks_jll v0.2.1+0
+  [dad2f222] LLVMExtra_jll v0.0.55+0
+  [6206cf0b] LMDB_jll v1.0.2+0
+  [ad6e5548] LibTracyClient_jll v0.13.1+0
+  [ce32ce21] MSVCRuntime_jll v14.51.36247+0
+  [ef6e0fe3] NVPTX_LLVM_Backend_jll v23.1.2+1
+  [e98f9f5b] NVTX_jll v3.2.2+0
+  [1e29f10c] demumble_jll v1.3.0+0
+  [8b5cbfcf] tree_sitter_gcn_jll v0.1.0+0
+  [44208993] tree_sitter_llvm_jll v1.1.0+0
+  [71e3f6e6] tree_sitter_ptx_jll v0.1.0+0
+  [f0e86581] tree_sitter_spirv_jll v0.1.0+0
+  [0dad84c5] ArgTools v1.1.2
+  [56f22d72] Artifacts v1.11.0
+  [2a0f44e3] Base64 v1.11.0
+  [ade2ca70] Dates v1.11.0
+  [f43a241f] Downloads v1.7.0
+  [7b1f6079] FileWatching v1.11.0
+  [b77e0a4c] InteractiveUtils v1.11.0
+  [ac6e5ff7] JuliaSyntaxHighlighting v1.12.0
+  [4af54fe1] LazyArtifacts v1.11.0
+  [b27032c2] LibCURL v1.0.0
+  [76f85450] LibGit2 v1.11.0
+  [8f399da3] Libdl v1.11.0
+  [37e2e46d] LinearAlgebra v1.13.0
+  [56ddb016] Logging v1.11.0
+  [d6f4376e] Markdown v1.11.0
+  [ca575930] NetworkOptions v1.3.0
+  [44cfe95a] Pkg v1.13.0
+  [de0858da] Printf v1.11.0
+  [3fa0cd96] REPL v1.11.0
+  [9a3f8284] Random v1.11.0
+  [ea8e919c] SHA v1.0.0
+  [9e88b42a] Serialization v1.11.0
+  [6462fe0b] Sockets v1.11.0
+  [2f01184e] SparseArrays v1.13.0
+  [f489334b] StyledStrings v1.11.0
+  [fa267f1f] TOML v1.0.3
+  [a4e569a6] Tar v1.10.0
+  [8dfed614] Test v1.11.0
+  [cf7118a7] UUIDs v1.11.0
+  [4ec0a83e] Unicode v1.11.0
+  [e66e0078] CompilerSupportLibraries_jll v1.5.5+2
+  [deac9b47] LibCURL_jll v8.18.0+1
+  [e37daf67] LibGit2_jll v1.9.1+0
+  [29816b5a] LibSSH2_jll v1.11.104+0
+  [14a3606d] MozillaCACerts_jll v2026.8.13
+  [4536629a] OpenBLAS_jll v0.3.30+0
+  [458c3c95] OpenSSL_jll v3.5.6+0
+  [efcefdf7] PCRE2_jll v10.46.0+0
+  [bea87d4a] SuiteSparse_jll v7.10.1+0
+  [83775a58] Zlib_jll v1.3.1+2
+  [3161d3a3] Zstd_jll v1.5.7+1
+  [8e850b90] libblastrampoline_jll v5.15.0+0
+  [8e850ede] nghttp2_jll v1.67.1+0
+  [3f19e933] p7zip_jll v17.8.2+0
+        Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading.
+     Testing Running tests...
+Test Summary:                                    | Pass  Total   Time
+CUDA local arithmetic vs independent CPU kernels |  102    102  30.3s
+Test Summary:                     | Pass  Total  Time
+CUDA host preflight and precision |   40     40  2.9s
+Test Summary:                                   | Pass  Total  Time
+CUDA observable preparation vs dense references |   12     12  2.5s
+Test Summary:                              | Broken  Total  Time
+CUDA hardware acceptance (GPU unavailable) |      1      1  0.0s
+     Testing MOSSCUDA tests passed 

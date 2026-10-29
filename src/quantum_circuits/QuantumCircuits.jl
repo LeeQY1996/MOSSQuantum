@@ -18,10 +18,13 @@ export CCPHASEGate
 # quantum channel
 export AbstractQuantumMap, QuantumMap, ordered_supermat, kraus_matrices, is_tp
 export AmplitudeDamping, PhaseDamping, Depolarizing
+export BitFlip, PhaseFlip, BitPhaseFlip, PauliChannel, MixedUnitary
+export GeneralizedAmplitudeDamping, ResetChannel, ThermalRelaxation
 
 
 # circuit 
 export QMeasure, QSelect, QCircuit
+export ClassicalRegister, ClassicalCondition, Conditional
 
 # hamiltonian
 export QubitsTerm, oplist, coeff, QubitsOperator, matrix, simplify
@@ -56,6 +59,7 @@ include("channels/one_qubit.jl")
 
 # circuit
 include("circuits/circuit.jl")
+include("circuits/classical_control.jl")
 
 # qubit hamiltonian
 include("operators/qubits_term.jl")

@@ -1,4 +1,4 @@
-using Test, MOSS, Zygote, LinearAlgebra, Random
+using Test, MOSSQuantum, Zygote, LinearAlgebra, Random
 
 @testset "Storage-preserving constructors retain AD domains" begin
     rng = MersenneTwister(20261020)
@@ -37,7 +37,7 @@ using Test, MOSS, Zygote, LinearAlgebra, Random
 end
 
 module ForeignCotangentFixtures
-using MOSS, Test
+using MOSSQuantum, Test
 
 # Metadata is available, but a CPU pullback must reject this storage before
 # reading a value or attempting any implicit host transfer.
@@ -79,10 +79,10 @@ function host_view(data::Array)
     return view_data
 end
 
-wrap_like(data, state::MOSS.StateVector) = MOSS.StateVector(data; preserve_storage=true)
-wrap_like(data, state::MOSS.DensityMatrix) = MOSS.DensityMatrix(data; preserve_storage=true)
-wrap_like(data, state::MOSS.BatchStateVector) = MOSS.BatchStateVector(data; preserve_storage=true)
-wrap_like(data, state::MOSS.BatchDensityMatrix) = MOSS.BatchDensityMatrix(data; preserve_storage=true)
+wrap_like(data, state::MOSSQuantum.StateVector) = MOSSQuantum.StateVector(data; preserve_storage=true)
+wrap_like(data, state::MOSSQuantum.DensityMatrix) = MOSSQuantum.DensityMatrix(data; preserve_storage=true)
+wrap_like(data, state::MOSSQuantum.BatchStateVector) = MOSSQuantum.BatchStateVector(data; preserve_storage=true)
+wrap_like(data, state::MOSSQuantum.BatchDensityMatrix) = MOSSQuantum.BatchDensityMatrix(data; preserve_storage=true)
 end
 
 @testset "CPU pullbacks reject foreign cotangents before access" begin
@@ -95,12 +95,12 @@ end
 
     @testset "Batch circuit and observation seeds" begin
         for initial in (pure, mixed), circuit in (unitary, noisy)
-            output, back = MOSS._batch_circuit_adjoint(circuit, initial)
+            output, back = MOSSQuantum._batch_circuit_adjoint(circuit, initial)
             output_before = copy(storage(output))
             seed = ones(ComplexF64, size(storage(output)))
             foreign = fixtures.ForeignArray(copy(seed))
             fixtures.rejected(back, foreign, fixtures.wrap_like(foreign, output);
-                wrapped_error=MOSS.UnsupportedOperation)
+                wrapped_error=MOSSQuantum.UnsupportedOperation)
             expected_parameters, expected_state = back(seed)
             parameters, state = back(fixtures.host_view(seed))
             @test parameters ≈ expected_parameters
@@ -108,7 +108,7 @@ end
             @test storage(output) == output_before
         end
         for initial in (pure, mixed)
-            values, back = MOSS._batch_expectation_adjoint(QubitsTerm(1 => "Z"), initial)
+            values, back = MOSSQuantum._batch_expectation_adjoint(QubitsTerm(1 => "Z"), initial)
             foreign = fixtures.ForeignArray(ComplexF64[0.5, -0.2im])
             before = copy(foreign.values)
             @test_throws ArgumentError back(foreign)
@@ -125,27 +125,27 @@ end
     @testset "Encoding and scalar contraction seeds" begin
         inputs = [0.12 -0.2; 0.3 0.07]
         before = copy(inputs)
-        output, back = MOSS._batch_qubit_encoding_adjoint(ComplexF64, inputs)
+        output, back = MOSSQuantum._batch_qubit_encoding_adjoint(ComplexF64, inputs)
         seed = ones(ComplexF64, size(storage(output)))
         foreign = fixtures.ForeignArray(copy(seed))
         fixtures.rejected(back, foreign, BatchStateVector(foreign; preserve_storage=true);
-            wrapped_error=MOSS.UnsupportedOperation)
+            wrapped_error=MOSSQuantum.UnsupportedOperation)
         @test back(fixtures.host_view(seed)) ≈ back(seed)
         @test inputs == before
 
-        output, back = MOSS._qubit_encoding_adjoint(ComplexF64, inputs[:, 1])
+        output, back = MOSSQuantum._qubit_encoding_adjoint(ComplexF64, inputs[:, 1])
         seed = ones(ComplexF64, size(storage(output)))
         foreign = fixtures.ForeignArray(copy(seed))
         fixtures.rejected(back, foreign, StateVector(foreign; preserve_storage=true);
-            wrapped_error=MOSS.UnsupportedOperation)
+            wrapped_error=MOSSQuantum.UnsupportedOperation)
         @test back(fixtures.host_view(seed))[2] ≈ back(seed)[2]
 
         host = DensityMatrix(ComplexF64, 1)
         host_before = copy(storage(host))
         foreign = fixtures.ForeignArray(ComplexF64[1, 0, 0, 0])
         state = DensityMatrix(foreign; preserve_storage=true)
-        @test_throws MOSS.UnsupportedOperation expectation(state, XGate(1), host)
-        @test_throws MOSS.UnsupportedOperation expectation(host, XGate(1), state)
+        @test_throws MOSSQuantum.UnsupportedOperation expectation(state, XGate(1), host)
+        @test_throws MOSSQuantum.UnsupportedOperation expectation(host, XGate(1), state)
         @test foreign.values == [1, 0, 0, 0]
         @test foreign.reads[] == foreign.writes[] == foreign.transfers[] == foreign.copies[] == 0
         @test storage(host) == host_before
@@ -154,13 +154,13 @@ end
     @testset "Postselection scatter seeds" begin
         initial = StateVector(ComplexF64[1, 2im, 3, 4im])
         before = copy(storage(initial))
-        for operation in (MOSS._apply_throw_impl, MOSS._apply_keep_impl)
+        for operation in (MOSSQuantum._apply_throw_impl, MOSSQuantum._apply_keep_impl)
             output, back = Zygote.pullback(operation, QSelect(1, 0), initial)
             output_before = copy(storage(output))
             seed = ones(ComplexF64, size(storage(output)))
             foreign = fixtures.ForeignArray(copy(seed))
             fixtures.rejected(back, foreign, StateVector(foreign; preserve_storage=true);
-                wrapped_error=MOSS.UnsupportedOperation)
+                wrapped_error=MOSSQuantum.UnsupportedOperation)
             @test back(fixtures.host_view(seed))[2] ≈ back(seed)[2]
             @test storage(output) == output_before
         end
@@ -228,7 +228,7 @@ end
         # The CPU-only projection restriction does not claim that an external
         # array's own AD projection must use host storage.
         foreign = fixtures.ForeignArray(ComplexF64[1, 2])
-        extension = Base.get_extension(MOSS, :MOSSZygoteExt)
+        extension = Base.get_extension(MOSSQuantum, :MOSSQuantumZygoteExt)
         @test isnothing(extension._check_cpu_array_cotangent(foreign, foreign))
         @test foreign.reads[] == foreign.writes[] == foreign.transfers[] == foreign.copies[] == 0
     end

@@ -1,4 +1,4 @@
-# MOSS numerical and API conventions
+# MOSSQuantum numerical and API conventions
 
 These conventions describe the public circuit, execution, readout, and backend interfaces. They also distinguish the current dense representation from requirements on an external simulator.
 
@@ -157,12 +157,12 @@ Zero shots produce empty samples and histograms; negative shots are invalid. An 
 
 - `state` is the final state, including any representation or precision promotion.
 - `measurements` holds `MeasurementRecord` values in execution order, including nested circuits.
-- Each record contains `position`, `outcome`, `probability`, and `kind` (`:measurement` or `:postselection`). The outcome is recorded before automatic reset.
+- Each record contains `position`, physical `outcome`, physical `probability`, and `kind` (`:measurement` or `:postselection`). The outcome is recorded before automatic reset. `key` optionally names the classical bit. `reported_outcome` additionally records classical readout error; without configured error it equals `outcome`.
 
 A result describes one circuit trajectory. `sample(rng, result.state, shots)` repeatedly samples its final state. It does not rerun intermediate measurements. To obtain independent intermediate-measurement trajectories, call `simulate` repeatedly from the original initial state while advancing an RNG:
 
 ```julia
-using MOSS, Random
+using MOSSQuantum, Random
 
 rng = MersenneTwister(42)
 results = [simulate(circuit, initial_state; rng=rng) for _ in 1:100]
@@ -176,9 +176,17 @@ order and then column order. Recorded `QMeasure` keeps the register size;
 qubit-removing measurements must use `measure` separately. Batch size one retains
 the nested record structure, and an empty batch has no sample record lists.
 
-Explicit RNGs are accepted by `simulate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, `rand_batch(rng, n, batch_size)`, and `rand_batch_densitymatrix(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
+`execute(circuit, initial_state; shots, rng)` provides repeated execution directly,
+returning terminal samples/counts and per-attempt measurement records. Its
+`QSelect` physically measures and rejects unsuccessful shots; `simulate` retains
+forced conditional selection. `estimate(H, circuit, initial_state; shots, rng)`
+uses a total budget across Pauli measurement groups and reports a standard error.
+The [operator and measurement guide](operators-and-measurement.md) defines
+accepted-shot indexing, batch shapes, grouping and statistical conventions.
 
-`simulate`, `sample`, and `counts` have no automatic differentiation contract. Use supported deterministic circuit application and expectation APIs for analytic gradients.
+Explicit RNGs are accepted by `simulate`, `execute`, `estimate`, `sample`, `counts`, `measure`, and `measure!`; readout also offers keyword forms such as `sample(state, shots; rng=rng)`. Random initialization accepts `rand_state(rng, n)`, `rand_densitymatrix(rng, n)`, `rand_batch(rng, n, batch_size)`, and `rand_batch_densitymatrix(rng, n, batch_size)`. Equal seeds reproduce results within the same Julia environment.
+
+`simulate`, `execute`, `estimate`, `sample`, and `counts` have no automatic differentiation contract. Use supported deterministic circuit application and expectation APIs for analytic gradients.
 
 ## Array storage and execution eligibility
 
@@ -237,6 +245,9 @@ and the array/backend requirements.
 | `copy_instruction(instruction_or_circuit)` | Independently copies mutable instruction data, recursively per occurrence for circuits |
 | `bind_parameters(instruction_or_circuit, values)` | Independently copies every occurrence and binds its active parameters |
 | `simulate(circuit, state; ...)` | Executes on an independent state copy |
+| `QubitsTerm(...)`, `QubitsOperator(terms...)`, observable copies and arithmetic | Own independent positions and local matrices |
+| `measurement_plan(observable)` | Snapshots coefficients and basis metadata; treat plan arrays as read-only |
+| `execute(...)`, `estimate(...)` | Preserve the initial state and use independent copies for evolution and basis rotations |
 
 Independent circuit containers alone do not imply independent parameter arrays. `QCircuit(...; copy=true)` is shallow; use `copy_instruction(circuit)` for independent mutable instruction data without changing parameter values. The default hook uses `deepcopy`; extensions managing resources can specialize it while preserving storage independence. Immutable instructions may remain `===` after copying.
 
@@ -267,7 +278,7 @@ F(ψ, ρ) = ⟨ψ|ρ|ψ⟩
 
 Converting pure states to density matrices preserves the answer, including rank-deficient states. The mixed-state implementation handles noncommuting states and truncates eigenvalues at numerical roundoff when constructing positive-semidefinite square roots. This replaces the former `tr(sqrt(ρ) * sqrt(σ))` expression. Results depending on that expression must be updated; for example, a pure state against the maximally mixed qubit now has fidelity `0.5` in either representation.
 
-`MOSS.Utilities.time_evolution(h, t, state)` keeps its exponential-coefficient convention: pure states evolve as `exp(t * h) * ψ`; density matrices evolve as `exp(t * h) * ρ * exp(conj(t) * h)`, for Hermitian `h`. For physical time `τ` and `ℏ = 1`, pass `t = -im * τ`. This preserves trace, Hermiticity, and positivity within numerical tolerance. A real coefficient gives an imaginary-time map whose trace generally changes; normalization is explicit, for example `normalize(time_evolution(h, -0.1, rho))`.
+`MOSSQuantum.Utilities.time_evolution(h, t, state)` keeps its exponential-coefficient convention: pure states evolve as `exp(t * h) * ψ`; density matrices evolve as `exp(t * h) * ρ * exp(conj(t) * h)`, for Hermitian `h`. For physical time `τ` and `ℏ = 1`, pass `t = -im * τ`. This preserves trace, Hermiticity, and positivity within numerical tolerance. A real coefficient gives an imaginary-time map whose trace generally changes; normalization is explicit, for example `normalize(time_evolution(h, -0.1, rho))`.
 
 The density overload previously performed only left multiplication. Code requiring the algebraic product `h * rho` can continue to use operator multiplication, which still denotes left multiplication. Evolution now performs two matrix-free Krylov actions and does not construct a dense propagator.
 
@@ -276,3 +287,36 @@ The density overload previously performed only left multiplication. Code requiri
 `supports(b, operation, state; action=:apply)` checks execution support. `action=:expectation` checks observation support. Unknown actions or unsupported combinations return `false`. Unsupported public backend execution or observation raises `UnsupportedOperation`; `validate_positions(operation, nqubits(state))` checks register bounds independently of backend arity or representation support.
 
 For eligible CPU storage, the dense backend supports gates on one through five acted-on qubits and generic Kraus channels on at most two physical qubits for single and batch states. Channels convert pure to mixed states while preserving sample independence. Retained `QMeasure` supports all four dense representations; `QSelect` supports single pure states and both batch types. Batch operators and expectations, measurement, post-selection, and recorded execution are supported. Batch reverse-mode support covers documented deterministic unitary/fixed-channel, observable, encoding, and constructor paths; it does not extend to stochastic execution, trainable noise, or every state operation. Legacy dense entrypoints retain some earlier assertions and error conventions.
+
+## Physical noise and trajectories
+
+The [noise simulation guide](noise-simulation.md) specifies channel parameter
+ranges, snapshot ownership, classical readout matrix orientation, model expansion,
+CPU trajectory method selection, streaming counts and RNG contracts. The default
+Kraus path still promotes pure inputs to density matrices. `KrausTrajectory()`
+is explicit and preserves a pure state per noise realization. Measurement record
+`outcome` stays physical; `reported_outcome` never changes collapse, ideal reset,
+or the default physical acceptance rule of `QSelect`.
+
+## Classical registers and sampled gradients
+
+Named measurement keys overwrite the latest bit while preserving record history.
+Conditions read reported bits by default; the first key has the least significant
+integer weight. Classical count strings retain key order. Full shot results store
+one register per attempted shot, including rejection. Dynamic/trajectory `simulate`
+requires physical post-selection to be expressed through `execute` instead.
+Shot objective budgets apply per evaluation, while gradient results report the
+actual aggregate budget. Noise rules in a shot objective are frozen at construction.
+The [guide](classical-control-and-gradients.md) specifies branching, uncertainty,
+shared-parameter recipes and optimization semantics.
+
+## Prepared experiment ownership and budgets
+
+Prepared plans snapshot inputs; their internal arrays are read-only configuration.
+Noise factories are frozen at preparation. Workspaces belong to one exact bound
+plan; sharing a workspace serializes execution, while separate workspaces allow
+concurrent calls. Parameter sweep columns retain input order and receive seeds
+before threaded scheduling. Adaptive pilot measurements are charged but excluded
+from the production mean. Hard budgets reserve whole calls atomically and retain
+charges after execution errors. The [prepared experiment guide](prepared-experiments.md)
+defines these contracts and the CPU-only scope.

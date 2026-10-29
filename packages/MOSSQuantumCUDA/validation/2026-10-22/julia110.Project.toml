@@ -1,0 +1,3 @@
+[deps]
+MOSS = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
+MOSSCUDA = "69838448-6374-4f27-b6be-0d2f71c73ec1"

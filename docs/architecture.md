@@ -1,6 +1,6 @@
-# MOSS architecture
+# MOSSQuantum architecture
 
-MOSS owns circuit descriptions, dense quantum states, the CPU simulator, observables, and public interfaces for companion simulators and application packages. These interfaces now allow an external instruction and an implicit state to execute without exposing dense amplitudes. The existing `MOSS`, `MOSS.QuantumCircuits`, `MOSS.QuantumCircuits.Gates`, and `MOSS.Utilities` namespaces remain the compatibility boundary.
+MOSSQuantum owns circuit descriptions, dense quantum states, the CPU simulator, observables, and public interfaces for companion simulators and application packages. These interfaces now allow an external instruction and an implicit state to execute without exposing dense amplitudes. The `MOSSQuantum`, `MOSSQuantum.QuantumCircuits`, `MOSSQuantum.QuantumCircuits.Gates`, and `MOSSQuantum.Utilities` namespaces form the public module boundary.
 
 ## Source ownership
 
@@ -8,20 +8,20 @@ Directories group responsibilities; they do not each introduce a Julia module.
 
 | Path | Responsibility | Owning namespace |
 | --- | --- | --- |
-| `src/MOSS.jl` | Dependency loading and package assembly | `MOSS` |
-| `src/api/` | Exports, state/backend contracts, parameter binding, objectives, and gradient-method protocols | `MOSS` |
-| `src/quantum_circuits/` | Instructions, gates, channels, circuits, and observable descriptions | `MOSS.QuantumCircuits` |
-| `src/quantum_circuits/gates/Gates.jl` | Elementary matrices and matrix constructors | `MOSS.QuantumCircuits.Gates` |
-| `src/states/` | Dense states, batches, initialization, and encoding | `MOSS` |
-| `src/execution/` | Execution, measurement, post-selection, probabilities, sampling, and results | `MOSS` |
-| `src/backends/cpu/` | Dense gate, channel, operator, and expectation kernels | `MOSS` |
-| `src/observables/` | Expectation interfaces, partial trace, and state diagnostics | `MOSS` |
-| `src/differentiation/` | Numerical single/batch circuit reverse passes and expectation/encoding derivatives | `MOSS` |
-| `src/utilities/` | Model builders, evolution helpers, and algorithms | `MOSS.Utilities` |
-| `src/utils/` | Internal indexing, tensor, distance, and parallel helpers | `MOSS` |
+| `src/MOSSQuantum.jl` | Dependency loading and package assembly | `MOSSQuantum` |
+| `src/api/` | Exports, state/backend contracts, parameter binding, objectives, and gradient-method protocols | `MOSSQuantum` |
+| `src/quantum_circuits/` | Instructions, gates, channels, circuits, and observable descriptions | `MOSSQuantum.QuantumCircuits` |
+| `src/quantum_circuits/gates/Gates.jl` | Elementary matrices and matrix constructors | `MOSSQuantum.QuantumCircuits.Gates` |
+| `src/states/` | Dense states, batches, initialization, and encoding | `MOSSQuantum` |
+| `src/execution/` | Execution, measurement, post-selection, probabilities, sampling, and results | `MOSSQuantum` |
+| `src/backends/cpu/` | Dense gate, channel, operator, and expectation kernels | `MOSSQuantum` |
+| `src/observables/` | Expectation interfaces, partial trace, and state diagnostics | `MOSSQuantum` |
+| `src/differentiation/` | Numerical single/batch circuit reverse passes and expectation/encoding derivatives | `MOSSQuantum` |
+| `src/utilities/` | Model builders, evolution helpers, and algorithms | `MOSSQuantum.Utilities` |
+| `src/utils/` | Internal indexing, tensor, distance, and parallel helpers | `MOSSQuantum` |
 | `ext/` | Optional ChainRulesCore/Zygote registrations and plotting integration | Extension modules |
 
-Each type and generic function has one owning module. Re-exports such as `MOSS.nqubits` and `MOSS.QuantumCircuits.nqubits` refer to the same function object. File relocation does not redefine a type under a new module.
+Each type and generic function has one owning module. Re-exports such as `MOSSQuantum.nqubits` and `MOSSQuantum.QuantumCircuits.nqubits` refer to the same function object. File relocation does not redefine a type under a new module.
 
 ## Dependency direction
 
@@ -37,7 +37,7 @@ instruction and observable descriptions
 
 Operation descriptions do not depend on concrete state types, CPU kernels, or AD frameworks. `AbstractInstruction` distinguishes executable circuit elements from the broader operation hierarchy: Hamiltonian terms are observables and cannot be inserted as circuit instructions. `AbstractQuantumState` imposes no dense storage requirement. Backend methods connect these descriptions to a representation.
 
-The CPU simulator implements the public execution interfaces while retaining existing dense entrypoints. Utilities imports the MOSS functions it uses explicitly. The core retains reverse-pass algorithms; Zygote method registration lives in its optional extension. Companion packages use documented public methods rather than files under `src/backends/`, `.data` fields, or private helper functions.
+The CPU simulator implements the public execution interfaces while retaining existing dense entrypoints. Utilities imports the MOSSQuantum functions it uses explicitly. The core retains reverse-pass algorithms; Zygote method registration lives in its optional extension. Companion packages use documented public methods rather than files under `src/backends/`, `.data` fields, or private helper functions.
 
 ## Public interfaces
 
@@ -48,18 +48,21 @@ The CPU simulator implements the public execution interfaces while retaining exi
 | Numerical differentiation | `ExpectationObjective`, `BatchExpectationObjective`, `evaluate`, `evaluate_batch`, `AbstractGradientMethod`, `AdjointGradient`, `supports_gradient`, `value_and_gradient`, `value_and_pullback`, `differentiable_value` |
 | Circuits | `QCircuit`, `push!`, `append!`, `shift`, `change_positions`, adjoint, circuit multiplication |
 | Channels | `QuantumMap`, `kraus_matrices`, `ordered_supermat`, `is_tp`, built-in noise constructors |
+| Noise configuration | `NoiseModel`, `NoiseRule`, `with_noise`, `NoisyCircuit`, `Delay` |
+| Noise methods | `DensityMatrixEvolution`, `KrausTrajectory` |
 | States | `AbstractQuantumState`, `nqubits`, `copy`, `StateVector`, `DensityMatrix`, `BatchStateVector`, `BatchDensityMatrix`; optional dense `storage` |
 | Backend selection | `AbstractBackend`, `CPUBackend`, `backend`, `supports`, `UnsupportedOperation` |
-| Execution | `apply!(backend, instruction, state)`, `apply!`, `circuit * state`, `simulate` |
-| Readout | `probabilities`, `sample`, `counts`, `measure`, `measure!`, `post_select`, `post_select!` |
-| Results | `SimulationResult`, `BatchSimulationResult`, result `state`/`measurements`, `MeasurementRecord` |
-| Observables | `QubitsTerm`, `QubitsOperator`, `expectation(backend, observable, state)`, `fidelity`, `partial_tr`, entropy helpers |
+| Execution | `apply!(backend, instruction, state)`, `apply!`, `circuit * state`, `simulate`, `execute` |
+| Readout | `ReadoutError`, `readout_probabilities`, `probabilities`, `sample`, `counts`, `measure`, `measure!`, `post_select`, `post_select!` |
+| Results | `SimulationResult`, `BatchSimulationResult`, `MeasurementRecord`, `ShotResult`, `CountsResult`, `ExpectationEstimate` |
+| Observables | `QubitsTerm`, `QubitsOperator`, `matrix`, `simplify`, operator arithmetic, `expectation(backend, observable, state)`, `fidelity`, `partial_tr`, entropy helpers |
+| Finite-shot estimation | `measurement_plan`, `MeasurementPlan`, `estimate`, `MeasurementGroup`, `GroupEstimate` |
 
 `supports(b, operation, state; action=:apply)` and `supports(b, observable, state; action=:expectation)` describe separate capabilities. Register bounds are checked through `validate_positions`. Declaring one capability does not imply noise, sampling, or differentiation support. The [extension guide](extending.md) gives implementation requirements and the [conventions](conventions.md) define ordering, ownership, and results.
 
-Public parameter writers may return replacement instructions. Circuit traversal and adjoint wrappers retain these results, so an immutable external gate can use its own fields. Independent binding uses `copy_instruction` per occurrence; ordinary circuit `copy` remains a shallow container copy. The copy hook is owned by `QuantumCircuits` and re-exported by MOSS; `bind_parameters` remains owned by MOSS.
+Public parameter writers may return replacement instructions. Circuit traversal and adjoint wrappers retain these results, so an immutable external gate can use its own fields. Independent binding uses `copy_instruction` per occurrence; ordinary circuit `copy` remains a shallow container copy. The copy hook is owned by `QuantumCircuits` and re-exported by MOSSQuantum; `bind_parameters` remains owned by MOSSQuantum.
 
-`ParameterMap` is owned by MOSS and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
+`ParameterMap` is owned by MOSSQuantum and keeps integer slot-to-value assignments separate from circuit types. Binding gathers independent values into recursive active-slot order, and `accumulate_parameter_gradients` sums slot gradients back into independent-value order. These operations belong in the main package because they use the public parameter protocol without depending on a simulator or AD framework. Bound circuits retain independent instruction storage and do not carry the map. Maps validate slot counts; callers must rebuild or review them after changing activation or slot order.
 
 ## Dense storage and backend selection
 
@@ -74,13 +77,13 @@ entering CPU numerical code. Ordinary arrays and supported contiguous host views
 can use the existing CPU executor. Unknown storage needs a companion backend;
 preserving an array neither selects CPU fallback nor establishes a device kernel.
 Gate/circuit execution, nonmutating observable action through qualified
-`MOSS.apply`, and basis probabilities have backend hooks. Forward objectives use
+`MOSSQuantum.apply`, and basis probabilities have backend hooks. Forward objectives use
 those hooks while gradient methods retain independent support checks.
 
-The independent `MOSSDemoArrayBackend` fixture attaches a backend to the existing
+The independent `MOSSQuantumDemoArrayBackend` fixture attaches a backend to the existing
 four container types and forbids scalar indexing and implicit host conversions.
 Its numerical implementation accesses only its own private storage and public
-MOSS operation descriptions. Device implementations can follow that boundary
+MOSSQuantum operation descriptions. Device implementations can follow that boundary
 without importing private CPU kernels. See the
 [array extension guide](extending.md#preserve-array-storage).
 
@@ -125,7 +128,7 @@ are outside the batch derivative contract.
 
 ## Optional integrations
 
-MOSS requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. ChainRulesCore, Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSChainRulesCoreExt` registers the explicit-method scalar rule independently of Zygote; `MOSSZygoteExt` retains the legacy Zygote adjoints; `MOSSPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
+MOSSQuantum requires Julia 1.10 or later, with Julia 1.13 as the primary development and acceptance version. ChainRulesCore, Zygote, Plots, and LaTeXStrings are weak dependencies. Native package extensions activate after their trigger dependencies load on every supported Julia version. `MOSSQuantumChainRulesCoreExt` registers the explicit-method scalar rule independently of Zygote; `MOSSQuantumZygoteExt` retains the legacy Zygote adjoints; `MOSSQuantumPlotsExt` requires both Plots and LaTeXStrings. The Requires bridge and support for Julia versions below 1.10 have been removed.
 
 FiniteDifferences is a test dependency. The minimal simulator can load without installing an AD or plotting framework. Final version-specific loading results belong in the [verification record](roadmap.md#verification-record); a compatibility declaration alone does not establish a tested Julia version.
 
@@ -133,11 +136,11 @@ FiniteDifferences is a test dependency. The minimal simulator can load without i
 
 `test/runtests.jl` uses normal package loading. Test groups are `unit/`, `integration/`, `regression/`, `extensions/`, and `support/`. Public API snapshots protect existing exports and namespace identities while allowing new exports.
 
-`test/fixtures/MOSSDemoBackend` is a separate package with its own `Project.toml` and `import MOSS`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSS kernels. Independent package resolution and final suite results are recorded separately from its implementation.
+`test/fixtures/MOSSQuantumDemoBackend` is a separate package with its own `Project.toml` and `import MOSSQuantum`. It provides an implicit product state, a custom instruction, a backend, and expectation evaluation through public interfaces. It requires neither dense `storage` nor private MOSSQuantum kernels. Independent package resolution and final suite results are recorded separately from its implementation.
 
-`test/fixtures/MOSSDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step, compare gradients with analytic and finite-difference results, and verify pure/mixed batch circuit gradients with fixed noise.
+`test/fixtures/MOSSQuantumDemoGates` separately defines an immutable trainable gate using public parameter readers, writers, activation controls, and `differentiate`. Its tests complete a dense CPU training step, compare gradients with analytic and finite-difference results, and verify pure/mixed batch circuit gradients with fixed noise.
 
-`test/fixtures/MOSSDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. Together with `MOSSDemoArrayBackend`, CI resolves and tests all four fixtures independently on Julia 1.10 and Julia 1.13.
+`test/fixtures/MOSSQuantumDemoDifferentiation` defines an external scalar objective, replaceable executors, and replaceable numerical gradient methods through public hooks. It verifies core-only execution, direct ChainRules without Zygote, and AD selection of the external method without a quantum-state representation. Together with `MOSSQuantumDemoArrayBackend`, CI resolves and tests all four fixtures independently on Julia 1.10 and Julia 1.13.
 
 The independent `benchmark/` environment keeps BenchmarkTools out of runtime dependencies. Its [instructions](../benchmark/README.md) distinguish first invocation latency from repeated execution. `batch_evaluation.jl` compares batch objectives of size 1/4/16 with explicit single-state loops, including gradients and optional AD. The [repeated-evaluation report](performance/repeated-evaluation-2026-10-19.md) records measured single-state scalar-objective comparisons, trial summaries, environment metadata, and the first CPU allocation reduction. Those measurements do not establish a baseline for every dense-kernel workload. CI exercises benchmark harnesses without timing thresholds.
 
@@ -150,3 +153,26 @@ The ownership and parameter milestone preserves existing constructor-sharing def
 Explicit shared-value maps add reuse of independent parameter values and gradient accumulation on the existing supported dense CPU circuit path. They preserve two-argument binding and mutating reset, and introduce no symbolic algebra or general backend differentiation contract. The [parameter conventions](conventions.md#explicit-shared-parameter-maps) define their validation and lifecycle.
 
 Dense state fields now record concrete array implementations while retaining their vector, matrix, and three-dimensional logical layouts. Hardware-specific GPU kernels, per-sample circuit parameter vectors, symbolic parameter expressions, and broader legacy ChainRules migration remain follow-up work. Additional numerical gradient methods and trainable noise are explicitly deferred. The method protocol provides an extension boundary for additional gradient algorithms; no additional estimators are implemented in this milestone. Existing Zygote support does not provide automatic derivatives of stochastic `simulate`, `sample`, or `counts`, or every operation supported by forward batching.
+
+## Classical execution and sampled derivatives
+
+`classical_control.jl` defines named registers and conditional instruction trees.
+`classical_execution.jl` validates definite assignment and exposes result accessors.
+The noise executor compiles both branches but runs only the selected branch;
+reported measurement bits are written before feedback. Each shot owns its register.
+`sampled_gradients.jl` implements snapshot-owning shot objectives and explicit
+parameter-shift, central-difference and SPSA methods without an AD dependency.
+The optimizer is a separate algorithm-zoo workflow. See the
+[classical control and gradient guide](classical-control-and-gradients.md).
+
+## Prepared experiments and shot accounting
+
+`execution_plans.jl` snapshots validated CPU programs and compiles fixed noise;
+active gate bindings remain independent. Bound deterministic outputs are cached,
+while optional trajectory workspaces own mutable buffers with an exclusive lock.
+`estimation_plans.jl` reuses basis metadata and deterministic base evolution;
+`experiments.jl` batches parameter columns with independently seeded workers.
+`shot_budgets.jl` atomically reserves whole-call costs. Adaptive estimation uses
+independent pilot and production samples. `ShotExpectationObjective` retains a
+prepared plan on supported CPU states, including occurrence-wise shift binding.
+No new dependency is required. See [prepared experiments](prepared-experiments.md).

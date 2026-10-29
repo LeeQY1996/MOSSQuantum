@@ -31,15 +31,17 @@ Base.:*(h::QubitsTerm, dm::DensityMatrix) = h(dm)
 
 
 function _cpu_linear_apply(m::QubitsTerm, vr::StateVector)
-	v = storage(vr)
+	T = promote_type(eltype(m), eltype(vr))
+	v = convert(Vector{T}, storage(vr))
 	vout = similar(v)
 	_apply_qterm_util!(m, v, vout)
 	return StateVector(vout, nqubits(vr))
 end
 
 function _cpu_linear_apply(m::QubitsOperator, vr::StateVector)
-	v = storage(vr)
-	vout = zeros(eltype(v), length(v))
+	T = promote_type(eltype(m), eltype(vr))
+	v = convert(Vector{T}, storage(vr))
+	vout = zeros(T, length(v))
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		_apply_util!(m, v, vout)
 	else

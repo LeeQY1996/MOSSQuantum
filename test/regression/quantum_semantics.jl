@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra
-using MOSS
-using MOSS.Utilities
+using MOSSQuantum
+using MOSSQuantum.Utilities
 
 @testset "Squared Uhlmann fidelity" begin
     zero_state = onehot_encoding([0])

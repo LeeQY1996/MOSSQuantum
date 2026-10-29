@@ -1,4 +1,4 @@
-using Test, MOSS, Random, LinearAlgebra
+using Test, MOSSQuantum, Random, LinearAlgebra
 
 function _batch_density_observation_dense(observable, n, ::Type{T}) where {T}
     if observable isa QubitsTerm && isempty(observable)
@@ -88,7 +88,7 @@ end
                 state = BatchDensityMatrix(copy(data))
                 saved_observed = deepcopy(observed)
                 dense = _batch_density_observation_dense(observed, n, T)
-                values, back = MOSS._batch_expectation_adjoint(observed, state)
+                values, back = MOSSQuantum._batch_expectation_adjoint(observed, state)
                 @test values ≈ [tr(dense * view(data, :, :, b)) for b in 1:B]
                 seeds = [0.2 + 0.3im, -0.4im, 0.0im]
                 expected = cat((seeds[b] .* dense' for b in 1:B)...; dims=3)
@@ -130,7 +130,7 @@ end
                 @test storage(results[2]) ≈ -2 .* expected
 
                 empty_state = BatchDensityMatrix(T, n, 0)
-                empty_values, empty_back = MOSS._batch_expectation_adjoint(saved_observed, empty_state)
+                empty_values, empty_back = MOSSQuantum._batch_expectation_adjoint(saved_observed, empty_state)
                 @test isempty(empty_values)
                 @test size(storage(empty_back(ComplexF64[])[2])) == (2^n, 2^n, 0)
                 @test size(storage(empty_back(nothing)[2])) == (2^n, 2^n, 0)
@@ -155,12 +155,12 @@ end
                           ComplexF64[0.2 + 0.3im, 0.2 + 0.3im, -0.4im, 0.2 + 0.3im])
             data = randn(rng, T, 2^n, 2^n, B)
             state = BatchDensityMatrix(data)
-            _, back = MOSS._batch_expectation_adjoint(observed, state)
+            _, back = MOSSQuantum._batch_expectation_adjoint(observed, state)
             CT = promote_type(T, eltype(observed), eltype(seeds))
             promoted = _batch_density_observation_promoted(observed, CT)
             dense = _batch_density_observation_dense(promoted, n, CT)
             expected = cat((seeds[b] .* dense' for b in 1:B)...; dims=3)
-            legacy = cat((storage(MOSS._batch_single_expectation_pullback(observed,
+            legacy = cat((storage(MOSSQuantum._batch_single_expectation_pullback(observed,
                 DensityMatrix(Matrix{CT}(view(data, :, :, b)), n))[2](seeds[b])[2])
                 for b in 1:B)...; dims=3)
             gradient = back(seeds)[2]
@@ -177,7 +177,7 @@ end
             small = T === Float32 ? 1f-25 : 1e-200
             scale = T === Float32 ? 1f30 : 1e200
             observed = QubitsTerm(1 => T[small 0; 0 0]; coeff=coefficient)
-            _, back = MOSS._batch_expectation_adjoint(observed, BatchDensityMatrix(T, 1, 3))
+            _, back = MOSSQuantum._batch_expectation_adjoint(observed, BatchDensityMatrix(T, 1, 3))
             seeds = T[scale, scale, -scale]
             expected = zeros(T, 2, 2, 3)
             expected[1, 1, :] .= (seeds .* coefficient) .* small
@@ -186,7 +186,7 @@ end
         end
         tiny = nextfloat(0f0)
         observed = QubitsTerm(1 => Float32[0.25 0; 0 0]; coeff=tiny)
-        _, back = MOSS._batch_expectation_adjoint(observed, BatchDensityMatrix(Float32, 1, 3))
+        _, back = MOSSQuantum._batch_expectation_adjoint(observed, BatchDensityMatrix(Float32, 1, 3))
         seeds = Float64[2.0^100, 2.0^100, -2.0^100]
         expected = zeros(Float64, 2, 2, 3)
         expected[1, 1, :] .= [2.0^-51, 2.0^-51, -2.0^-51]

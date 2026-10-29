@@ -1,5 +1,5 @@
 module StorageBackendRoutingFixtures
-using MOSS, Random
+using MOSSQuantum, Random
 struct Registered end
 struct Unregistered end
 struct GuardedArray{T,N,B} <: AbstractArray{T,N}
@@ -27,49 +27,49 @@ Base.similar(data::GuardedArray{T,N,B}, ::Type{S}, dims::Dims) where {T,N,B,S} =
 
 Base.copyto!(destination::GuardedArray, source::GuardedArray) = (copyto!(destination.values, source.values); destination)
 
-struct ProbeBackend <: MOSS.AbstractBackend end
-const RegisteredPure = MOSS.StateVector{T,A} where {T<:Number,A<:GuardedArray{T,1,Registered}}
-MOSS.backend(::RegisteredPure) = ProbeBackend()
+struct ProbeBackend <: MOSSQuantum.AbstractBackend end
+const RegisteredPure = MOSSQuantum.StateVector{T,A} where {T<:Number,A<:GuardedArray{T,1,Registered}}
+MOSSQuantum.backend(::RegisteredPure) = ProbeBackend()
 # A legacy backend can own whole nested circuits and measurement instructions
 # without accepting RNG keywords or implementing the recorded measure! hook.
-struct LegacyBackend <: MOSS.AbstractBackend
+struct LegacyBackend <: MOSSQuantum.AbstractBackend
     events::Vector{Symbol}
 end
-MOSS.supports(::LegacyBackend, ::Union{MOSS.XGate,MOSS.QMeasure}, ::RegisteredPure;
+MOSSQuantum.supports(::LegacyBackend, ::Union{MOSSQuantum.XGate,MOSSQuantum.QMeasure}, ::RegisteredPure;
               action::Symbol=:apply) = action === :apply
-function MOSS.apply!(backend::LegacyBackend, gate::MOSS.XGate, state::RegisteredPure)
+function MOSSQuantum.apply!(backend::LegacyBackend, gate::MOSSQuantum.XGate, state::RegisteredPure)
     push!(backend.events, :gate)
-    return MOSS.apply!(ProbeBackend(), gate, state)
+    return MOSSQuantum.apply!(ProbeBackend(), gate, state)
 end
-function MOSS.apply!(backend::LegacyBackend, ::MOSS.QCircuit, state::RegisteredPure)
+function MOSSQuantum.apply!(backend::LegacyBackend, ::MOSSQuantum.QCircuit, state::RegisteredPure)
     push!(backend.events, :circuit)
     return state
 end
-function MOSS.apply!(backend::LegacyBackend, ::MOSS.QMeasure, ::RegisteredPure)
+function MOSSQuantum.apply!(backend::LegacyBackend, ::MOSSQuantum.QMeasure, ::RegisteredPure)
     push!(backend.events, :measurement)
     return 0, 1.0
 end
 
-MOSS.supports(::ProbeBackend, ::MOSS.XGate, ::RegisteredPure; action::Symbol=:apply) = action === :apply
-MOSS.supports(::ProbeBackend, ::MOSS.ZGate, ::RegisteredPure; action::Symbol=:apply) = action === :expectation
-function MOSS.apply!(::ProbeBackend, gate::MOSS.XGate, state::RegisteredPure)
-    MOSS.validate_positions(gate, MOSS.nqubits(state))
-    data = MOSS.storage(state).values
+MOSSQuantum.supports(::ProbeBackend, ::MOSSQuantum.XGate, ::RegisteredPure; action::Symbol=:apply) = action === :apply
+MOSSQuantum.supports(::ProbeBackend, ::MOSSQuantum.ZGate, ::RegisteredPure; action::Symbol=:apply) = action === :expectation
+function MOSSQuantum.apply!(::ProbeBackend, gate::MOSSQuantum.XGate, state::RegisteredPure)
+    MOSSQuantum.validate_positions(gate, MOSSQuantum.nqubits(state))
+    data = MOSSQuantum.storage(state).values
     data[1], data[2] = data[2], data[1]
     return state
 end
-MOSS.expectation(::ProbeBackend, ::MOSS.ZGate, state::RegisteredPure) =
-    abs2(MOSS.storage(state).values[1]) - abs2(MOSS.storage(state).values[2])
-MOSS.probabilities(::ProbeBackend, state::RegisteredPure; qubits=1:MOSS.nqubits(state)) =
-    abs2.(MOSS.storage(state).values)
-function MOSS.measure!(::ProbeBackend, state::RegisteredPure, position::Int;
+MOSSQuantum.expectation(::ProbeBackend, ::MOSSQuantum.ZGate, state::RegisteredPure) =
+    abs2(MOSSQuantum.storage(state).values[1]) - abs2(MOSSQuantum.storage(state).values[2])
+MOSSQuantum.probabilities(::ProbeBackend, state::RegisteredPure; qubits=1:MOSSQuantum.nqubits(state)) =
+    abs2.(MOSSQuantum.storage(state).values)
+function MOSSQuantum.measure!(::ProbeBackend, state::RegisteredPure, position::Int;
                        auto_reset::Bool=true, rng=Random.default_rng())
-    MOSS.validate_positions(MOSS.QMeasure(position), MOSS.nqubits(state))
+    MOSSQuantum.validate_positions(MOSSQuantum.QMeasure(position), MOSSQuantum.nqubits(state))
     return 0, 1.0
 end
-function MOSS.apply(::ProbeBackend, operator::MOSS.QubitsTerm, state::RegisteredPure)
+function MOSSQuantum.apply(::ProbeBackend, operator::MOSSQuantum.QubitsTerm, state::RegisteredPure)
     result = copy(state)
-    result.data.values .*= MOSS.coeff(operator)
+    result.data.values .*= MOSSQuantum.coeff(operator)
     return result
 end
 end
@@ -90,7 +90,7 @@ end
         @test !supports(CPUBackend(), circuit, state)
         @test !supports(CPUBackend(), observable, state; action=:expectation)
         @test !supports(CPUBackend(), probabilities, state; action=:probabilities)
-        @test_throws ArgumentError MOSS.backend(state)
+        @test_throws ArgumentError MOSSQuantum.backend(state)
         @test_throws ArgumentError apply!(operation, state)
         @test_throws ArgumentError expectation(observable, state)
         @test_throws ArgumentError circuit * state
@@ -102,7 +102,7 @@ end
         @test_throws UnsupportedOperation apply!(CPUBackend(), operation, state)
         @test_throws UnsupportedOperation apply!(CPUBackend(), circuit, state)
         @test_throws UnsupportedOperation expectation(CPUBackend(), observable, state)
-        @test_throws UnsupportedOperation MOSS.apply(CPUBackend(), observable, state)
+        @test_throws UnsupportedOperation MOSSQuantum.apply(CPUBackend(), observable, state)
         @test_throws UnsupportedOperation probabilities(CPUBackend(), state)
         @test_throws UnsupportedOperation measure!(CPUBackend(), state, 1)
         @test_throws UnsupportedOperation simulate(circuit, state; backend=CPUBackend())
@@ -115,7 +115,7 @@ end
     @testset "Registered array-backed states use their own public backend" begin
         guarded = fixtures.GuardedArray(ComplexF64[1,0], fixtures.Registered)
         state = StateVector(guarded, 1; preserve_storage=true)
-        @test MOSS.backend(state) isa fixtures.ProbeBackend
+        @test MOSSQuantum.backend(state) isa fixtures.ProbeBackend
         @test !supports(CPUBackend(), XGate(1), state)
         @test expectation(ZGate(1), state) == 1
         @test probabilities(state) == [1, 0]
@@ -123,7 +123,7 @@ end
         @test expectation(ZGate(1), state) == -1
         @test expectation(ZGate(1), QCircuit([XGate(1)]) * state) == 1
         @test state.data.values == [0, 1]
-        @test MOSS.measure!(state, 1) == (0, 1.0)
+        @test MOSSQuantum.measure!(state, 1) == (0, 1.0)
         scaled = QubitsTerm(1 => "Z"; coeff=2.0) * state
         @test scaled.data.values == 2 .* state.data.values
         @test scaled.data !== state.data
@@ -146,7 +146,7 @@ end
         nested = QCircuit([XGate(1), QCircuit([XGate(1)]), QMeasure(1), XGate(1)])
         # Exercise the generic public circuit adapter while allowing nested
         # dispatch to select the backend's more specific public hook.
-        output = invoke(apply!, Tuple{MOSS.AbstractBackend,QCircuit,MOSS.AbstractQuantumState},
+        output = invoke(apply!, Tuple{MOSSQuantum.AbstractBackend,QCircuit,MOSSQuantum.AbstractQuantumState},
                         legacy, nested, state)
         @test output === state
         @test legacy.events == [:gate, :circuit, :measurement, :gate]
@@ -157,7 +157,7 @@ end
     @testset "CPU layout support is deliberately conservative" begin
         data = ComplexF64[1, 0, 0, 0, 0, 0, 0, 0]
         contiguous = StateVector(view(data, 1:4), 2; preserve_storage=true)
-        @test MOSS.backend(contiguous) isa CPUBackend
+        @test MOSSQuantum.backend(contiguous) isa CPUBackend
         @test supports(CPUBackend(), probabilities, contiguous; action=:probabilities)
         @test !supports(CPUBackend(), probabilities, contiguous; action=:apply)
         @test !supports(CPUBackend(), probabilities, contiguous; action=:expectation)
@@ -171,11 +171,11 @@ end
         @test expectation(QubitsTerm(2 => "Z"), contiguous) == -1
         stepped = StateVector(view(data, 1:2:7), 2; preserve_storage=true)
         @test !supports(CPUBackend(), XGate(1), stepped)
-        @test_throws ArgumentError MOSS.backend(stepped)
+        @test_throws ArgumentError MOSSQuantum.backend(stepped)
         @test_throws UnsupportedOperation apply!(CPUBackend(), XGate(1), stepped)
         repeated = BatchStateVector(view(reshape(data, 4, 2), :, [1, 1]), 2, 2; preserve_storage=true)
         @test !supports(CPUBackend(), XGate(1), repeated)
-        @test_throws ArgumentError MOSS.backend(repeated)
+        @test_throws ArgumentError MOSSQuantum.backend(repeated)
         @test_throws UnsupportedOperation apply!(CPUBackend(), XGate(1), repeated)
     end
 end

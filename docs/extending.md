@@ -1,13 +1,13 @@
-# Extending MOSS
+# Extending MOSSQuantum
 
-A companion package can add instructions, implicit states, execution backends, and observations through public methods. An external state need not expose dense amplitudes or follow MOSS's current vector/matrix storage layout.
+A companion package can add instructions, implicit states, execution backends, and observations through public methods. An external state need not expose dense amplitudes or follow MOSSQuantum's current vector/matrix storage layout.
 
 ## Use existing dense operation types
 
 For a matrix-defined gate, no new type is needed:
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 phase = ComplexF64[1 0; 0 cis(0.2)]
 circuit = QCircuit([QuantumGate(1, phase)])
@@ -16,7 +16,16 @@ state = apply!(circuit, qstate(2))
 
 The first gate position is the least significant local matrix bit. `QuantumGate` does not validate unitarity, so the caller is responsible for the intended operation. `QuantumMap` accepts Kraus matrices; applying it to a state vector returns a density matrix, and applying it to `BatchStateVector` returns `BatchDensityMatrix`. Current CPU generic channels support at most two physical qubits because their superoperators act on twice as many density indices. Batch samples undergo the same channel independently.
 
-A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, `MOSS.mat`, and `MOSS.change_positions`. It then uses the existing CPU gate dispatcher, subject to its arity limits. A fixed gate angle does not become trainable automatically. Trainable gates add the public parameter and derivative methods described below, without adopting the built-in gate fields.
+Physical noise constructors validate CPTP maps; general `QuantumMap` retains an
+explicit `check_tp` switch for non-trace-preserving low-level applications.
+Kraus constructor inputs are copied, and exposed Kraus/supermatrix arrays must
+be treated as read-only. Reconstruct the map to change it. Stochastic execution
+requires physical channels and rejects inconsistent cached representations.
+Explicit CPU `KrausTrajectory()` preserves pure states per noise realization;
+it does not imply that an external backend supports trajectories. See the
+[noise guide](noise-simulation.md) for method, record and readout contracts.
+
+A custom matrix gate can subtype `MOSSQuantum.Gate{N}` and implement `MOSSQuantum.positions`, `MOSSQuantum.mat`, and `MOSSQuantum.change_positions`. It then uses the existing CPU gate dispatcher, subject to its arity limits. A fixed gate angle does not become trainable automatically. Trainable gates add the public parameter and derivative methods described below, without adopting the built-in gate fields.
 
 ## Instruction and state contracts
 
@@ -30,7 +39,7 @@ A custom matrix gate can subtype `MOSS.Gate{N}` and implement `MOSS.positions`, 
 | `copy(state)` | Return an independently mutable state |
 | `backend(state)` | Return an `AbstractBackend` implementation |
 
-`QCircuit` accepts external `AbstractInstruction` subtypes, including instructions outside the gate/channel hierarchy. Observable descriptions such as `QubitsOperator` are not instructions. Instructions are parameterless by default. `storage` is optional for external states, and neither `.data` nor MOSS private helpers belong to the extension contract.
+`QCircuit` accepts external `AbstractInstruction` subtypes, including instructions outside the gate/channel hierarchy. Observable descriptions such as `QubitsOperator` are not instructions. Instructions are parameterless by default. `storage` is optional for external states, and neither `.data` nor MOSSQuantum private helpers belong to the extension contract.
 
 The dense state containers keep single and batch representation separate:
 `StateVector` has one vector, while `BatchStateVector` has one sample
@@ -58,7 +67,7 @@ state hierarchy. `DensityMatrix` retains a vectorized backing array; its public
 Array inputs opt in explicitly:
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 amplitude_data = ComplexF64[1, 0, 0, 0]
 input = view(amplitude_data, 1:4)
@@ -105,19 +114,21 @@ instance. The same applies to the other three containers.
 Implement these methods for the combinations the backend supports:
 
 ```julia
-MOSS.supports(my_backend, instruction, state; action=:apply)
-MOSS.apply!(my_backend, instruction, state)
-MOSS.supports(my_backend, observable, state; action=:expectation)
-MOSS.expectation(my_backend, observable, state)
+MOSSQuantum.supports(my_backend, instruction, state; action=:apply)
+MOSSQuantum.apply!(my_backend, instruction, state)
+MOSSQuantum.supports(my_backend, observable, state; action=:expectation)
+MOSSQuantum.expectation(my_backend, observable, state)
 # Nonmutating observable action, used by observable * state:
-MOSS.supports(my_backend, observable, state; action=:apply)
-MOSS.apply(my_backend, observable, state)
+MOSSQuantum.supports(my_backend, observable, state; action=:apply)
+MOSSQuantum.apply(my_backend, observable, state)
 # Computational-basis readout:
-MOSS.supports(my_backend, MOSS.probabilities, state; action=:probabilities)
-MOSS.probabilities(my_backend, state; qubits=1:MOSS.nqubits(state))
+MOSSQuantum.supports(my_backend, MOSSQuantum.probabilities, state; action=:probabilities)
+MOSSQuantum.probabilities(my_backend, state; qubits=1:MOSSQuantum.nqubits(state))
 ```
 
-`supports` returns a Boolean and defaults to `false` for unknown capabilities. Check register bounds with `MOSS.validate_positions(instruction, MOSS.nqubits(state))` separately. Instruction application returns the resulting state and may replace it with another representation. Unsupported execution or observation should raise `MOSS.UnsupportedOperation(backend, operation, state, action)`.
+`supports` returns a Boolean and defaults to `false` for unknown capabilities. Check register bounds with `MOSSQuantum.validate_positions(instruction, MOSSQuantum.nqubits(state))` separately. Instruction application returns the resulting state and may replace it with another representation. Unsupported execution or observation should raise `MOSSQuantum.UnsupportedOperation(backend, operation, state, action)`.
+
+For circuit-level diagnostics, a backend may specialize `validate_backend_execution(backend, circuit, state; mode=:apply)`. The default does nothing. The hook receives the original circuit and `mode` is `:apply`, `:simulate`, or `:execute`; it can throw a detailed error before execution and must not mutate the circuit, state, or random-number generator. This preflight supplements the capability and position checks, and preserves the distinction between forced post-selection in `simulate` and rejection sampling in `execute`. A backend that specializes circuit-level `apply!` must call the hook itself.
 
 The two-argument methods `apply!(instruction, state)` and `expectation(observable, state)` select `backend(state)`. Generic backend circuit execution visits nested instructions, retains replacement states, and rejects unsupported capabilities. A default circuit capability query checks each instruction against the supplied state. Backends that change representation should specialize that query to follow their state transitions; the dense CPU backend does so for pure-to-mixed channel application.
 
@@ -138,19 +149,19 @@ mixed batch representations. It returns `BatchSimulationResult`, whose
 returns one probability per sample. Recorded batch measurements keep the register
 size; separate nonmutating `measure`/`post_select` calls support qubit removal.
 
-Sampling is a separate capability. For the four dense containers, implement `MOSS.probabilities(backend, state; qubits=...)`; the ordinary state call selects its backend. Implicit external state types can also implement their own state-level `probabilities`, `sample`, or `counts` methods. Preserve the documented readout ordering, normalization, RNG, and shape conventions. Implementing `apply!` alone does not establish readout or differentiation support.
+Sampling is a separate capability. For the four dense containers, implement `MOSSQuantum.probabilities(backend, state; qubits=...)`; the ordinary state call selects its backend. Implicit external state types can also implement their own state-level `probabilities`, `sample`, or `counts` methods. Preserve the documented readout ordering, normalization, RNG, and shape conventions. Implementing `apply!` alone does not establish readout or differentiation support.
 
-`MOSS.apply(backend, observable, state)` is the qualified, nonmutating linear
+`MOSSQuantum.apply(backend, observable, state)` is the qualified, nonmutating linear
 action hook for matrix and operator multiplication. It returns independent
 output storage; for density matrices this action is `Oρ`, while gate execution
-through `apply!` is `UρU†`. Use `MOSS.apply` with its module qualification; it is
+through `apply!` is `UρU†`. Use `MOSSQuantum.apply` with its module qualification; it is
 not exported. Observation continues to use `expectation`. Readout arrays may be
 host metadata if that is the backend's documented convention; this does not
 change the state's storage family.
 
 ## Independent array-backend example
 
-The [array-backend fixture](../test/fixtures/MOSSDemoArrayBackend/README.md)
+The [array-backend fixture](../test/fixtures/MOSSQuantumDemoArrayBackend/README.md)
 uses the four public state containers with `DemoArray`. That array rejects scalar
 indexing, `Array(...)`, and `collect(...)`, so its tests detect accidental CPU
 fallback. The example executor owns ordinary CPU arrays privately; it is a
@@ -159,13 +170,13 @@ contract demonstration, not a GPU implementation.
 From this repository root, prepare its independent environment:
 
 ```bash
-julia --project=test/fixtures/MOSSDemoArrayBackend --startup-file=no -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
+julia --project=test/fixtures/MOSSQuantumDemoArrayBackend --startup-file=no -e 'using Pkg; Pkg.develop(path=pwd()); Pkg.instantiate()'
 ```
 
 Then run the following in that environment:
 
 ```julia
-using MOSS, MOSSDemoArrayBackend
+using MOSSQuantum, MOSSQuantumDemoArrayBackend
 
 initial = StateVector(DemoArray(ComplexF64[1, 0]); preserve_storage=true)
 @assert backend(initial) isa ArrayBackend
@@ -173,7 +184,7 @@ state = apply!(RyGate(1, 0.3), copy(initial))
 @assert real(expectation(ZGate(1), state)) ≈ cos(0.3)
 @assert probabilities(state) ≈ [cos(0.15)^2, sin(0.15)^2]
 
-flipped = MOSS.apply(backend(state), ComplexF64[0 1; 1 0], state)
+flipped = MOSSQuantum.apply(backend(state), ComplexF64[0 1; 1 0], state)
 mixed = DensityMatrix(state)
 @assert storage(flipped) isa DemoArray
 @assert storage(mixed) isa DemoArray
@@ -192,26 +203,26 @@ implementations; successful storage adaptation alone establishes none of them.
 
 ## Independent backend example
 
-[`test/fixtures/MOSSDemoBackend`](../test/fixtures/MOSSDemoBackend) is a real fixture package with its own `Project.toml` and `import MOSS`. It defines:
+[`test/fixtures/MOSSQuantumDemoBackend`](../test/fixtures/MOSSQuantumDemoBackend) is a real fixture package with its own `Project.toml` and `import MOSSQuantum`. It defines:
 
 - `DemoState <: AbstractQuantumState`, storing one bit per qubit rather than dense amplitudes;
 - `DemoFlip <: AbstractInstruction`, independent of the built-in gate hierarchy;
 - `DemoBackend <: AbstractBackend`, implementing flip execution and Z expectation.
 
-After developing the MOSS checkout into that package's environment and loading it normally:
+After developing the MOSSQuantum checkout into that package's environment and loading it normally:
 
 ```julia
-import MOSS
-using MOSSDemoBackend
+import MOSSQuantum
+using MOSSQuantumDemoBackend
 
 state = DemoState(3)
-circuit = MOSS.QCircuit([DemoFlip(1), MOSS.XGate(3)])
-@assert MOSS.supports(MOSS.backend(state), circuit, state)
-state = MOSS.apply!(circuit, state)
-@assert MOSS.expectation(MOSS.ZGate(1), state) == -1
+circuit = MOSSQuantum.QCircuit([DemoFlip(1), MOSSQuantum.XGate(3)])
+@assert MOSSQuantum.supports(MOSSQuantum.backend(state), circuit, state)
+state = MOSSQuantum.apply!(circuit, state)
+@assert MOSSQuantum.expectation(MOSSQuantum.ZGate(1), state) == -1
 ```
 
-Its tests also exercise unsupported H-gate execution, noise, and X observation. They use only public MOSS methods and do not require `storage`, internal source includes, or underscore-prefixed kernels. The fixture is a minimal contract example, rather than a production stabilizer or tensor-network simulator.
+Its tests also exercise unsupported H-gate execution, noise, and X observation. They use only public MOSSQuantum methods and do not require `storage`, internal source includes, or underscore-prefixed kernels. The fixture is a minimal contract example, rather than a production stabilizer or tensor-network simulator.
 
 ## Parameters and differentiation
 
@@ -240,10 +251,10 @@ Dⱼ = (∂U/∂θⱼ)' * U
 
 on the same register positions as the original gate. This is the generator convention used by the reverse pass, rather than a list of raw `∂U/∂θⱼ` matrices. A gate with active parameters but no derivative implementation raises `ArgumentError`; a parameterless gate returns `nothing`. The reverse pass requires unitary gates and also supports fixed `QuantumMap` channels in single/batch pure and mixed workflows. Arbitrary `AbstractInstruction` subtypes, custom backends, and trainable noise parameters are outside that implementation. For the current Zygote training contract, bind the parameters of a `QCircuit` inside the loss; standalone instruction binding does not establish a general AD rule.
 
-[`test/fixtures/MOSSDemoGates`](../test/fixtures/MOSSDemoGates) is an independent package showing the complete path. Its immutable `DemoRotation <: ParametricGate{1}` stores `wire`, `angle`, and `trainable`, implements only public MOSS methods, and needs no special reset or execution code in MOSS. Its contract tests cover nested and repeated binding, frozen parameters, adjoint wrappers, analytic and finite-difference gradients, one optimization update, and fixed-channel gradients. After developing both packages into the consumer environment:
+[`test/fixtures/MOSSQuantumDemoGates`](../test/fixtures/MOSSQuantumDemoGates) is an independent package showing the complete path. Its immutable `DemoRotation <: ParametricGate{1}` stores `wire`, `angle`, and `trainable`, implements only public MOSSQuantum methods, and needs no special reset or execution code in MOSSQuantum. Its contract tests cover nested and repeated binding, frozen parameters, adjoint wrappers, analytic and finite-difference gradients, one optimization update, and fixed-channel gradients. After developing both packages into the consumer environment:
 
 ```julia
-using MOSS, MOSSDemoGates, Zygote
+using MOSSQuantum, MOSSQuantumDemoGates, Zygote
 
 template = QCircuit([DemoRotation(1, 0.1)])
 initial = StateVector(1)
@@ -257,7 +268,7 @@ gradient = Zygote.gradient(loss, [0.1])[1]  # approximately [-sin(0.1)]
 `ParameterMap` uses the same public active-slot order for built-in and external instructions. A companion gate needs no additional parameter-identity interface:
 
 ```julia
-using MOSS, MOSSDemoGates, Zygote
+using MOSSQuantum, MOSSQuantumDemoGates, Zygote
 
 template = QCircuit([DemoRotation(1, 0.0), DemoRotation(1, 0.0)])
 parameter_map = ParameterMap(template, [1, 1])
@@ -274,7 +285,7 @@ Maps are immutable metadata kept separate from instructions and bound circuits. 
 
 Sharing a value does not share mutable gate storage. Existing independent binding, mutating reset, and shallow circuit copies retain their documented ownership rules. Parameter maps do not provide symbolic parameter expressions or a general derivative rule for external backends.
 
-Zygote registrations are optional and loaded by `MOSSZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
+Zygote registrations are optional and loaded by `MOSSQuantumZygoteExt`. They connect existing reverse passes to supported deterministic dense-state circuit application and expectation APIs. New backends and instructions need their own derivative rules and validation; `supports(...; action=:apply)` or `:expectation` does not imply gradients. Stochastic `simulate`, `sample`, and `counts` do not define automatic derivatives.
 
 The legacy circuit/state integration uses Zygote adjoints. Its batch rules cover
 pure/mixed circuit application with unitary gates and fixed channels,
@@ -294,11 +305,11 @@ before entering its numerical reverse pass.
 
 ## Execution and replaceable differentiation
 
-Execution and the selected gradient method are separate public interfaces. An external objective can be any Julia type; it does not need to inherit from MOSS or provide `storage`, `backend`, or a quantum state. `ExpectationObjective` is the built-in adapter for a circuit, observable, and initial state:
+Execution and the selected gradient method are separate public interfaces. An external objective can be any Julia type; it does not need to inherit from MOSSQuantum or provide `storage`, `backend`, or a quantum state. `ExpectationObjective` is the built-in adapter for a circuit, observable, and initial state:
 
 ```julia
 objective = ExpectationObjective(template, observable, initial;
-    parameter_map=ParameterMap(template), backend=MOSS.backend(initial))
+    parameter_map=ParameterMap(template), backend=MOSSQuantum.backend(initial))
 value = evaluate(objective, values)
 method = AdjointGradient()
 supports_gradient(method, objective)
@@ -346,7 +357,7 @@ Stochastic instructions, trainable channels, arbitrary backends, and
 missing derivative rules are unsupported by this method. Querying another method
 is independent of the execution backend's `supports` queries.
 
-Loading ChainRulesCore activates `MOSSChainRulesCoreExt`. Its `rrule` is limited to `differentiable_value(method, objective, values)` and dispatches through the public numerical pullback. Only `values` receives a cotangent; the method and objective (including its template, observable, map, and initial state) are fixed configuration for this entrypoint. Zero cotangents skip the numerical pullback, thunks are unpacked, real scalar seeds are projected, and parameter cotangents are projected to the original vector domain. No rule is installed on the generic `evaluate` entrypoint. Existing Zygote circuit and state rules remain separate compatibility paths.
+Loading ChainRulesCore activates `MOSSQuantumChainRulesCoreExt`. Its `rrule` is limited to `differentiable_value(method, objective, values)` and dispatches through the public numerical pullback. Only `values` receives a cotangent; the method and objective (including its template, observable, map, and initial state) are fixed configuration for this entrypoint. Zero cotangents skip the numerical pullback, thunks are unpacked, real scalar seeds are projected, and parameter cotangents are projected to the original vector domain. No rule is installed on the generic `evaluate` entrypoint. Existing Zygote circuit and state rules remain separate compatibility paths.
 
 ```julia
 using Zygote
@@ -354,11 +365,11 @@ loss(values) = differentiable_value(method, objective, values)
 gradient = Zygote.gradient(loss, values)[1]
 ```
 
-The [`MOSSDemoDifferentiation` fixture](../test/fixtures/MOSSDemoDifferentiation) imports MOSS normally and defines its own scalar objective, two replaceable executors, and two public gradient methods without any quantum-state fields. It validates core-only numerical calls, direct ChainRules use without Zygote, and Zygote dispatch to the selected external method. This fixture proves the extension contract; it is not a hardware driver or a new finite-difference/stochastic gradient implementation. Those algorithms can later implement the same public hooks without changing execution or AD adapters.
+The [`MOSSQuantumDemoDifferentiation` fixture](../test/fixtures/MOSSQuantumDemoDifferentiation) imports MOSSQuantum normally and defines its own scalar objective, two replaceable executors, and two public gradient methods without any quantum-state fields. It validates core-only numerical calls, direct ChainRules use without Zygote, and Zygote dispatch to the selected external method. This fixture proves the extension contract; it is not a hardware driver or a new finite-difference/stochastic gradient implementation. The core now supplies explicit parameter-shift, finite-difference and SPSA methods through these hooks; see the [sampled gradient guide](classical-control-and-gradients.md).
 
 ## Optional package integrations
 
-MOSS requires Julia 1.10 or later and uses native `[weakdeps]` and `[extensions]` on every supported version. Julia 1.13 is the primary development and acceptance version. Zygote activates `MOSSZygoteExt`; Plots together with LaTeXStrings activates `MOSSPlotsExt`. The Requires bridge has been removed. Install and load trigger packages explicitly in the consumer environment:
+MOSSQuantum requires Julia 1.10 or later and uses native `[weakdeps]` and `[extensions]` on every supported version. Julia 1.13 is the primary development and acceptance version. Zygote activates `MOSSQuantumZygoteExt`; Plots together with LaTeXStrings activates `MOSSQuantumPlotsExt`. The Requires bridge has been removed. Install and load trigger packages explicitly in the consumer environment:
 
 ```julia
 using Pkg
@@ -366,9 +377,9 @@ Pkg.add("Zygote")                         # Only when gradients are needed
 Pkg.add(["Plots", "LaTeXStrings"])       # Only when plotting is needed
 ```
 
-Consumers can then `using MOSS, Zygote`, or `using MOSS, Plots, LaTeXStrings`. Core simulation has no mandatory AD or plotting framework. Compatibility and load-order verification are recorded in the [roadmap](roadmap.md#verification-record).
+Consumers can then `using MOSSQuantum, Zygote`, or `using MOSSQuantum, Plots, LaTeXStrings`. Core simulation has no mandatory AD or plotting framework. Compatibility and load-order verification are recorded in the [roadmap](roadmap.md#verification-record).
 
-Plots also exports `backend`. When both packages are loaded with `using`, call `MOSS.backend(state)` explicitly, or import that binding with `import MOSS: backend`.
+Plots also exports `backend`. When both packages are loaded with `using`, call `MOSSQuantum.backend(state)` explicitly, or import that binding with `import MOSSQuantum: backend`.
 
 ## Boundaries for future packages
 

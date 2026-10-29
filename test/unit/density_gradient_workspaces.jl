@@ -1,4 +1,4 @@
-using Test, MOSS, LinearAlgebra, Random
+using Test, MOSSQuantum, LinearAlgebra, Random
 
 function _workspace_objective_difference(objective, values; step=1e-6)
     return map(eachindex(values)) do i

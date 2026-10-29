@@ -1,5 +1,6 @@
 function _cpu_expectation(m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state, state)
+	state = convert(StateVector{promote_type(eltype(m), eltype(state))}, state)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 	    return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state))
 	else
@@ -9,6 +10,7 @@ end
 
 
 function _cpu_expectation(m::QubitsOperator, state::StateVector)
+	state = convert(StateVector{promote_type(eltype(m), eltype(state))}, state)
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		r = zero(eltype(state))
 		for (k, v) in m.data
@@ -33,6 +35,8 @@ end
 
 function _cpu_cross_expectation(state_c::StateVector, m::QubitsTerm, state::StateVector)
 	isempty(m) && return coeff(m) * dot(state_c, state)
+	T = promote_type(eltype(m), eltype(state), eltype(state_c))
+	state, state_c = convert(StateVector{T}, state), convert(StateVector{T}, state_c)
 	if length(positions(m)) <= LARGEST_SUPPORTED_NTERMS
 		return expectation_value(Tuple(positions(m)), _get_mat(m), storage(state), storage(state_c))
 	else
@@ -41,6 +45,8 @@ function _cpu_cross_expectation(state_c::StateVector, m::QubitsTerm, state::Stat
 end
 
 function _cpu_cross_expectation(state_c::StateVector, m::QubitsOperator, state::StateVector)
+	T = promote_type(eltype(m), eltype(state), eltype(state_c))
+	state, state_c = convert(StateVector{T}, state), convert(StateVector{T}, state_c)
 	if _largest_nterm(m) <= LARGEST_SUPPORTED_NTERMS
 		r = zero(eltype(state))
 		for (k, v) in m.data

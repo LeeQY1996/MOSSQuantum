@@ -1,7 +1,7 @@
 using Plots, LaTeXStrings
 
-# Resolve the plot name shared by MOSS and Plots.
-const qcplot = MOSS.QuantumCircuits.plot
+# Resolve the plot name shared by MOSSQuantum and Plots.
+const qcplot = MOSSQuantum.QuantumCircuits.plot
 
 @testset "QuantumCircuits plotting" begin
 
@@ -96,7 +96,7 @@ const qcplot = MOSS.QuantumCircuits.plot
         plt = qcplot(c)
         tmpfile = tempname() * ".png"
         try
-            MOSS.QuantumCircuits.save_circuit_plot(plt, tmpfile)
+            MOSSQuantum.QuantumCircuits.save_circuit_plot(plt, tmpfile)
             @test isfile(tmpfile)
         finally
             isfile(tmpfile) && rm(tmpfile)

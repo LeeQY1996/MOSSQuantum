@@ -1,6 +1,6 @@
 using BenchmarkTools
 using LinearAlgebra
-using MOSS
+using MOSSQuantum
 using Random
 using Zygote
 

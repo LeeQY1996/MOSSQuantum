@@ -17,6 +17,8 @@ export CCPHASEGate
 # quantum channel
 export AbstractQuantumMap, QuantumMap, ordered_supermat, kraus_matrices, is_tp
 export AmplitudeDamping, PhaseDamping, Depolarizing
+export BitFlip, PhaseFlip, BitPhaseFlip, PauliChannel, MixedUnitary
+export GeneralizedAmplitudeDamping, ResetChannel, ThermalRelaxation
 # circuit
 export QMeasure, QSelect, QCircuit
 # hamiltonian
@@ -25,7 +27,7 @@ export QubitsTerm, oplist, coeff, QubitsOperator, matrix, simplify
 export H, X, Y, Z, S, T, CNOT, CZ, SWAP, Rx, Ry, Rz
 
 # ============================================================================
-# MOSS 特有功能（原 VQC）
+# MOSSQuantum 特有功能（原 VQC）
 # ============================================================================
 
 # state
@@ -57,11 +59,26 @@ export post_select, post_select!
 # partial trace
 export partial_tr
 export AbstractInstruction, validate_positions, AbstractQuantumState
-export AbstractBackend, CPUBackend, backend, supports, UnsupportedOperation
+export AbstractBackend, CPUBackend, backend, supports, validate_backend_execution, UnsupportedOperation
 export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
 export BatchSimulationResult
+export execute, ShotResult
+export measurement_plan, estimate, MeasurementPlan, MeasurementGroup, PauliMeasurementTerm
+export ExpectationEstimate, GroupEstimate
 export bind_parameters, copy_instruction
 export ParameterMap, parameter_indices, accumulate_parameter_gradients
 export AbstractGradientMethod, AdjointGradient, UnsupportedGradient, ExpectationObjective
 export BatchExpectationObjective, evaluate_batch
 export evaluate, supports_gradient, value_and_gradient, value_and_pullback, differentiable_value
+
+export ReadoutError, NoiseRule, NoiseModel, NoisyCircuit, with_noise, Delay, readout_probabilities
+export DensityMatrixEvolution, KrausTrajectory, CountsResult
+
+export ClassicalRegister, ClassicalCondition, Conditional, classical_register, classical_counts
+
+export ShotExpectationObjective, ParameterShift, FiniteDifference, SPSAGradient
+export parameter_shift_rule, estimate_gradient, GradientEstimate
+
+export ExecutionPlan, BoundExecutionPlan, ExecutionWorkspace, prepare_execution, bind_execution
+export EstimationPlan, BoundEstimationPlan, prepare_estimation, VarianceAllocation, AdaptiveEstimate
+export ExperimentResult, run_sweep, ShotBudget, ShotBudgetExceeded, remaining_shots, required_shots

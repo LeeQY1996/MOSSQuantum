@@ -1,98 +1,98 @@
 using Test
 using LinearAlgebra
-using MOSS
+using MOSSQuantum
 
 module AdjointObjectiveFixtures
-import MOSS
+import MOSSQuantum
 
 const FORWARDS = Ref(0)
 const REVERSES = Ref(0)
 
-struct Rotation <: MOSS.ParametricGate{1}
+struct Rotation <: MOSSQuantum.ParametricGate{1}
     wire::Int
     angle::Float64
     rule::Symbol
 end
-MOSS.positions(gate::Rotation) = (gate.wire,)
-MOSS.parameters(gate::Rotation) = [gate.angle]
-MOSS.active_parameters(gate::Rotation) = [gate.angle]
-MOSS.mat(gate::Rotation) = [cos(gate.angle / 2) -sin(gate.angle / 2); sin(gate.angle / 2) cos(gate.angle / 2)]
-function MOSS.reset_parameters!(gate::Rotation, values::AbstractVector{<:Real})
+MOSSQuantum.positions(gate::Rotation) = (gate.wire,)
+MOSSQuantum.parameters(gate::Rotation) = [gate.angle]
+MOSSQuantum.active_parameters(gate::Rotation) = [gate.angle]
+MOSSQuantum.mat(gate::Rotation) = [cos(gate.angle / 2) -sin(gate.angle / 2); sin(gate.angle / 2) cos(gate.angle / 2)]
+function MOSSQuantum.reset_parameters!(gate::Rotation, values::AbstractVector{<:Real})
     length(values) == 1 || throw(DimensionMismatch())
     all(isfinite, values) || throw(ArgumentError("parameters must be finite"))
     return Rotation(gate.wire, only(values), gate.rule)
 end
 
-struct BadMatrix <: MOSS.Gate{1} end
-MOSS.positions(::BadMatrix) = (1,)
-MOSS.mat(::BadMatrix) = ones(3, 3)
+struct BadMatrix <: MOSSQuantum.Gate{1} end
+MOSSQuantum.positions(::BadMatrix) = (1,)
+MOSSQuantum.mat(::BadMatrix) = ones(3, 3)
 
 # The template is valid, but binding a different parameter can invalidate a
 # matrix or its derivative. Execution deliberately fails so these cases also
 # verify that validation finishes before any gate is applied.
-struct BoundValidationGate <: MOSS.ParametricGate{1}
+struct BoundValidationGate <: MOSSQuantum.ParametricGate{1}
     angle::Float64
     failure::Symbol
 end
-MOSS.positions(::BoundValidationGate) = (1,)
-MOSS.parameters(gate::BoundValidationGate) = [gate.angle]
-MOSS.active_parameters(gate::BoundValidationGate) = [gate.angle]
-function MOSS.reset_parameters!(gate::BoundValidationGate, values::AbstractVector{<:Real})
+MOSSQuantum.positions(::BoundValidationGate) = (1,)
+MOSSQuantum.parameters(gate::BoundValidationGate) = [gate.angle]
+MOSSQuantum.active_parameters(gate::BoundValidationGate) = [gate.angle]
+function MOSSQuantum.reset_parameters!(gate::BoundValidationGate, values::AbstractVector{<:Real})
     length(values) == 1 || throw(DimensionMismatch())
     return BoundValidationGate(only(values), gate.failure)
 end
-function MOSS.mat(gate::BoundValidationGate)
+function MOSSQuantum.mat(gate::BoundValidationGate)
     if gate.angle > 0.5
         gate.failure === :matrix && return [1.0 0.0; 0.0 2.0]
         gate.failure === :matrix_shape && return ones(3, 3)
     end
     return [cos(gate.angle / 2) -sin(gate.angle / 2); sin(gate.angle / 2) cos(gate.angle / 2)]
 end
-function MOSS.differentiate(gate::BoundValidationGate)
+function MOSSQuantum.differentiate(gate::BoundValidationGate)
     if gate.angle > 0.5
         gate.failure === :derivative_shape && return [BadMatrix()]
-        gate.failure === :derivative_nonfinite && return [MOSS.QuantumGate(1, [NaN 0.0; 0.0 0.0])]
+        gate.failure === :derivative_nonfinite && return [MOSSQuantum.QuantumGate(1, [NaN 0.0; 0.0 0.0])]
     end
-    return [MOSS.QuantumGate(1, [0.0 0.5; -0.5 0.0])]
+    return [MOSSQuantum.QuantumGate(1, [0.0 0.5; -0.5 0.0])]
 end
-for State in (MOSS.StateVector, MOSS.DensityMatrix)
-    @eval MOSS.apply!(::BoundValidationGate, ::$State) =
+for State in (MOSSQuantum.StateVector, MOSSQuantum.DensityMatrix)
+    @eval MOSSQuantum.apply!(::BoundValidationGate, ::$State) =
         throw(AssertionError("invalid bound instructions must be rejected before execution"))
 end
 
-function MOSS.differentiate(gate::Rotation)
+function MOSSQuantum.differentiate(gate::Rotation)
     gate.rule === :missing && throw(ArgumentError("implement differentiate"))
-    gate.rule === :length && return MOSS.Gate[]
+    gate.rule === :length && return MOSSQuantum.Gate[]
     gate.rule === :type && return [nothing]
     gate.rule === :shape && return [BadMatrix()]
     wire = gate.rule === :positions ? gate.wire + 1 : gate.wire
-    return [MOSS.QuantumGate(wire, [0.0 0.5; -0.5 0.0])]
+    return [MOSSQuantum.QuantumGate(wire, [0.0 0.5; -0.5 0.0])]
 end
 
-for State in (MOSS.StateVector, MOSS.DensityMatrix)
-    @eval function MOSS.apply!(gate::Rotation, state::$State)
+for State in (MOSSQuantum.StateVector, MOSSQuantum.DensityMatrix)
+    @eval function MOSSQuantum.apply!(gate::Rotation, state::$State)
         FORWARDS[] += 1
-        return MOSS.apply!(MOSS.QuantumGate(MOSS.positions(gate), MOSS.mat(gate)), state)
+        return MOSSQuantum.apply!(MOSSQuantum.QuantumGate(MOSSQuantum.positions(gate), MOSSQuantum.mat(gate)), state)
     end
-    @eval function MOSS.apply!(gate::MOSS.AdjointQuantumGate{1,G}, state::$State) where {G<:Rotation}
+    @eval function MOSSQuantum.apply!(gate::MOSSQuantum.AdjointQuantumGate{1,G}, state::$State) where {G<:Rotation}
         REVERSES[] += 1
-        return MOSS.apply!(MOSS.QuantumGate(MOSS.positions(gate), MOSS.mat(gate)), state)
+        return MOSSQuantum.apply!(MOSSQuantum.QuantumGate(MOSSQuantum.positions(gate), MOSSQuantum.mat(gate)), state)
     end
 end
 
-struct ForwardBackend <: MOSS.AbstractBackend end
-MOSS.apply!(::ForwardBackend, circuit::MOSS.QCircuit, state::MOSS.StateVector) =
-    MOSS.apply!(MOSS.CPUBackend(), circuit, state)
-MOSS.expectation(::ForwardBackend, observable, state::MOSS.StateVector) =
-    MOSS.expectation(MOSS.CPUBackend(), observable, state)
+struct ForwardBackend <: MOSSQuantum.AbstractBackend end
+MOSSQuantum.apply!(::ForwardBackend, circuit::MOSSQuantum.QCircuit, state::MOSSQuantum.StateVector) =
+    MOSSQuantum.apply!(MOSSQuantum.CPUBackend(), circuit, state)
+MOSSQuantum.expectation(::ForwardBackend, observable, state::MOSSQuantum.StateVector) =
+    MOSSQuantum.expectation(MOSSQuantum.CPUBackend(), observable, state)
 
-struct UnknownInstruction <: MOSS.AbstractInstruction end
-MOSS.positions(::UnknownInstruction) = ()
+struct UnknownInstruction <: MOSSQuantum.AbstractInstruction end
+MOSSQuantum.positions(::UnknownInstruction) = ()
 
-struct TrainableChannel <: MOSS.AbstractQuantumMap{1} end
-MOSS.positions(::TrainableChannel) = (1,)
-MOSS.nparameters(::TrainableChannel) = 1
-MOSS.active_parameters(::TrainableChannel) = [0.1]
+struct TrainableChannel <: MOSSQuantum.AbstractQuantumMap{1} end
+MOSSQuantum.positions(::TrainableChannel) = (1,)
+MOSSQuantum.nparameters(::TrainableChannel) = 1
+MOSSQuantum.active_parameters(::TrainableChannel) = [0.1]
 end
 
 function _objective_finite_difference(objective, values; step=1e-6)

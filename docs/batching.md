@@ -4,7 +4,7 @@
 `BatchStateVector` represents independent pure states with shape `(2^n, B)`,
 one sample per column. The types share operation names through dispatch. A
 one-column batch remains a batch: expectation values and measurement outcomes
-retain their sample axis. MOSS already uses the name `BatchStateVector`; there
+retain their sample axis. MOSSQuantum already uses the name `BatchStateVector`; there
 is no second `StateVectorBatch` type.
 
 Mixed states have their own `BatchDensityMatrix` with shape `(2^n, 2^n, B)`.
@@ -22,7 +22,7 @@ come from that family's backend. See the
 ## Constructing and owning states
 
 ```julia
-using MOSS, Random, LinearAlgebra
+using MOSSQuantum, Random, LinearAlgebra
 
 batch = BatchStateVector(3, 4)                 # four copies of |000⟩
 random_batch = rand_batch(MersenneTwister(8), 3, 4)

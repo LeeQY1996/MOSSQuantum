@@ -1,4 +1,4 @@
-using Test, MOSS, Zygote, LinearAlgebra, Random
+using Test, MOSSQuantum, Zygote, LinearAlgebra, Random
 
 function _batch_density_gradient_difference(loss, values; step=1e-6)
     result = similar(values, promote_type(eltype(values), Float64))
@@ -163,7 +163,7 @@ end
         for initial in (pure, mixed), source in (unitary, noisy)
             circuit = copy_instruction(source)
             state = copy(initial)
-            output, back = MOSS._batch_circuit_adjoint(circuit, state)
+            output, back = MOSSQuantum._batch_circuit_adjoint(circuit, state)
             seed = randn(rng, ComplexF64, size(storage(output)))
             parameter_gradient, state_gradient = back(seed)
             @test back(2 .* seed)[1] ≈ 2 .* parameter_gradient
@@ -200,7 +200,7 @@ end
         @test Zygote.gradient(zero_loss, zero_data)[1] ≈
             _batch_density_gradient_difference(zero_loss, zero_data) atol=1e-7
         for operation in (QMeasure(1), QSelect(1)), state in (pure, mixed)
-            @test_throws ArgumentError MOSS._batch_circuit_adjoint(QCircuit([operation]), state)
+            @test_throws ArgumentError MOSSQuantum._batch_circuit_adjoint(QCircuit([operation]), state)
         end
     end
 end

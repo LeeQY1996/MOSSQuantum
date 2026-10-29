@@ -1,0 +1,15 @@
+{
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "logical_cpus": 32,
+  "memory": [
+    "MemTotal:       32679124 kB",
+    "MemFree:          776272 kB",
+    "MemAvailable:   10121120 kB"
+  ],
+  "environment": {
+    "JULIA_PKG_OFFLINE": "true",
+    "JULIA_PKG_PRECOMPILE_AUTO": "0",
+    "OPENBLAS_NUM_THREADS": "1",
+    "GKSwstype": "100"
+  }
+}

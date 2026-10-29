@@ -1,15 +1,15 @@
-using Test, MOSS, Random, LinearAlgebra
+using Test, MOSSQuantum, Random, LinearAlgebra
 
 module BatchDensityObservableFixtures
-import MOSS
-struct OrderedBoundsGate <: MOSS.Gate{1} end
-struct OrderedShapeGate <: MOSS.Gate{1} end
-MOSS.positions(::Union{OrderedBoundsGate,OrderedShapeGate}) = (1,)
-MOSS.mat(::Union{OrderedBoundsGate,OrderedShapeGate}) = [1.0 0.0; 0.0 1.0]
-MOSS.ordered_positions(::OrderedBoundsGate) = (2,)
-MOSS.ordered_positions(::OrderedShapeGate) = (1,)
-MOSS.ordered_mat(::OrderedBoundsGate) = [1.0 0.0; 0.0 1.0]
-MOSS.ordered_mat(::OrderedShapeGate) = ones(3, 3)
+import MOSSQuantum
+struct OrderedBoundsGate <: MOSSQuantum.Gate{1} end
+struct OrderedShapeGate <: MOSSQuantum.Gate{1} end
+MOSSQuantum.positions(::Union{OrderedBoundsGate,OrderedShapeGate}) = (1,)
+MOSSQuantum.mat(::Union{OrderedBoundsGate,OrderedShapeGate}) = [1.0 0.0; 0.0 1.0]
+MOSSQuantum.ordered_positions(::OrderedBoundsGate) = (2,)
+MOSSQuantum.ordered_positions(::OrderedShapeGate) = (1,)
+MOSSQuantum.ordered_mat(::OrderedBoundsGate) = [1.0 0.0; 0.0 1.0]
+MOSSQuantum.ordered_mat(::OrderedShapeGate) = ones(3, 3)
 end
 
 @testset "Independent batch density observables and operators" begin

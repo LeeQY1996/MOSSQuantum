@@ -4,11 +4,11 @@ using Test
 using Random
 using Zygote, LinearAlgebra
 
-using MOSS
-using MOSS.Utilities
-using MOSS: apply_serial!
-using MOSS.QuantumCircuits: n_qubits_mat_from_external
-using MOSS.QuantumCircuits.Gates
+using MOSSQuantum
+using MOSSQuantum.Utilities
+using MOSSQuantum: apply_serial!
+using MOSSQuantum.QuantumCircuits: n_qubits_mat_from_external
+using MOSSQuantum.QuantumCircuits.Gates
 
 _check_unitary(m::AbstractMatrix) = isapprox(m' * m, LinearAlgebra.I)
 
@@ -41,6 +41,18 @@ end
 end
 
 include("unit/ownership_and_containers.jl")
+include("unit/operator_algebra.jl")
+include("unit/constant_operators.jl")
+include("unit/shot_execution.jl")
+include("unit/shot_estimation.jl")
+include("unit/circuit_estimation.jl")
+include("unit/noise_channels.jl")
+include("unit/noise_execution.jl")
+include("unit/classical_control.jl")
+include("unit/sampled_gradients.jl")
+include("integration/shot_optimization.jl")
+include("unit/execution_plans.jl")
+include("unit/shot_budgets.jl")
 
 @testset "test batch state vector" begin
     include("unit/batch_state_vector.jl")
@@ -71,6 +83,8 @@ end
 @testset "test quantum algorithm" begin
     include("integration/algorithms.jl")
 end
+
+include("integration/sqd.jl")
 
 @testset "test utility" begin
     include("integration/utilities.jl")
@@ -146,9 +160,9 @@ if "--load-orders" in ARGS
     @testset "Fresh-process optional integration loading" begin
         project = dirname(Base.active_project())
         script = joinpath(@__DIR__, "extensions", "load_order.jl")
-        for scenario in ("core", "chainrules_first", "moss_first_chainrules",
-                         "zygote_first", "moss_first_zygote", "plots_first",
-                         "moss_first_plots", "latex_then_moss_then_plots")
+        for scenario in ("core", "chainrules_first", "mossquantum_first_chainrules",
+                         "zygote_first", "mossquantum_first_zygote", "plots_first",
+                         "mossquantum_first_plots", "latex_then_mossquantum_then_plots")
             @test success(`$(Base.julia_cmd()) --startup-file=no --project=$project $script $scenario`)
         end
     end

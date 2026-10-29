@@ -44,3 +44,7 @@ expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractArray{T, 10}, 
 	pos, Matrix{eltype(state)}(reshape(m, 32, 32)), state)
 expectation_value(pos::Tuple{Int, Int, Int, Int, Int}, m::AbstractArray{T, 10}, state::AbstractVector, state_c::AbstractVector) where T = expectation_value(
 	pos, Matrix{eltype(state)}(reshape(m, 32, 32)), state, state_c)
+expectation_value(::Tuple{}, matrix::AbstractMatrix, state::AbstractVector) =
+    _zero_qubit_matrix_value(matrix) * dot(state, state)
+expectation_value(::Tuple{}, matrix::AbstractMatrix, state::AbstractVector,
+                  state_c::AbstractVector) = _zero_qubit_matrix_value(matrix) * dot(state_c, state)

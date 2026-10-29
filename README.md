@@ -1,28 +1,39 @@
-# MOSS
+# MOSSQuantum
 
-MOSS (550W) is a Julia framework for quantum circuit simulation, variational quantum algorithms, and quantum machine learning. It provides a dense CPU simulator, explicit readout and experiment results, and public state/backend interfaces for companion packages. Optional Zygote integration supports analytic gradients for supported deterministic circuit workflows.
+MOSSQuantum is a Julia package for quantum computing simulation, variational quantum algorithms, and quantum machine learning. It provides a dense CPU simulator, explicit readout and experiment results, and public state/backend interfaces for companion packages. Optional Zygote integration supports analytic gradients for supported deterministic circuit workflows.
 
-MOSS merges the circuit representation of [QuantumCircuits.jl](https://github.com/guochu/QuantumCircuits.jl) and the simulation/differentiation capabilities of [VQC.jl](https://github.com/LeeQY1996/VQC.jl) into a single unified package.
+MOSSQuantum merges the circuit representation of [QuantumCircuits.jl](https://github.com/guochu/QuantumCircuits.jl) and the simulation/differentiation capabilities of [VQC.jl](https://github.com/LeeQY1996/VQC.jl) into a single unified package.
 
 ## Features
 
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).
-- **State simulation**: Dense state vectors and density matrices, with dedicated batch representations, gate execution, and Kraus noise.
+- **State simulation**: Dense state vectors and density matrices, with dedicated batch representations, gate execution, and Kraus noise. CPU pure-state trajectories provide independent noisy shots and optional threaded execution.
 - **Differentiation**: Replaceable explicit gradient methods and optional Zygote integration, including shared-parameter pure/mixed batches with unitary gates and fixed noise, supported expectations, and pure-state qubit encoding. Stochastic execution and trainable noise parameters have no AD contract.
+- **Dynamic circuits and sampled gradients**: Named classical bits, conditional branches, readout-aware feedback, parameter-shift/finite-difference/SPSA estimates with uncertainty and shot budgets. See the [guide](docs/classical-control-and-gradients.md) and [optimization workflow](algorithm_zoo/optimization/README.md).
+- **Prepared experiments**: Reusable CPU execution/estimation plans, reproducible parallel parameter sweeps, variance-based shot allocation and hard sampling budgets. See the [prepared experiment guide](docs/prepared-experiments.md).
 - **Hamiltonian tools**: Pauli string operators (`QubitsTerm`, `QubitsOperator`), expectation value computation, Trotterization, and variational ansatz construction.
 - **Algorithms**: QFT, Shor's order finding, variational ansatze, ground state solvers, and time evolution.
 - **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
 - **Extension interfaces**: Custom instructions, implicit states, selectable backends, opt-in generic storage in all four dense containers, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
+The [algorithm zoo](algorithm_zoo/README.md) contains runnable, self-contained
+examples built with MOSSQuantum, starting with sample-based quantum diagonalization.
+
 ## Installation
 
-MOSS requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version; the minimum-version checks target Julia 1.10.
+The package was previously named MOSS. Update `using MOSS` to `using MOSSQuantum`
+and qualified references such as `MOSS.Utilities` to `MOSSQuantum.Utilities`.
+The package UUID is unchanged. In environments that list `MOSS` as a dependency,
+remove it with `Pkg.rm("MOSS")`, then develop this checkout again as shown below. The CUDA
+companion is now named `MOSSQuantumCUDA`.
+
+MOSSQuantum requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version; the minimum-version checks target Julia 1.10.
 
 ```julia
 using Pkg
 # Add this checkout to your active environment.
-Pkg.develop(path="/absolute/path/to/MOSS")
+Pkg.develop(path="/absolute/path/to/MOSSQuantum")
 ```
 
 From this checkout, `julia --project=. -e 'using Pkg; Pkg.instantiate()'` prepares the Julia 1.13 development environment. The checked-in Manifest is generated with Julia 1.13; for Julia 1.10, develop the checkout into a fresh environment so its dependencies resolve for that version, as the minimum-version checks do. Install optional integrations in the environment that will use them:
@@ -38,7 +49,7 @@ Pkg.add(["Plots", "LaTeXStrings"])
 ### Bell state
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 state = qstate(2)
 circuit = QCircuit()
@@ -51,7 +62,7 @@ println(amplitudes(state))
 ### Readout and recorded execution
 
 ```julia
-using MOSS, Random
+using MOSSQuantum, Random
 
 bell = QCircuit([HGate(1), CNOTGate(1, 2)])
 result = simulate(bell, StateVector(2); rng=MersenneTwister(42))
@@ -66,6 +77,22 @@ measured.measurements # outcome and probability, including nested circuits
 
 `simulate` copies its input state. A single-state result describes one trajectory; a batch result contains one trajectory and record list per sample. Sampling the final state does not rerun intermediate measurements; repeat `simulate` from the initial state for independent trajectories. Count-string characters follow the requested `qubits` order, with qubit 1 first by default. Batch samples have axes `(shots, qubits, batch)`.
 
+Use `execute(circuit, initial; shots=1024, rng=rng)` to replay intermediate
+measurements independently and retain attempted/accepted shot records. Use
+`estimate(H, circuit, initial; shots=4096, rng=rng)` for a finite-shot energy and
+standard error, with a total budget across Pauli measurement groups. Exact
+`expectation` remains available. Operator arithmetic now includes constants,
+zero operators, multiplication and term simplification; see the
+[operator and measurement guide](docs/operators-and-measurement.md) for examples,
+post-selection semantics, batch budgets and statistical limits.
+
+For noise experiments, pass `noise_model=NoiseModel(...)` and choose
+`method=KrausTrajectory()` for independent CPU pure-state noise realizations.
+Density-matrix evolution remains the default. `ReadoutError` adds classical
+reporting errors; `result=:counts` avoids retaining all shot records. The
+[noise simulation guide](docs/noise-simulation.md) covers thermal relaxation,
+correlated errors, explicit idle times, parallel shots, and uncertainty limits.
+
 ### Array storage and external backends
 
 The four dense state types can retain another array family without introducing
@@ -73,7 +100,7 @@ another state hierarchy. Ordinary array constructors keep their CPU default;
 preservation is explicit:
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 amplitude_data = ComplexF64[1, 0, 0, 0]
 state = StateVector(view(amplitude_data, 1:4); preserve_storage=true)
@@ -90,10 +117,18 @@ implicit host conversion. Device kernels belong to companion implementations.
 Existing `StateVector{T}` constructor and dispatch syntax remains valid; exact
 instance types now also include a storage parameter `A`.
 
+The independent [MOSSQuantumCUDA companion](packages/MOSSQuantumCUDA/README.md) implements
+the first CUDA device-array path: single pure states, 1–5-qubit gates, nested
+gate-only circuits, expectations and terminal readout. Its hardware acceptance
+is pending; CPU-only checks do not establish GPU correctness or performance.
+It adds no CUDA dependency to the MOSSQuantum core. Device execution requires a
+functional NVIDIA GPU and driver; GPU batch/density execution and gradients
+remain follow-up work.
+
 ### Independent parameter binding
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 template = QCircuit([RyGate(1, 0.0; isparas=true)])
 bound = bind_parameters(template, [π / 4])
@@ -107,7 +142,7 @@ Binding accepts individual instructions as well as circuits. It follows `active_
 Use a separate map to bind several active slots to one independent value:
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 template = QCircuit([RyGate(1, 0.0; isparas=true),
                      RzGate(1, 0.0; isparas=true),
@@ -159,7 +194,7 @@ loss(values) = differentiable_value(method, objective, values)
 gradient = Zygote.gradient(loss, values)[1]
 ```
 
-External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Additional numerical gradient algorithms are separate future work; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines the current contracts.
+External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSQuantumDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Additional numerical gradient algorithms are separate future work; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines the current contracts.
 
 ### Pure-state batches
 
@@ -169,7 +204,7 @@ independent pure states in a `(2^n, B)` matrix, one sample per column. Both use
 of size one retains its batch shape and result type.
 
 ```julia
-using MOSS, Random
+using MOSSQuantum, Random
 
 batch = BatchStateVector(2, 4)
 batch_template = QCircuit([RyGate(1, 0.0; isparas=true), CNOTGate(1, 2)])
@@ -200,7 +235,7 @@ samples in an array with axes `(2^n, 2^n, B)`. Batch size one retains the final
 axis. Converting a pure-state batch computes one outer product per sample:
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 pure_batch = QCircuit([HGate(1), CNOTGate(1, 2)]) * BatchStateVector(2, 4)
 mixed_batch = BatchDensityMatrix(pure_batch)
@@ -233,7 +268,7 @@ Retain the return value of `reset_parameters!`, activation, and deactivation whe
 ### Expectation value
 
 ```julia
-using MOSS
+using MOSSQuantum
 
 circuit = QCircuit()
 push!(circuit, RxGate(1, π/4))
@@ -249,7 +284,7 @@ println("⟨ZZ⟩ = ", expectation(h, state))
 ### Variational circuit optimization
 
 ```julia
-using MOSS, Zygote
+using MOSSQuantum, Zygote
 
 circuit = variational_circuit_1d(3, 2)
 initial_state = qstate(3)
@@ -264,7 +299,7 @@ grad = Zygote.gradient(loss, circuit)[1]
 ### Hamiltonian simulation
 
 ```julia
-using MOSS, MOSS.Utilities
+using MOSSQuantum, MOSSQuantum.Utilities
 
 # Build Ising Hamiltonian
 h = ising_1d(4, J=1.0, hz=0.5)
@@ -281,7 +316,7 @@ state = apply!(circuit, qstate(4))
 ### Circuit visualization
 
 ```julia
-using MOSS, Plots, LaTeXStrings
+using MOSSQuantum, Plots, LaTeXStrings
 
 circuit = QCircuit()
 push!(circuit, HGate(1))
@@ -289,7 +324,7 @@ push!(circuit, CNOTGate(1, 2))
 push!(circuit, RxGate(1, π/4))
 push!(circuit, QMeasure(2))
 
-plt = MOSS.QuantumCircuits.plot(circuit)
+plt = MOSSQuantum.QuantumCircuits.plot(circuit)
 savefig(plt, "circuit.png")
 ```
 
@@ -302,14 +337,14 @@ savefig(plt, "circuit.png")
 | Two-qubit | `CNOTGate`, `CZGate`, `SWAPGate`, `iSWAPGate`, `CONTROLGate` |
 | Controlled parametric | `CRxGate`, `CRyGate`, `CRzGate`, `CPHASEGate`, `FSIMGate` |
 | Three-qubit | `TOFFOLIGate`, `FREDKINGate`, `CONTROLCONTROLGate`, `CCPHASEGate` |
-| Channels | `AmplitudeDamping`, `PhaseDamping`, `Depolarizing` |
+| Channels | Kraus maps, Pauli/flip errors, 1–2 qubit depolarizing, amplitude/phase damping, generalized damping, thermal relaxation, reset and mixed-unitary errors |
 | Operations | `QMeasure`, `QSelect` |
 
-`MOSS.QuantumCircuits.Gates` supplies elementary matrices such as `H`, `X`, `Y`, `Z`, `CNOT`, `CZ`, and `SWAP`, and matrix functions `Rx`, `Ry`, and `Rz`. Use the corresponding `...Gate` types to place operations in a circuit.
+`MOSSQuantum.QuantumCircuits.Gates` supplies elementary matrices such as `H`, `X`, `Y`, `Z`, `CNOT`, `CZ`, and `SWAP`, and matrix functions `Rx`, `Ry`, and `Rz`. Use the corresponding `...Gate` types to place operations in a circuit.
 
 ## Utilities module
 
-`MOSS.Utilities` provides pre-built algorithms and Hamiltonians:
+`MOSSQuantum.Utilities` provides pre-built algorithms and Hamiltonians:
 
 - **Spin Hamiltonians**: `heisenberg_1d`, `heisenberg_2d`, `ising_1d`, `ising_2d`
 - **Ground state & evolution**: `ground_state`, `time_evolution`
@@ -330,6 +365,7 @@ ChainRulesCore is an optional rule dependency for the explicit-method scalar int
 - [Architecture and package boundaries](docs/architecture.md)
 - [Numerical and API conventions](docs/conventions.md), including squared Uhlmann fidelity, two-sided density evolution, qubit order, RNGs, and ownership
 - [Pure-state batches and gradient boundaries](docs/batching.md)
+- [Noise models, readout errors, and CPU trajectories](docs/noise-simulation.md)
 - [Density-matrix batches, noise, and gradients](docs/batch-density-matrices.md)
 - [Extension guide](docs/extending.md)
 - [Core foundation roadmap](docs/roadmap.md)
@@ -342,9 +378,9 @@ Run the test suite through the package entrypoint:
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
-Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, qualified `MOSS.apply(backend, ...)`, `expectation(backend, ...)`, and `probabilities(backend, ...)`; the [independent demo package](test/fixtures/MOSSDemoBackend) exercises these public contracts without dense storage. The [array-backend package](test/fixtures/MOSSDemoArrayBackend/README.md) instead reuses the four dense containers with its own array family and executor.
+Backend extensions use `AbstractInstruction`, `AbstractQuantumState`, `backend`, `supports`, `apply!(backend, ...)`, qualified `MOSSQuantum.apply(backend, ...)`, `expectation(backend, ...)`, and `probabilities(backend, ...)`; the [independent demo package](test/fixtures/MOSSQuantumDemoBackend) exercises these public contracts without dense storage. The [array-backend package](test/fixtures/MOSSQuantumDemoArrayBackend/README.md) instead reuses the four dense containers with its own array family and executor.
 
-The [independent trainable-gate package](test/fixtures/MOSSDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single and batch pure/mixed circuits, including fixed channels. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
+The [independent trainable-gate package](test/fixtures/MOSSQuantumDemoGates) demonstrates an immutable custom gate using public parameter methods and the existing CPU gradient path. Its `differentiate` method returns gates storing `(∂U/∂θ)' * U` in active-parameter order. This path covers supported deterministic single and batch pure/mixed circuits, including fixed channels. Arbitrary instructions, custom backends, stochastic execution, and trainable noise need their own derivative support.
 
 Retain the return value of `apply!`: execution can change the numeric domain or convert single/batch state vectors to density matrices when applying noise. Floating density-batch execution preserves the state's component precision, including real-to-complex promotion. See the conventions for qubit ordering, parameter activation, and storage ownership.
 

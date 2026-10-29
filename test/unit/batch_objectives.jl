@@ -1,53 +1,53 @@
-using Test, LinearAlgebra, Random, MOSS
-using MOSS: BatchExpectationObjective, evaluate_batch
+using Test, LinearAlgebra, Random, MOSSQuantum
+using MOSSQuantum: BatchExpectationObjective, evaluate_batch
 
 module BatchObjectiveFixtures
-import MOSS
+import MOSSQuantum
 
 const FORWARDS = Ref(0)
 const BATCH_FORWARDS = Ref(0)
 const REVERSES = Ref(0)
 
-struct Rotation <: MOSS.ParametricGate{1}
+struct Rotation <: MOSSQuantum.ParametricGate{1}
     angle::Float64
     failure::Symbol
 end
-MOSS.positions(::Rotation) = (1,)
-MOSS.parameters(gate::Rotation) = [gate.angle]
-MOSS.active_parameters(gate::Rotation) = [gate.angle]
-MOSS.reset_parameters!(gate::Rotation, values::AbstractVector{<:Real}) = Rotation(only(values), gate.failure)
-function MOSS.mat(gate::Rotation)
+MOSSQuantum.positions(::Rotation) = (1,)
+MOSSQuantum.parameters(gate::Rotation) = [gate.angle]
+MOSSQuantum.active_parameters(gate::Rotation) = [gate.angle]
+MOSSQuantum.reset_parameters!(gate::Rotation, values::AbstractVector{<:Real}) = Rotation(only(values), gate.failure)
+function MOSSQuantum.mat(gate::Rotation)
     gate.angle > 0.5 && gate.failure === :shape && return ones(3, 3)
     gate.angle > 0.5 && gate.failure === :nonunitary && return [1.0 0.0; 0.0 2.0]
     return [cos(gate.angle / 2) -sin(gate.angle / 2); sin(gate.angle / 2) cos(gate.angle / 2)]
 end
-function MOSS.differentiate(gate::Rotation)
-    gate.angle > 0.5 && gate.failure === :derivative && return [MOSS.QuantumGate(1, ones(3, 3))]
-    return [MOSS.QuantumGate(1, [0.0 0.5; -0.5 0.0])]
+function MOSSQuantum.differentiate(gate::Rotation)
+    gate.angle > 0.5 && gate.failure === :derivative && return [MOSSQuantum.QuantumGate(1, ones(3, 3))]
+    return [MOSSQuantum.QuantumGate(1, [0.0 0.5; -0.5 0.0])]
 end
-function MOSS.apply!(gate::Rotation, state::MOSS.StateVector)
+function MOSSQuantum.apply!(gate::Rotation, state::MOSSQuantum.StateVector)
     FORWARDS[] += 1
-    return MOSS.apply!(MOSS.QuantumGate(1, MOSS.mat(gate)), state)
+    return MOSSQuantum.apply!(MOSSQuantum.QuantumGate(1, MOSSQuantum.mat(gate)), state)
 end
-function MOSS.apply!(gate::Rotation, state::MOSS.BatchStateVector)
+function MOSSQuantum.apply!(gate::Rotation, state::MOSSQuantum.BatchStateVector)
     BATCH_FORWARDS[] += 1
-    return MOSS.apply!(MOSS.QuantumGate(1, MOSS.mat(gate)), state)
+    return MOSSQuantum.apply!(MOSSQuantum.QuantumGate(1, MOSSQuantum.mat(gate)), state)
 end
-function MOSS.apply!(gate::MOSS.AdjointQuantumGate{1,G}, state::MOSS.StateVector) where {G<:Rotation}
+function MOSSQuantum.apply!(gate::MOSSQuantum.AdjointQuantumGate{1,G}, state::MOSSQuantum.StateVector) where {G<:Rotation}
     REVERSES[] += 1
-    return MOSS.apply!(MOSS.QuantumGate(1, MOSS.mat(gate)), state)
+    return MOSSQuantum.apply!(MOSSQuantum.QuantumGate(1, MOSSQuantum.mat(gate)), state)
 end
 
-struct ForwardBackend <: MOSS.AbstractBackend end
-MOSS.supports(::ForwardBackend, operation, state::MOSS.BatchStateVector; action::Symbol=:apply) =
-    MOSS.supports(MOSS.CPUBackend(), operation, state; action=action)
-MOSS.supports(::ForwardBackend, operation::MOSS.QCircuit, state::MOSS.BatchStateVector; action::Symbol=:apply) =
-    MOSS.supports(MOSS.CPUBackend(), operation, state; action=action)
-MOSS.apply!(::ForwardBackend, circuit::MOSS.QCircuit, state::MOSS.BatchStateVector) =
-    MOSS.apply!(MOSS.CPUBackend(), circuit, state)
-MOSS.expectation(::ForwardBackend, observable, state::MOSS.BatchStateVector) =
-    MOSS.expectation(MOSS.CPUBackend(), observable, state)
-struct NoGradient <: MOSS.AbstractGradientMethod end
+struct ForwardBackend <: MOSSQuantum.AbstractBackend end
+MOSSQuantum.supports(::ForwardBackend, operation, state::MOSSQuantum.BatchStateVector; action::Symbol=:apply) =
+    MOSSQuantum.supports(MOSSQuantum.CPUBackend(), operation, state; action=action)
+MOSSQuantum.supports(::ForwardBackend, operation::MOSSQuantum.QCircuit, state::MOSSQuantum.BatchStateVector; action::Symbol=:apply) =
+    MOSSQuantum.supports(MOSSQuantum.CPUBackend(), operation, state; action=action)
+MOSSQuantum.apply!(::ForwardBackend, circuit::MOSSQuantum.QCircuit, state::MOSSQuantum.BatchStateVector) =
+    MOSSQuantum.apply!(MOSSQuantum.CPUBackend(), circuit, state)
+MOSSQuantum.expectation(::ForwardBackend, observable, state::MOSSQuantum.BatchStateVector) =
+    MOSSQuantum.expectation(MOSSQuantum.CPUBackend(), observable, state)
+struct NoGradient <: MOSSQuantum.AbstractGradientMethod end
 end
 
 function _batch_objective_difference(objective, values; step=1e-6)

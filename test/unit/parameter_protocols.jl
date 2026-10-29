@@ -1,85 +1,85 @@
 using Test
-using MOSS
+using MOSSQuantum
 
 module ParameterProtocolFixtures
-import MOSS
+import MOSSQuantum
 
 """An immutable parameterized instruction with one frozen angle."""
-struct AnglePair{T<:Real} <: MOSS.AbstractInstruction
+struct AnglePair{T<:Real} <: MOSSQuantum.AbstractInstruction
     angles::NTuple{2,T}
     enabled::NTuple{2,Bool}
 end
-MOSS.positions(::AnglePair) = ()
-MOSS.parameters(x::AnglePair) = collect(x.angles)
-MOSS.active_parameters(x::AnglePair) = [angle for (angle, enabled) in zip(x.angles, x.enabled) if enabled]
-function MOSS.reset_parameters!(x::AnglePair{T}, values::AbstractVector{<:Real}) where T
-    length(values) == MOSS.nparameters(x) || throw(DimensionMismatch())
+MOSSQuantum.positions(::AnglePair) = ()
+MOSSQuantum.parameters(x::AnglePair) = collect(x.angles)
+MOSSQuantum.active_parameters(x::AnglePair) = [angle for (angle, enabled) in zip(x.angles, x.enabled) if enabled]
+function MOSSQuantum.reset_parameters!(x::AnglePair{T}, values::AbstractVector{<:Real}) where T
+    length(values) == MOSSQuantum.nparameters(x) || throw(DimensionMismatch())
     all(isfinite, values) || throw(ArgumentError("parameters must be finite"))
     angles = collect(x.angles)
     angles[collect(x.enabled)] .= values
     return AnglePair(Tuple(angles), x.enabled)
 end
-MOSS.activate_parameter!(x::AnglePair, j::Int) = AnglePair(x.angles, ntuple(i -> i == j || x.enabled[i], 2))
-MOSS.activate_parameters!(x::AnglePair) = AnglePair(x.angles, (true, true))
-MOSS.deactivate_parameter!(x::AnglePair, j::Int) = AnglePair(x.angles, ntuple(i -> i != j && x.enabled[i], 2))
-MOSS.deactivate_parameters!(x::AnglePair) = AnglePair(x.angles, (false, false))
+MOSSQuantum.activate_parameter!(x::AnglePair, j::Int) = AnglePair(x.angles, ntuple(i -> i == j || x.enabled[i], 2))
+MOSSQuantum.activate_parameters!(x::AnglePair) = AnglePair(x.angles, (true, true))
+MOSSQuantum.deactivate_parameter!(x::AnglePair, j::Int) = AnglePair(x.angles, ntuple(i -> i != j && x.enabled[i], 2))
+MOSSQuantum.deactivate_parameters!(x::AnglePair) = AnglePair(x.angles, (false, false))
 
 """No legacy fields; a custom copy hook is observable without shared counters."""
-struct PublicAngle{T<:Real} <: MOSS.ParametricGate{1}
+struct PublicAngle{T<:Real} <: MOSSQuantum.ParametricGate{1}
     angle::T
     enabled::Bool
     copied::Bool
 end
-MOSS.parameters(x::PublicAngle) = [x.angle]
-MOSS.active_parameters(x::PublicAngle{T}) where T = x.enabled ? [x.angle] : T[]
-MOSS.copy_instruction(x::PublicAngle) = PublicAngle(x.angle, x.enabled, true)
-function MOSS.reset_parameters!(x::PublicAngle{T}, values::AbstractVector{<:Real}) where T
-    length(values) == MOSS.nparameters(x) || throw(DimensionMismatch())
+MOSSQuantum.parameters(x::PublicAngle) = [x.angle]
+MOSSQuantum.active_parameters(x::PublicAngle{T}) where T = x.enabled ? [x.angle] : T[]
+MOSSQuantum.copy_instruction(x::PublicAngle) = PublicAngle(x.angle, x.enabled, true)
+function MOSSQuantum.reset_parameters!(x::PublicAngle{T}, values::AbstractVector{<:Real}) where T
+    length(values) == MOSSQuantum.nparameters(x) || throw(DimensionMismatch())
     all(isfinite, values) || throw(ArgumentError("parameters must be finite"))
     return PublicAngle(x.enabled ? convert(T, only(values)) : x.angle, x.enabled, x.copied)
 end
-MOSS.activate_parameter!(x::PublicAngle, ::Int) = PublicAngle(x.angle, true, x.copied)
-MOSS.activate_parameters!(x::PublicAngle) = PublicAngle(x.angle, true, x.copied)
-MOSS.deactivate_parameter!(x::PublicAngle, ::Int) = PublicAngle(x.angle, false, x.copied)
-MOSS.deactivate_parameters!(x::PublicAngle) = PublicAngle(x.angle, false, x.copied)
+MOSSQuantum.activate_parameter!(x::PublicAngle, ::Int) = PublicAngle(x.angle, true, x.copied)
+MOSSQuantum.activate_parameters!(x::PublicAngle) = PublicAngle(x.angle, true, x.copied)
+MOSSQuantum.deactivate_parameter!(x::PublicAngle, ::Int) = PublicAngle(x.angle, false, x.copied)
+MOSSQuantum.deactivate_parameters!(x::PublicAngle) = PublicAngle(x.angle, false, x.copied)
 
-struct MissingWriter <: MOSS.AbstractInstruction end
-struct MissingGateWriter <: MOSS.ParametricGate{1} end
+struct MissingWriter <: MOSSQuantum.AbstractInstruction end
+struct MissingGateWriter <: MOSSQuantum.ParametricGate{1} end
 for type in (MissingWriter, MissingGateWriter)
-    @eval MOSS.parameters(::$type) = [0.1]
-    @eval MOSS.active_parameters(::$type) = [0.1]
+    @eval MOSSQuantum.parameters(::$type) = [0.1]
+    @eval MOSSQuantum.active_parameters(::$type) = [0.1]
 end
 
-struct InvalidWriter <: MOSS.AbstractInstruction end
-MOSS.active_parameters(::InvalidWriter) = [0.1]
-MOSS.reset_parameters!(::InvalidWriter, ::AbstractVector{<:Real}) = nothing
+struct InvalidWriter <: MOSSQuantum.AbstractInstruction end
+MOSSQuantum.active_parameters(::InvalidWriter) = [0.1]
+MOSSQuantum.reset_parameters!(::InvalidWriter, ::AbstractVector{<:Real}) = nothing
 
-struct NonfiniteWriter <: MOSS.AbstractInstruction
+struct NonfiniteWriter <: MOSSQuantum.AbstractInstruction
     angle::Float64
 end
-MOSS.active_parameters(x::NonfiniteWriter) = [x.angle]
-MOSS.reset_parameters!(::NonfiniteWriter, ::AbstractVector{<:Real}) = NonfiniteWriter(Inf)
+MOSSQuantum.active_parameters(x::NonfiniteWriter) = [x.angle]
+MOSSQuantum.reset_parameters!(::NonfiniteWriter, ::AbstractVector{<:Real}) = NonfiniteWriter(Inf)
 
-struct RetainedValues{V<:AbstractVector{<:Real}} <: MOSS.AbstractInstruction
+struct RetainedValues{V<:AbstractVector{<:Real}} <: MOSSQuantum.AbstractInstruction
     angles::V
 end
-MOSS.parameters(x::RetainedValues) = x.angles
-MOSS.active_parameters(x::RetainedValues) = x.angles
-MOSS.reset_parameters!(::RetainedValues, values::AbstractVector{<:Real}) = RetainedValues(values)
+MOSSQuantum.parameters(x::RetainedValues) = x.angles
+MOSSQuantum.active_parameters(x::RetainedValues) = x.angles
+MOSSQuantum.reset_parameters!(::RetainedValues, values::AbstractVector{<:Real}) = RetainedValues(values)
 
-struct InvalidCopy <: MOSS.AbstractInstruction end
-MOSS.copy_instruction(::InvalidCopy) = nothing
+struct InvalidCopy <: MOSSQuantum.AbstractInstruction end
+MOSSQuantum.copy_instruction(::InvalidCopy) = nothing
 
-struct InvalidActivation <: MOSS.Gate{1} end
-MOSS.activate_parameters!(::InvalidActivation) = nothing
-MOSS.deactivate_parameters!(::InvalidActivation) = nothing
+struct InvalidActivation <: MOSSQuantum.Gate{1} end
+MOSSQuantum.activate_parameters!(::InvalidActivation) = nothing
+MOSSQuantum.deactivate_parameters!(::InvalidActivation) = nothing
 
-mutable struct LegacyInstruction <: MOSS.AbstractInstruction
+mutable struct LegacyInstruction <: MOSSQuantum.AbstractInstruction
     angles::Vector{Float64}
 end
-MOSS.parameters(x::LegacyInstruction) = x.angles
-MOSS.active_parameters(x::LegacyInstruction) = x.angles
-function MOSS.QuantumCircuits.reset_parameters_util!(x::LegacyInstruction, values::Vector{<:Real}, pos::Int)
+MOSSQuantum.parameters(x::LegacyInstruction) = x.angles
+MOSSQuantum.active_parameters(x::LegacyInstruction) = x.angles
+function MOSSQuantum.QuantumCircuits.reset_parameters_util!(x::LegacyInstruction, values::Vector{<:Real}, pos::Int)
     n = length(x.angles)
     x.angles .= view(values, pos+1:pos+n)
     return pos + n
@@ -88,8 +88,8 @@ end
 
 @testset "Public instruction parameter protocols" begin
     F = ParameterProtocolFixtures
-    @test MOSS.copy_instruction === MOSS.QuantumCircuits.copy_instruction
-    @test MOSS.reset_parameters! === MOSS.QuantumCircuits.reset_parameters!
+    @test MOSSQuantum.copy_instruction === MOSSQuantum.QuantumCircuits.copy_instruction
+    @test MOSSQuantum.reset_parameters! === MOSSQuantum.QuantumCircuits.reset_parameters!
     @test active_parameters(HGate(1)) === nothing
     @test nparameters(HGate(1)) == 0
     @test reset_parameters!(HGate(1), Float64[]) isa HGate

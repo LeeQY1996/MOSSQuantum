@@ -69,6 +69,7 @@ function _join_ops(s::QubitsTerm)
     # m = _kron_chain_ops(op(s))
     # return reshape(m * value(coeff(s)) , Tuple(repeat(ds, 2)))
     ops = oplist(s)
+	isempty(ops) && return reshape([coeff(s)], 1, 1)
 	m = QuantumCircuits._kron_ops(reverse(ops)) .* coeff(s)
 	# N = length(ops)
 	# return reshape(m, [2 for i in 1:2N])
@@ -102,15 +103,6 @@ function qterms(x::QubitsOperator, k::Tuple)
 		end
 	end
 	return r
-end
-
-function Base.iszero(x::QubitsTerm) 
-	iszero(coeff(x)) && return true
-	isempty(x) && return true
-	for item in oplist(x)
-	    iszero(item) && return true
-	end
-	return false
 end
 
 _td_tebd1order(ham, t, dt) = _expm(ham, t+dt, dt)
@@ -179,12 +171,16 @@ end
 trotter_propagator(ham::QubitsOperator, t::Number; order::Int=2, stepsize::Number=abs(t)) = trotter_propagator(
 					ham, (zero(t), t); order=order, stepsize=stepsize)
 function trotter_propagator(ham::QubitsOperator, tspan::Tuple{<:Number, <:Number}; order::Int=2, stepsize::Number=0.01)
-	ham = simplify(ham)
+	ham = QuantumCircuits.absorb_one_bodies(simplify(ham))
 	p = div(order, 2)
-	(p * 2 == order) || throw(ArgumentError("only even order supported.")) 
-	dt = stepsize
+	(order >= 2 && p * 2 == order) || throw(ArgumentError("order must be a positive even integer of at least two."))
 	ti, tf = tspan
+	all(isfinite, tspan) || throw(ArgumentError("evolution times must be finite."))
 	tdiff = tf - ti
+	iszero(tdiff) && return QCircuit()
+	(stepsize isa Real && isfinite(stepsize) && stepsize > 0) ||
+		throw(ArgumentError("stepsize must be positive and finite."))
+	dt = stepsize
 	nsteps = round(Int, abs(tdiff / dt)) 	
 	if nsteps == 0
 		nsteps = 1

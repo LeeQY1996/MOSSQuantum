@@ -1,4 +1,4 @@
-using Test, LinearAlgebra, Random, MOSS
+using Test, LinearAlgebra, Random, MOSSQuantum
 
 # Independent dense embedding using the public least-significant-qubit ordering.
 function regression_embed_gate(n, positions, local_matrix)
@@ -37,7 +37,7 @@ end
         if length(positions) == 5
             data = randn(rng, ComplexF64, 64, 2)
             batch = BatchStateVector(copy(data), 6, 2)
-            @test storage(MOSS.apply_serial!(gate, batch)) ≈ full * data atol=1e-11
+            @test storage(MOSSQuantum.apply_serial!(gate, batch)) ≈ full * data atol=1e-11
         end
     end
 end

@@ -1,5 +1,5 @@
 using Test
-using MOSS
+using MOSSQuantum
 
 @testset "Independent circuit parameter binding" begin
     @testset "Nested traversal and inactive parameters" begin

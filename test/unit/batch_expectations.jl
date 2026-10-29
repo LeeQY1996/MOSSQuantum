@@ -1,5 +1,5 @@
 using Test
-using MOSS
+using MOSSQuantum
 using LinearAlgebra
 using Random
 

@@ -4,7 +4,13 @@ struct MeasurementRecord
     outcome::Int
     probability::Float64
     kind::Symbol
+    reported_outcome::Int
+    key::Union{Nothing,Symbol}
 end
+MeasurementRecord(position::Integer, outcome::Integer, probability::Real, kind::Symbol) =
+    MeasurementRecord(Int(position),Int(outcome),Float64(probability),kind,Int(outcome),nothing)
+MeasurementRecord(position::Integer,outcome::Integer,probability::Real,kind::Symbol,reported::Integer) =
+    MeasurementRecord(Int(position),Int(outcome),Float64(probability),kind,Int(reported),nothing)
 
 """
 Result of one circuit execution. `state` is the final state; `measurements`
@@ -15,7 +21,9 @@ from the initial state for independent intermediate-measurement trajectories.
 struct SimulationResult{S}
     state::S
     measurements::Vector{MeasurementRecord}
+    classical::ClassicalRegister
 end
+SimulationResult(state,records::Vector{MeasurementRecord}) = SimulationResult(state,records,classical_register(records))
 
 """
 Result of a batch circuit execution. `state` contains one final pure or mixed
@@ -26,7 +34,10 @@ instruction order and then batch column order. An empty batch has no records.
 struct BatchSimulationResult{S<:Union{BatchStateVector,BatchDensityMatrix}}
     state::S
     measurements::Vector{Vector{MeasurementRecord}}
+    classical::Vector{ClassicalRegister}
 end
+BatchSimulationResult(state,records::Vector{Vector{MeasurementRecord}}) =
+    BatchSimulationResult(state,records,ClassicalRegister[classical_register(r) for r in records])
 
 function measure!(b::AbstractBackend, state::AbstractQuantumState, position::Int;
                   auto_reset::Bool=true, rng::Random.AbstractRNG=Random.default_rng())
@@ -160,7 +171,12 @@ Type promotion can replace the state wrapper. This stochastic execution API does
 not define automatic derivatives; analytic circuit application remains available
 through `circuit * state` and `expectation`.
 """
-function simulate(circuit::QCircuit, state; backend=MOSS.backend(state), rng::Random.AbstractRNG=Random.default_rng())
+function simulate(circuit::QCircuit, state; backend=MOSSQuantum.backend(state), rng::Random.AbstractRNG=Random.default_rng(),
+                  noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(), classical=nothing)
+    validate_backend_execution(backend, circuit, state; mode=:simulate)
+    if _has_classical(circuit) || !isnothing(classical) || !isnothing(noise_model) || readout isa ReadoutError || !isempty(readout) || !(method isa DensityMatrixEvolution)
+        return _simulate_noisy(circuit,state;backend,rng,noise_model,readout,method,classical)
+    end
     supports(backend, circuit, state) || throw(UnsupportedOperation(backend, circuit, state, :apply))
     validate_positions(circuit, nqubits(state))
     records = MeasurementRecord[]
@@ -168,8 +184,26 @@ function simulate(circuit::QCircuit, state; backend=MOSS.backend(state), rng::Ra
     return SimulationResult(result, records)
 end
 
-function simulate(circuit::QCircuit, state::Union{BatchStateVector,BatchDensityMatrix}; backend=MOSS.backend(state),
-                  rng::Random.AbstractRNG=Random.default_rng())
+function simulate(circuit::QCircuit, state::Union{BatchStateVector,BatchDensityMatrix}; backend=MOSSQuantum.backend(state),
+                  rng::Random.AbstractRNG=Random.default_rng(), noise_model=nothing,
+                  readout=ReadoutError[], method=DensityMatrixEvolution(), classical=nothing)
+    validate_backend_execution(backend, circuit, state; mode=:simulate)
+    if _has_classical(circuit) || !isnothing(classical) || !isnothing(noise_model) || readout isa ReadoutError || !isempty(readout) || !(method isa DensityMatrixEvolution)
+        circuit,errors = _noise_configuration(circuit,noise_model,readout)
+        _check_noise_execution(circuit,state,backend,method,Int[],errors;classical=classical,mode=:simulate)
+        (method isa KrausTrajectory || _has_classical(circuit) || !isnothing(classical)) &&
+            _has_postselection(circuit) && throw(ArgumentError("use execute for trajectory/classical post-selection"))
+        members = [_simulate_noisy(circuit,_shot_member(state,b);backend,rng,noise_model=nothing,readout=errors,method,classical)
+                   for b in 1:batch_size(state)]
+        if isempty(members)
+            output = _empty_dynamic_batch(circuit,state,method)
+        elseif all(r -> r.state isa StateVector,members)
+            output = BatchStateVector(hcat([storage(r.state) for r in members]...))
+        else
+            output = BatchDensityMatrix(cat([storage(r.state isa StateVector ? DensityMatrix(r.state) : r.state) for r in members]...;dims=3))
+        end
+        return BatchSimulationResult(output,Vector{MeasurementRecord}[r.measurements for r in members],ClassicalRegister[r.classical for r in members])
+    end
     supports(backend, circuit, state) || throw(UnsupportedOperation(backend, circuit, state, :apply))
     _check_batch_recorded_instructions(circuit, backend, state)
     validate_positions(circuit, nqubits(state))

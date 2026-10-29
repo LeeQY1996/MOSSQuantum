@@ -179,3 +179,8 @@ expectation_value_serial(pos::Tuple{Int, Int}, m::AbstractMatrix, state::Abstrac
 expectation_value_serial(pos::Tuple{Int, Int, Int}, m::AbstractMatrix, state::AbstractMatrix) = _expectation_value_util(
 	pos, SMatrix{8,8, eltype(state)}(m), state)
 
+_expectation_value_util(::Tuple{}, matrix::AbstractMatrix, state::AbstractMatrix) =
+    _zero_qubit_matrix_value(matrix) * tr(state)
+expectation_value_serial(positions::Tuple{}, matrix::AbstractMatrix, state::AbstractMatrix) =
+    _expectation_value_util(positions, matrix, state)
+

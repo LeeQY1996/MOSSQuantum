@@ -8,13 +8,17 @@ struct QMeasure <: AbstractInstruction
 	position::Int
 	auto_reset::Bool
 	keep::Bool
+    key::Union{Nothing,Symbol}
 
-	QMeasure(key::Int; auto_reset::Bool=true, keep::Bool=true) = new(key, auto_reset, keep)
+    function QMeasure(position::Int; auto_reset::Bool=true, keep::Bool=true, key=nothing)
+        name = isnothing(key) ? nothing : _classical_key(key)
+        new(position,auto_reset,keep,name)
+    end
 end
 positions(x::QMeasure) = [x.position]
 nparameters(x::QMeasure) = 0
 parameters(x::QMeasure) = nothing
-change_positions(x::QMeasure, m::AbstractDict) = QMeasure(m[x.position]; auto_reset=x.auto_reset, keep=x.keep)
+change_positions(x::QMeasure, m::AbstractDict) = QMeasure(m[x.position]; auto_reset=x.auto_reset, keep=x.keep, key=x.key)
 
 
 """

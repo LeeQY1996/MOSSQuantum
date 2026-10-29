@@ -1,0 +1,15 @@
+[deps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+MOSS = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
+MOSSCUDA = "69838448-6374-4f27-b6be-0d2f71c73ec1"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[extras]
+CUDA_Compiler_jll = "d1e2174e-dfdc-576e-b43e-73b79eb1aca8"
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
+
+[sources.MOSS]
+path = "/home/qingyu_li/Code/Quantum/MOSS"
+
+[sources.MOSSCUDA]
+path = "/home/qingyu_li/Code/Quantum/MOSS/packages/MOSSCUDA"

@@ -1,6 +1,8 @@
 /benchmark/Manifest.toml
 /benchmark/results/
 /test/fixtures/*/Manifest.toml
+/packages/*/Manifest.toml
+/algorithm_zoo/Manifest.toml
 /docs/build/
 *.cov
 *.mem

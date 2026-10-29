@@ -8,7 +8,7 @@ input order. Construction snapshots the instruction tree, observable, and
 initial state; the backend is retained as an execution resource. Evaluation
 copies the initial state and never modifies the template or input values.
 
-This is an adapter for MOSS state/backends, not a required base type for external
+This is an adapter for MOSSQuantum state/backends, not a required base type for external
 objectives. It carries no gradient method. `AdjointGradient` has narrower
 capabilities than forward evaluation, reported by `supports_gradient`.
 """
@@ -21,7 +21,7 @@ struct ExpectationObjective{O,S<:AbstractQuantumState,B<:AbstractBackend}
 
     function ExpectationObjective(template::QCircuit, observable, initial_state::AbstractQuantumState;
                                   parameter_map::ParameterMap=ParameterMap(template),
-                                  backend::AbstractBackend=MOSS.backend(initial_state))
+                                  backend::AbstractBackend=MOSSQuantum.backend(initial_state))
         _check_parameter_map(template, parameter_map)
         copied_template = copy_instruction(template)
         copied_state = copy(initial_state)
@@ -68,7 +68,7 @@ struct BatchExpectationObjective{O,S<:Union{BatchStateVector,BatchDensityMatrix}
     function BatchExpectationObjective(template::QCircuit, observable,
                                        initial_state::Union{BatchStateVector,BatchDensityMatrix};
                                        parameter_map::ParameterMap=ParameterMap(template),
-                                       backend::AbstractBackend=MOSS.backend(initial_state),
+                                       backend::AbstractBackend=MOSSQuantum.backend(initial_state),
                                        reduction::Symbol=:mean, weights=nothing)
         _check_parameter_map(template, parameter_map)
         count = batch_size(initial_state)

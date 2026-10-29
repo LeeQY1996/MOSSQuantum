@@ -1,16 +1,16 @@
 using Test
-using MOSS
+using MOSSQuantum
 
 module ParameterMapFixtures
-import MOSS
+import MOSSQuantum
 
 """An immutable instruction that stores active values without legacy fields."""
-struct ImmutablePair{T<:Real} <: MOSS.AbstractInstruction
+struct ImmutablePair{T<:Real} <: MOSSQuantum.AbstractInstruction
     angles::NTuple{2,T}
 end
-MOSS.parameters(x::ImmutablePair) = collect(x.angles)
-MOSS.active_parameters(x::ImmutablePair) = collect(x.angles)
-function MOSS.reset_parameters!(x::ImmutablePair{T}, values::AbstractVector{<:Real}) where T
+MOSSQuantum.parameters(x::ImmutablePair) = collect(x.angles)
+MOSSQuantum.active_parameters(x::ImmutablePair) = collect(x.angles)
+function MOSSQuantum.reset_parameters!(x::ImmutablePair{T}, values::AbstractVector{<:Real}) where T
     length(values) == 2 || throw(DimensionMismatch())
     all(isfinite, values) || throw(ArgumentError("parameters must be finite"))
     return ImmutablePair((convert(T, values[1]), convert(T, values[2])))

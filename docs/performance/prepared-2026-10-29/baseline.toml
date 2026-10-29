@@ -1,0 +1,18 @@
+julia = "1.13.1"
+notes = "Median of 5 warmed trials; construction excluded from prepared rows; allocations are cumulative, not peak memory."
+cpu = "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S"
+threads = 4
+blas_threads = 1
+
+[[cases]]
+seconds = 0.000703471
+bytes = 1250016
+case = "fixed_density/direct"
+[[cases]]
+seconds = 0.011067043
+bytes = 14484320
+case = "feedback_trajectory/direct"
+[[cases]]
+seconds = 0.001054361
+bytes = 811728
+case = "parameter_scan/direct"

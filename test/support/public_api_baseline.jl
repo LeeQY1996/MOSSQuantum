@@ -1,7 +1,8 @@
 # Public exports recorded from c79ecb5 before the source layout migration.
-# Keep this snapshot fixed; new exports are allowed by the compatibility test.
+# The root namespace and module self-binding reflect the MOSSQuantum rename.
+# Keep the remaining snapshot fixed; new exports are allowed by the compatibility test.
 const PUBLIC_API_BASELINE = Dict(
-    "MOSS" => [
+    "MOSSQuantum" => [
         "AbstractQuantumMap",
         "AdjointQuantumGate",
         "AmplitudeDamping",
@@ -24,7 +25,7 @@ const PUBLIC_API_BASELINE = Dict(
         "Gate",
         "H",
         "HGate",
-        "MOSS",
+        "MOSSQuantum",
         "PHASEGate",
         "ParametricGate",
         "PhaseDamping",

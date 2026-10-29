@@ -1,4 +1,4 @@
-name = "MOSS"
+name = "MOSSQuantum"
 uuid = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
 version = "0.1.0"
 authors = ["Guo Chu <guochu604b@gmail.com>"]
@@ -18,9 +18,9 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
-MOSSChainRulesCoreExt = "ChainRulesCore"
-MOSSPlotsExt = ["Plots", "LaTeXStrings"]
-MOSSZygoteExt = "Zygote"
+MOSSQuantumChainRulesCoreExt = "ChainRulesCore"
+MOSSQuantumPlotsExt = ["Plots", "LaTeXStrings"]
+MOSSQuantumZygoteExt = "Zygote"
 
 [compat]
 ChainRulesCore = "1.26"

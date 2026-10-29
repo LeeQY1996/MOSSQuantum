@@ -64,6 +64,7 @@ function _cpu_apply!(operation::Gate, state::BatchDensityMatrix)
 end
 
 function _cpu_apply!(operation::QuantumMap, state::BatchDensityMatrix)
+    QuantumCircuits._validate_channel_data(operation)
     _check_batch_density_channel(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)

@@ -1,7 +1,7 @@
 using BenchmarkTools
 using Dates
 using LinearAlgebra
-using MOSS
+using MOSSQuantum
 using Random
 using SHA
 using TOML

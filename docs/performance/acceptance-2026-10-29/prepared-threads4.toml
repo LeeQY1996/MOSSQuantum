@@ -1,0 +1,72 @@
+julia = "1.13.1"
+notes = "Median of 5 warmed trials; construction excluded from prepared rows; allocations are cumulative, not peak memory."
+cpu = "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S"
+threads = 4
+blas_threads = 1
+
+[[cases]]
+seconds = 0.000709771
+bytes = 1250016
+case = "fixed_density/direct"
+[[cases]]
+seconds = 1.7811e-5
+bytes = 15616
+case = "fixed_density/prepare"
+[[cases]]
+seconds = 8.481e-6
+bytes = 10216
+case = "fixed_density/bind"
+[[cases]]
+seconds = 0.000446456
+bytes = 1017024
+case = "fixed_density/prepared"
+[[cases]]
+seconds = 0.011193671
+bytes = 14484896
+case = "feedback_trajectory/direct"
+[[cases]]
+seconds = 3.8132e-5
+bytes = 40576
+case = "feedback_trajectory/prepare"
+[[cases]]
+seconds = 3.5e-7
+bytes = 528
+case = "feedback_trajectory/bind"
+[[cases]]
+seconds = 0.010253595
+bytes = 14028704
+case = "feedback_trajectory/prepared"
+[[cases]]
+seconds = 0.000633337
+bytes = 811728
+case = "parameter_scan/direct"
+[[cases]]
+seconds = 0.000281096
+bytes = 452856
+case = "parameter_scan/sweep_serial"
+[[cases]]
+seconds = 0.000440289
+bytes = 455128
+case = "parameter_scan/sweep_threaded"
+[[cases]]
+seconds = 0.000301977
+bytes = 447440
+case = "parameter_scan/prepared"
+[[cases]]
+seconds = 0.003856403
+bytes = 4032448
+case = "vqe_gradient/direct"
+[[cases]]
+seconds = 0.00172092
+bytes = 2333152
+case = "vqe_gradient/prepared"
+[[cases]]
+seconds = 3.0742e-5
+bytes = 33552
+case = "parameter_scan/prepare"
+
+[source_sha256]
+"src/differentiation/sampled_gradients.jl" = "4dfec5bf6ac6e25ba475fe660a816b49fa8e51828623958e43411b4ce9744713"
+"src/observables/estimation_plans.jl" = "c47413661c1e2ddbc1112db8f8ca09c4dc1e2b1fe82c3293b0a4605dc3e80f50"
+"src/execution/noisy_execution.jl" = "4b53c35ffd811d2867f0f40f9522178f59250ce8f21d797fb8a3e07de5a131ce"
+"src/execution/execution_plans.jl" = "656f6a6b5b3177bc083e6d791af51d1c96b6cb02dac77a1fac112d4de04d4b0b"

@@ -2,7 +2,7 @@
 
 julia_version = "1.13.1"
 manifest_format = "2.1"
-project_hash = "14f266d1dca421e4ada929df5972f63b2afd8d06"
+project_hash = "2f29df6ab1996c7b8ff4bc4ec0f9647e0a9ea407"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -50,18 +50,18 @@ deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 version = "1.13.0"
 
-[[deps.MOSS]]
+[[deps.MOSSQuantum]]
 deps = ["KrylovKit", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "TensorOperations"]
 path = "."
 uuid = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
 version = "0.1.0"
 
-    [deps.MOSS.extensions]
-    MOSSChainRulesCoreExt = "ChainRulesCore"
-    MOSSPlotsExt = ["Plots", "LaTeXStrings"]
-    MOSSZygoteExt = "Zygote"
+    [deps.MOSSQuantum.extensions]
+    MOSSQuantumChainRulesCoreExt = "ChainRulesCore"
+    MOSSQuantumPlotsExt = ["Plots", "LaTeXStrings"]
+    MOSSQuantumZygoteExt = "Zygote"
 
-    [deps.MOSS.weakdeps]
+    [deps.MOSSQuantum.weakdeps]
     ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
     LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
     Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"

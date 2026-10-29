@@ -1,15 +1,20 @@
 
 
-_get_mat(x::Tuple{Vector{AbstractMatrix}, Number}) = QuantumCircuits._kron_ops(reverse(x[1])) * x[2]
-_get_mat(x::QubitsTerm) = QuantumCircuits._kron_ops(reverse(oplist(x))) * coeff(x)
+_get_mat(x::Tuple{Vector{AbstractMatrix}, Number}) = isempty(x[1]) ?
+    reshape([x[2]], 1, 1) : QuantumCircuits._kron_ops(reverse(x[1])) * x[2]
+_get_mat(x::QubitsTerm) = isempty(oplist(x)) ?
+    reshape([coeff(x)], 1, 1) : QuantumCircuits._kron_ops(reverse(oplist(x))) * coeff(x)
 
 function _get_mat(n::Int, x::QuantumCircuits.QOP_DATA_VALUE_TYPE)
-    isempty(x) && error("bond is empty.")
     m = zeros(_scalar_type(x), 2^n, 2^n)
     for item in x
-        tmp = QuantumCircuits._kron_ops(reverse(item[1]))
-        alpha = item[2]
-        @. m += alpha * tmp
+        if isempty(item[1])
+            m[1, 1] += item[2]
+        else
+            tmp = QuantumCircuits._kron_ops(reverse(item[1]))
+            alpha = item[2]
+            @. m += alpha * tmp
+        end
     end
     return m
 end
@@ -28,6 +33,7 @@ end
 
 
 function LinearAlgebra.ishermitian(x::QubitsTerm)
+	x = simplify(x)
 	(imag(coeff(x)) ≈ 0.) || return false
 	for item in oplist(x)
 		ishermitian(item) || return false
@@ -35,7 +41,7 @@ function LinearAlgebra.ishermitian(x::QubitsTerm)
 	return true
 end
 function LinearAlgebra.ishermitian(x::QubitsOperator)
-	for (k, v) in x.data
+	for (k, v) in simplify(x).data
 		m = _get_mat(length(k), v)
 		ishermitian(m) || return false
 	end

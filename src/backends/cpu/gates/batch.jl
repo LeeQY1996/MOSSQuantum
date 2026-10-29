@@ -27,6 +27,11 @@ function apply_threaded!(x::Gate, batch::BatchStateVector)
     bs = batch_size(batch)
     state_size = size(data, 1)
 
+    if isempty(positions)
+        data .*= _zero_qubit_matrix_value(mat)
+        return batch
+    end
+
     # Decision logic
     if bs == 1
         # Single state, use existing threaded algorithm

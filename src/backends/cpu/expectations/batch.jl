@@ -266,3 +266,8 @@ function expectation_value(pos::Union{NTuple{4,Int}, NTuple{5,Int}}, m::Abstract
     end
     return results
 end
+expectation_value(::Tuple{}, matrix::AbstractMatrix, batch::BatchStateVector) =
+    _zero_qubit_matrix_value(matrix) .* dot(batch, batch)
+expectation_value(::Tuple{}, matrix::AbstractMatrix, batch::BatchStateVector,
+                  batch_c::BatchStateVector) =
+    _zero_qubit_matrix_value(matrix) .* dot(batch_c, batch)
