@@ -13,4 +13,9 @@ for name in (:plot, :circuit_plot, :draw_gate!, :draw!, :new_circuit_plot,
         getfield(QuantumCircuitsPlotting, $(QuoteNode(name)))(args...; kwargs...)
 end
 
+QuantumCircuits.plot(program::MOSSQuantum.NoisyCircuit; kwargs...) =
+    QuantumCircuitsPlotting.plot(program; kwargs...)
+QuantumCircuits.circuit_plot(program::MOSSQuantum.NoisyCircuit; kwargs...) =
+    QuantumCircuitsPlotting.plot(program; kwargs...)
+
 end

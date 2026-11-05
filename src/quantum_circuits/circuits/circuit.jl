@@ -239,20 +239,24 @@ parameters(x::QCircuit) = _circuit_parameter_values(parameters, x)
 active_parameters(x::QCircuit) = _circuit_parameter_values(active_parameters, x)
 
 function activate_parameter!(x::QCircuit, j::Int)
+	_require_numeric_parameter_mutation(x)
 	x[j] = _checked_instruction_result(activate_parameters!(x[j]), :activate_parameters!)
 	return x
 end
 function activate_parameters!(x::QCircuit)
+	_require_numeric_parameter_mutation(x)
 	for j in eachindex(x.operations)
 		x[j] = _checked_instruction_result(activate_parameters!(x[j]), :activate_parameters!)
 	end
 	return x
 end
 function deactivate_parameter!(x::QCircuit, j::Int)
+	_require_numeric_parameter_mutation(x)
 	x[j] = _checked_instruction_result(deactivate_parameters!(x[j]), :deactivate_parameters!)
 	return x
 end
 function deactivate_parameters!(x::QCircuit)
+	_require_numeric_parameter_mutation(x)
 	for j in eachindex(x.operations)
 		x[j] = _checked_instruction_result(deactivate_parameters!(x[j]), :deactivate_parameters!)
 	end
@@ -260,6 +264,7 @@ function deactivate_parameters!(x::QCircuit)
 end
 
 function reset_parameters!(x::QCircuit, p::AbstractVector{<:Real})
+	_require_numeric_parameter_mutation(x)
 	_check_parameter_values(x, p)
 	pos = 0
 	for j in eachindex(x.operations)

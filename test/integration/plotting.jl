@@ -103,3 +103,7 @@ const qcplot = MOSSQuantum.QuantumCircuits.plot
         end
     end
 end
+
+include("plotting_layout.jl")
+include("plotting_gates.jl")
+include("plotting_instructions.jl")

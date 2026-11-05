@@ -2,7 +2,7 @@
 
 julia_version = "1.13.1"
 manifest_format = "2.1"
-project_hash = "2f29df6ab1996c7b8ff4bc4ec0f9647e0a9ea407"
+project_hash = "0ea0eefb2161baa05ab22f23e2f7f66e1934a9ec"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -51,7 +51,7 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 version = "1.13.0"
 
 [[deps.MOSSQuantum]]
-deps = ["KrylovKit", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "TensorOperations"]
+deps = ["KrylovKit", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "TensorOperations", "UUIDs"]
 path = "."
 uuid = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
 version = "0.1.0"
@@ -221,6 +221,11 @@ git-tree-sha1 = "41e43b9dc950775eac654b9f845c839cd2f1821e"
 registries = "General"
 uuid = "9d95972d-f1c8-5527-a6e0-b4b365fa01f6"
 version = "1.6.0"
+
+[[deps.UUIDs]]
+deps = ["Random", "SHA"]
+uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+version = "1.11.0"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"

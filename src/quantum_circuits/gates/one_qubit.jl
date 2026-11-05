@@ -81,7 +81,13 @@ struct RxGate <: ParametricGate{1}
 	isparas::Vector{Bool}
 end
 RxGate(pos::Int, p::Real; isparas::Bool=false) = RxGate((pos,), [convert(Float64, p)], [isparas])
-RxGate(pos::Int; θ::Real, isparas::Bool=false) = RxGate(pos, θ, isparas=isparas)
+function RxGate(pos::Int; θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return RxGate(pos, θ)
+    end
+    return RxGate(pos, θ; isparas=something(isparas, false))
+end
 
 mat(x::RxGate) = Rx(x.paras[1])
 change_positions(s::RxGate, m::AbstractDict) = RxGate((m[s.pos[1]],), s.paras, s.isparas)
@@ -93,7 +99,13 @@ struct RyGate <: ParametricGate{1}
 	isparas::Vector{Bool}
 end
 RyGate(pos::Int, p::Real; isparas::Bool=false) = RyGate((pos,), [convert(Float64, p)], [isparas])
-RyGate(pos::Int; θ::Real, isparas::Bool=false) = RyGate(pos, θ, isparas=isparas)
+function RyGate(pos::Int; θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return RyGate(pos, θ)
+    end
+    return RyGate(pos, θ; isparas=something(isparas, false))
+end
 
 mat(x::RyGate) = Ry(x.paras[1])
 change_positions(s::RyGate, m::AbstractDict) = RyGate((m[s.pos[1]],), s.paras, s.isparas)
@@ -105,7 +117,13 @@ struct RzGate <: ParametricGate{1}
 	isparas::Vector{Bool}
 end
 RzGate(pos::Int, p::Real; isparas::Bool=false) = RzGate((pos,), [convert(Float64, p)], [isparas])
-RzGate(pos::Int; θ::Real, isparas::Bool=false) = RzGate(pos, θ, isparas=isparas)
+function RzGate(pos::Int; θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return RzGate(pos, θ)
+    end
+    return RzGate(pos, θ; isparas=something(isparas, false))
+end
 
 mat(x::RzGate) = Rz(x.paras[1])
 change_positions(s::RzGate, m::AbstractDict) = RzGate((m[s.pos[1]],), s.paras, s.isparas)
@@ -117,7 +135,13 @@ struct PHASEGate <: ParametricGate{1}
 	isparas::Vector{Bool}
 end
 PHASEGate(pos::Int, p::Real; isparas::Bool=false) = PHASEGate((pos,), [convert(Float64, p)], [isparas])
-PHASEGate(pos::Int; θ::Real, isparas::Bool=false) = PHASEGate(pos, θ, isparas=isparas)
+function PHASEGate(pos::Int; θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return PHASEGate(pos, θ)
+    end
+    return PHASEGate(pos, θ; isparas=something(isparas, false))
+end
 
 mat(x::PHASEGate) = PHASE(x.paras[1])
 change_positions(s::PHASEGate, m::AbstractDict) = PHASEGate((m[s.pos[1]],), s.paras, s.isparas)

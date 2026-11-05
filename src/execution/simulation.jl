@@ -173,7 +173,10 @@ through `circuit * state` and `expectation`.
 """
 function simulate(circuit::QCircuit, state; backend=MOSSQuantum.backend(state), rng::Random.AbstractRNG=Random.default_rng(),
                   noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(), classical=nothing)
-    validate_backend_execution(backend, circuit, state; mode=:simulate)
+    QuantumCircuits._require_bound_parameters(circuit)
+    checked = method isa AbstractNoiseMethod && _stochastic_noise_method(method) && !(method isa KrausTrajectory) ?
+        _stochastic_validation_circuit(circuit) : circuit
+    validate_backend_execution(backend, checked, state; mode=:simulate)
     if _has_classical(circuit) || !isnothing(classical) || !isnothing(noise_model) || readout isa ReadoutError || !isempty(readout) || !(method isa DensityMatrixEvolution)
         return _simulate_noisy(circuit,state;backend,rng,noise_model,readout,method,classical)
     end
@@ -187,6 +190,7 @@ end
 function simulate(circuit::QCircuit, state::Union{BatchStateVector,BatchDensityMatrix}; backend=MOSSQuantum.backend(state),
                   rng::Random.AbstractRNG=Random.default_rng(), noise_model=nothing,
                   readout=ReadoutError[], method=DensityMatrixEvolution(), classical=nothing)
+    QuantumCircuits._require_bound_parameters(circuit)
     validate_backend_execution(backend, circuit, state; mode=:simulate)
     if _has_classical(circuit) || !isnothing(classical) || !isnothing(noise_model) || readout isa ReadoutError || !isempty(readout) || !(method isa DensityMatrixEvolution)
         circuit,errors = _noise_configuration(circuit,noise_model,readout)

@@ -1,8 +1,6 @@
 # 用户面向API
 # 提供简单易用的绘图接口
 
-import .Plots: plot, savefig
-
 # 绘图函数已在同一模块中定义，直接可用
 
 # ============================================================================
@@ -37,6 +35,11 @@ function new_circuit_plot(nqubits::Int, depth::Int;
                          dpi::Int=300,
                          size::Union{Tuple{Int,Int},Nothing}=nothing,
                          title::String="")::Plots.Plot
+
+    nqubits >= 0 || throw(ArgumentError("nqubits must be nonnegative"))
+    depth >= 0 || throw(ArgumentError("depth must be nonnegative"))
+    isempty(qubit_names) || length(qubit_names) == nqubits ||
+        throw(ArgumentError("expected $nqubits qubit names, got $(length(qubit_names))"))
 
     # 自动计算图像尺寸
     if isnothing(size)
@@ -81,7 +84,7 @@ end
 
 # 参数
 - `circuit::QCircuit`: 要绘制的量子电路
-- `qubit_names::Vector{String}`: 量子位名称（默认：["q₁", "q₂", ...]）
+- `qubit_names::Vector{String}`: 量子位名称（默认为实际量子位编号）
 - `grid::Bool`: 是否显示网格（默认：false）
 - `dpi::Int`: 图像DPI（默认：300）
 - `size::Tuple{Int,Int}`: 图像尺寸（默认：自动计算）
@@ -95,8 +98,8 @@ end
 
 # 示例
 ```julia
-using QuantumCircuits
-using Plots  # 可选，仅当需要自定义绘图时
+using MOSSQuantum, Plots, LaTeXStrings
+# Plots 与 LaTeXStrings 共同启用可选绘图扩展
 
 circuit = QCircuit()
 push!(circuit, XGate(1))
@@ -104,11 +107,11 @@ push!(circuit, HGate(2))
 push!(circuit, CNOTGate(1, 2))
 
 # 基础绘图
-plt = plot(circuit)
+plt = MOSSQuantum.QuantumCircuits.plot(circuit)
 
 # 自定义绘图
-plt = plot(circuit;
-    qubit_names=["|0⟩", "|1⟩", "|2⟩"],
+plt = MOSSQuantum.QuantumCircuits.plot(circuit;
+    qubit_names=["q₁", "q₂"],
     grid=true,
     dpi=600,
     title="量子傅里叶变换电路"
@@ -128,47 +131,24 @@ function plot(circuit::QCircuit;
              gate_colors::Dict{Type,String}=Dict{Type,String}(),
              layout_algorithm::Symbol=:auto)::Plots.Plot
 
-    # 应用自定义门颜色
-    for (gate_type, color) in gate_colors
-        set_gate_color(gate_type, color)
-    end
-
-    # 计算电路统计信息
-    nqubits, depth, gate_counts = compute_circuit_stats(circuit)
-
-    # 创建绘图画布
+    layout_algorithm in (:auto, :compact, :sequential) ||
+        throw(ArgumentError("unsupported layout algorithm: $layout_algorithm"))
+    depth, nqubits, gate_positions = _compute_layout(circuit;
+        sequential=(layout_algorithm == :sequential))
+    # Labels follow actual positions even when only a sparse subset is used.
+    names = isempty(qubit_names) ? ["q" * subscript(string(q)) for q in _plot_qubits(circuit)] : qubit_names
     plt = new_circuit_plot(nqubits, depth;
-                          qubit_names=qubit_names,
-                          grid=grid,
-                          dpi=dpi,
-                          size=size,
-                          title=title)
+                          qubit_names=names, grid=grid, dpi=dpi,
+                          size=size, title=title)
 
-    # 使用布局算法计算门位置
-    if layout_algorithm == :compact
-        # 紧凑布局（实现贪心算法）
-        gate_positions = compute_compact_layout(circuit)
-    else
-        # 自动布局（默认）
-        _, _, gate_positions = compute_circuit_layout(circuit)
+    for ((time, _), (gate, rows)) in sort!(collect(gate_positions); by=first)
+        isempty(rows) && continue # classical-only condition is explained below the diagram
+        gate_color = get(gate_colors, typeof(gate), get_gate_color(typeof(gate)))
+        target = length(rows) == 1 ? first(rows) : Tuple(rows)
+        draw_circuit_gate!(plt, gate, time, target;
+                           color=gate_color, show_parameters=show_parameters)
     end
-
-    # 绘制所有门
-    for ((time, row), (gate, rows)) in gate_positions
-        # 获取门颜色
-        gate_color = get_gate_color(typeof(gate))
-
-        # 根据门类型绘制
-        if length(rows) == 1
-            draw_gate!(plt, gate, time, rows[1]; color=gate_color)
-        elseif length(rows) == 2
-            draw_gate!(plt, gate, time, (rows[1], rows[2]); color=gate_color)
-        elseif length(rows) == 3
-            draw_gate!(plt, gate, time, (rows[1], rows[2], rows[3]); color=gate_color)
-        else
-            error("门绘制尚未实现：$(typeof(gate))（$(length(rows))量子位）")
-        end
-    end
+    _draw_instruction_notes!(plt, gate_positions, nqubits; size=size, show_parameters=show_parameters)
 
     return plt
 end
@@ -226,8 +206,8 @@ draw!(plt, XGate(1), 2, 1)  # 在时间步2，量子位1绘制X门
 draw!(plt, CNOTGate(1, 2), 3, (1, 2))  # 绘制CNOT门
 ```
 """
-function draw!(plt::Plots.Plot, gate::Gate, step::Int, qubit::Int; kwargs...)
-    draw_gate!(plt, gate, step, qubit; kwargs...)
+function draw!(plt::Plots.Plot, gate::Gate, step::Int, qubits::Union{Int,Tuple}; kwargs...)
+    draw_gate!(plt, gate, step, qubits; kwargs...)
 end
 
 
@@ -257,7 +237,7 @@ function get_circuit_stats(circuit::QCircuit)::Dict
         :nqubits => nqubits,
         :depth => depth,
         :gate_counts => gate_counts,
-        :total_gates => length(circuit)
+        :total_gates => sum(values(gate_counts); init=0)
     )
 end
 

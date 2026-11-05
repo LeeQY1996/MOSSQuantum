@@ -4,6 +4,16 @@ struct DensityMatrixEvolution <: AbstractNoiseMethod end
 """Independent pure-state Kraus trajectories; CPU pure states and batches only."""
 struct KrausTrajectory <: AbstractNoiseMethod end
 
+# Companion backends can supply their own stochastic evolution method without
+# treating a single trajectory as an ensemble density matrix.
+_stochastic_noise_method(::AbstractNoiseMethod) = false
+_stochastic_noise_method(::KrausTrajectory) = true
+abstract type _CompiledStochasticChannel end
+_compile_stochastic_channel(method::AbstractNoiseMethod, backend, channel, state) =
+    throw(UnsupportedOperation(backend, channel, state, :apply))
+_apply_stochastic_channel!(channel::_CompiledStochasticChannel, backend, state, rng, workspace) =
+    throw(UnsupportedOperation(backend, channel, state, :apply))
+
 """Streaming counts: `shots` counts attempts and `accepted` counts successful attempts."""
 struct CountsResult
     shots::Int
@@ -25,7 +35,7 @@ struct _CompiledConditional
     else_branch::Vector{Any}
 end
 
-struct _TrajectoryChannel
+struct _TrajectoryChannel <: _CompiledStochasticChannel
     gates::Vector{QuantumGate}
     weights::Union{Nothing,Vector{Float64}}
 end
@@ -56,9 +66,17 @@ function _noise_preflight!(flat, circuit, state, chosen, method)
         elseif instruction isa Delay
             validate_positions(instruction,nqubits(state))
         elseif instruction isa QuantumMap
-            supports(chosen,instruction,state) || throw(UnsupportedOperation(chosen,instruction,state,:apply))
+            validate_positions(instruction,nqubits(state))
             QuantumCircuits._validate_channel_data(instruction; check_tp=true)
-            push!(flat,method isa KrausTrajectory ? _trajectory_channel(instruction) : instruction)
+            if method isa KrausTrajectory
+                supports(chosen,instruction,state) || throw(UnsupportedOperation(chosen,instruction,state,:apply))
+                push!(flat,_trajectory_channel(instruction))
+            elseif _stochastic_noise_method(method)
+                push!(flat,_compile_stochastic_channel(method,chosen,instruction,state))
+            else
+                supports(chosen,instruction,state) || throw(UnsupportedOperation(chosen,instruction,state,:apply))
+                push!(flat,instruction)
+            end
         else
             method isa KrausTrajectory && !(instruction isa Union{Gate,QMeasure,QSelect}) &&
                 throw(UnsupportedOperation(chosen,instruction,state,:apply))
@@ -95,6 +113,9 @@ function _trajectory_apply!(channel::_TrajectoryChannel, state::StateVector, rng
     return state
 end
 
+_apply_stochastic_channel!(channel::_TrajectoryChannel, backend, state, rng, workspace) =
+    _trajectory_apply!(channel,state,rng,workspace.scratch,workspace.weights)
+
 function _trajectory_workspace(initial,flat)
     T = typeof(float(real(zero(eltype(initial)))))
     state = StateVector{Complex{T}}(initial;copy=true)
@@ -114,8 +135,8 @@ function _noise_evolve(flat,state,chosen,rng,errors,records,register,keep_record
             state,accepted = _noise_evolve(branch,state,chosen,rng,errors,records,register,
                 keep_records,method,workspace,register_size)
             accepted || return state,false
-        elseif instruction isa _TrajectoryChannel
-            state = _trajectory_apply!(instruction,state,rng,workspace.scratch,workspace.weights)
+        elseif instruction isa _CompiledStochasticChannel
+            state = _apply_stochastic_channel!(instruction,chosen,state,rng,workspace)
         elseif instruction isa Union{QMeasure,QSelect}
             reset = instruction isa QMeasure && instruction.auto_reset
             outcome, probability = measure!(chosen,state,instruction.position;auto_reset=reset,rng=rng)
@@ -169,14 +190,38 @@ function _noise_configuration(circuit, noise_model, readout)
     return circuit,errors
 end
 
+# The ordinary backend capability check handles gates and measurements. A
+# stochastic channel is separately checked and compiled in _noise_preflight!,
+# because its deterministic apply! capability is deliberately different.
+function _stochastic_validation_circuit(circuit::QCircuit)
+    operations = AbstractInstruction[]
+    for instruction in circuit
+        if instruction isa QCircuit
+            push!(operations,_stochastic_validation_circuit(instruction))
+        elseif instruction isa Conditional
+            push!(operations,Conditional(instruction.condition,
+                _stochastic_validation_circuit(instruction.then_branch);
+                otherwise=_stochastic_validation_circuit(instruction.else_branch)))
+        elseif instruction isa QuantumMap
+            push!(operations,QCircuit())
+        else
+            push!(operations,instruction)
+        end
+    end
+    return QCircuit(operations)
+end
+
 function _check_noise_execution(circuit, initial, chosen, method, indices, errors; classical=nothing, mode::Symbol=:execute)
-    method isa Union{DensityMatrixEvolution,KrausTrajectory} || throw(ArgumentError("unsupported noise method"))
-    if method isa KrausTrajectory
-        chosen isa CPUBackend && supports(chosen,method,initial) || throw(UnsupportedOperation(chosen,method,initial,:apply))
+    method isa AbstractNoiseMethod || throw(ArgumentError("unsupported noise method"))
+    if _stochastic_noise_method(method)
+        supports(chosen,method,initial) || throw(UnsupportedOperation(chosen,method,initial,:apply))
+    elseif !(method isa DensityMatrixEvolution)
+        throw(UnsupportedOperation(chosen,method,initial,:apply))
     end
     expanded = _readout_register(errors,indices,nqubits(initial))
-    _check_shot_execution(circuit,initial,chosen,expanded;classical=classical,mode=mode)
     flat = _noise_preflight!(Any[],circuit,initial,chosen,method)
+    checked = _stochastic_noise_method(method) && !(method isa KrausTrajectory) ? _stochastic_validation_circuit(circuit) : circuit
+    _check_shot_execution(checked,initial,chosen,expanded;classical=classical,mode=mode)
     return flat,expanded
 end
 
@@ -191,7 +236,7 @@ function _execute_noisy(circuit, initial; shots, qubits, rng, backend, noise_mod
     flat,expanded = _check_noise_execution(circuit,initial,backend,method,indices,errors;classical=classical)
     deterministic = method isa DensityMatrixEvolution && _shot_deterministic(circuit)
     prepared = deterministic && count_shots > 0 ? simulate(circuit,initial; backend=backend,rng=rng).state : nothing
-    distribution = isnothing(prepared) ? nothing : _shot_distribution(prepared,backend,expanded)
+    distribution = isnothing(prepared) ? nothing : prepare_terminal_sampling(backend,prepared,expanded)
     workspace = method isa KrausTrajectory && !parallel ? _trajectory_workspace(initial,flat) : nothing
     return _execute_prepared(initial,backend,errors,method,indices,flat,expanded,deterministic,distribution,
         classical;count_shots,rng,result,parallel,chunk_size,workspace)
@@ -209,7 +254,7 @@ function _execute_prepared(initial,backend,errors,method,indices,flat,expanded,d
     for firstshot in 1:chunk_size:count_shots
         count = min(chunk_size,count_shots-firstshot+1)
         if deterministic
-            draws = _draw_samples!(Matrix{Int}(undef,count,length(expanded)),rng,distribution,count,length(expanded))
+            draws = _checked_terminal_samples(rng,distribution,count,length(expanded))
             _readout_samples!(draws,expanded,errors,rng)
             for j in 1:count
                 row = view(draws,j,1:length(indices))
@@ -269,7 +314,7 @@ end
 function _simulate_noisy(circuit,initial; backend,rng,noise_model,readout,method,classical=nothing)
     circuit,errors = _noise_configuration(circuit,noise_model,readout)
     flat,expanded = _check_noise_execution(circuit,initial,backend,method,Int[],errors;classical=classical,mode=:simulate)
-    if method isa KrausTrajectory || _has_classical(circuit) || !isnothing(classical)
+    if _stochastic_noise_method(method) || _has_classical(circuit) || !isnothing(classical)
         _has_postselection(circuit) && throw(ArgumentError(
             "trajectory/classical simulate does not force post-selection; use execute for physical rejection"))
         state,records,register = _noise_attempt(flat,initial,backend,rng,errors,expanded,true,method;final_state=true,classical=classical)

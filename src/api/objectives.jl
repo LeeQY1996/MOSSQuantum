@@ -12,24 +12,24 @@ This is an adapter for MOSSQuantum state/backends, not a required base type for 
 objectives. It carries no gradient method. `AdjointGradient` has narrower
 capabilities than forward evaluation, reported by `supports_gradient`.
 """
-struct ExpectationObjective{O,S<:AbstractQuantumState,B<:AbstractBackend}
+struct ExpectationObjective{O,S<:AbstractQuantumState,B<:AbstractBackend,P<:AbstractParameterMap}
     template::QCircuit
     observable::O
     initial_state::S
-    parameter_map::ParameterMap
+    parameter_map::P
     backend::B
 
-    function ExpectationObjective(template::QCircuit, observable, initial_state::AbstractQuantumState;
-                                  parameter_map::ParameterMap=ParameterMap(template),
+    function ExpectationObjective(template::Union{QCircuit,_ParameterContext}, observable, initial_state::AbstractQuantumState;
+                                  parameter_map=nothing, parameter_order=nothing, fixed=nothing,
                                   backend::AbstractBackend=MOSSQuantum.backend(initial_state))
-        _check_parameter_map(template, parameter_map)
-        copied_template = copy_instruction(template)
+        copied_template, compiled_map = _prepare_parameter_template(template; parameter_map, parameter_order, fixed)
+        copied_template isa QCircuit || throw(ArgumentError("an expectation objective requires a circuit template"))
         copied_state = copy(initial_state)
         copied_state isa AbstractQuantumState ||
             throw(ArgumentError("copy(initial_state) must return an AbstractQuantumState."))
         copied_observable = deepcopy(observable)
-        return new{typeof(copied_observable),typeof(copied_state),typeof(backend)}(
-            copied_template, copied_observable, copied_state, parameter_map, backend)
+        return new{typeof(copied_observable),typeof(copied_state),typeof(backend),typeof(compiled_map)}(
+            copied_template, copied_observable, copied_state, compiled_map, backend)
     end
 end
 
@@ -56,21 +56,22 @@ negative and are not normalized. Other reductions reject `weights`. Construction
 snapshots the circuit, observable, states, and weights; the backend remains an
 execution resource. Forward execution does not select a gradient method.
 """
-struct BatchExpectationObjective{O,S<:Union{BatchStateVector,BatchDensityMatrix},B<:AbstractBackend,W}
+struct BatchExpectationObjective{O,S<:Union{BatchStateVector,BatchDensityMatrix},B<:AbstractBackend,W,P<:AbstractParameterMap}
     template::QCircuit
     observable::O
     initial_state::S
-    parameter_map::ParameterMap
+    parameter_map::P
     backend::B
     reduction::Symbol
     weights::W
 
-    function BatchExpectationObjective(template::QCircuit, observable,
+    function BatchExpectationObjective(template::Union{QCircuit,_ParameterContext}, observable,
                                        initial_state::Union{BatchStateVector,BatchDensityMatrix};
-                                       parameter_map::ParameterMap=ParameterMap(template),
+                                       parameter_map=nothing, parameter_order=nothing, fixed=nothing,
                                        backend::AbstractBackend=MOSSQuantum.backend(initial_state),
                                        reduction::Symbol=:mean, weights=nothing)
-        _check_parameter_map(template, parameter_map)
+        copied_template, compiled_map = _prepare_parameter_template(template; parameter_map, parameter_order, fixed)
+        copied_template isa QCircuit || throw(ArgumentError("an expectation objective requires a circuit template"))
         count = batch_size(initial_state)
         count > 0 || throw(ArgumentError("a batch expectation objective requires at least one sample."))
         reduction in (:sum, :mean, :weighted_sum) ||
@@ -87,13 +88,16 @@ struct BatchExpectationObjective{O,S<:Union{BatchStateVector,BatchDensityMatrix}
             isnothing(weights) || throw(ArgumentError("weights are only valid with :weighted_sum."))
             saved_weights = nothing
         end
-        copied_template = copy_instruction(template)
         copied_state = copy(initial_state)
         copied_observable = deepcopy(observable)
-        return new{typeof(copied_observable),typeof(copied_state),typeof(backend),typeof(saved_weights)}(
-            copied_template, copied_observable, copied_state, parameter_map, backend, reduction, saved_weights)
+        return new{typeof(copied_observable),typeof(copied_state),typeof(backend),typeof(saved_weights),typeof(compiled_map)}(
+            copied_template, copied_observable, copied_state, compiled_map, backend, reduction, saved_weights)
     end
 end
+
+parameter_order(objective::Union{ExpectationObjective,BatchExpectationObjective}) = parameter_order(objective.parameter_map)
+independent_parameters(objective::Union{ExpectationObjective,BatchExpectationObjective}) = independent_parameters(objective.parameter_map)
+trainable_parameters(objective::Union{ExpectationObjective,BatchExpectationObjective}) = trainable_parameters(objective.parameter_map)
 
 function _check_batch_objective_configuration(objective::BatchExpectationObjective)
     count = batch_size(objective.initial_state)
@@ -238,3 +242,8 @@ function _batch_objective_weights(objective::BatchExpectationObjective, ::Type{T
     weight = objective.reduction === :mean ? one(T) / batch_size(objective.initial_state) : one(T)
     return ntuple(_ -> weight, batch_size(objective.initial_state))
 end
+
+parameter_info(objective::Union{ExpectationObjective,BatchExpectationObjective}) =
+    parameter_info((; template=objective.template, parameter_map=objective.parameter_map))
+initial_parameters(objective::Union{ExpectationObjective,BatchExpectationObjective}; kwargs...) =
+    initial_parameters((; template=objective.template, parameter_map=objective.parameter_map); kwargs...)

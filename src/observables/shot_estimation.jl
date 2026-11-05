@@ -280,21 +280,14 @@ function estimate(plan::MeasurementPlan, state::AbstractQuantumState;
     plan.nqubits <= nqubits(state) || throw(ArgumentError("observable acts outside the state's register"))
     allocations = _measurement_allocations(plan, shots)
     # Validate normalization even when the observable is constant or zero.
-    probabilities(backend, state; qubits=Int[])
+    validate_terminal_sampling(backend, state, Int[])
     estimates = GroupEstimate[]
     for (group, count) in zip(plan.groups, allocations)
         rotation = _measurement_rotation(group)
         # Z-only readout needs no gate capability, including for implicit
         # third-party states that expose probabilities without gate execution.
         rotated = isempty(rotation) ? state : apply!(backend, rotation, copy(state))
-        distribution = probabilities(backend, rotated; qubits=group.qubits)
-        distribution isa AbstractVector{<:Real} ||
-            throw(ArgumentError("measurement probabilities must be a real vector"))
-        Base.require_one_based_indexing(distribution)
-        length(distribution) == _state_dimension(length(group.qubits)) ||
-            throw(DimensionMismatch("measurement probability count must be 2^length(group.qubits)"))
-        draws = Matrix{Int}(undef, count, length(group.qubits))
-        _draw_samples!(draws, rng, distribution, count, length(group.qubits))
+        draws = _shot_samples(rng, rotated, backend, count, group.qubits)
         push!(estimates, _group_estimate(group, draws))
     end
     return _assemble_estimate(plan, shots, estimates)

@@ -71,8 +71,8 @@ inside the estimator are ideal; classical readout errors are included afterward.
 
 ## CUDA device arrays and single-state execution
 
-The first real-device companion is [MOSSQuantumCUDA](../packages/MOSSQuantumCUDA/README.md),
-developed independently under `packages/MOSSQuantumCUDA`. It combines actual CUDA
+The first real-device companion is [MOSSGPU](https://github.com/LeeQY1996/MOSSGPU#readme),
+developed as a separate package alongside MOSSQuantum. It combines actual CUDA
 device-memory arrays with an executor selected through the existing backend
 protocol. The implementation targets NVIDIA CUDA; quantum hardware integration
 is a separate direction.
@@ -94,7 +94,7 @@ conversions remain distinct from execution capabilities.
 Local verification on 2026-10-22 passed 154 companion host assertions on each
 supported Julia version, 887 existing storage/backend assertions with the
 companion loaded, and 45 offline gate-kernel PTX compilation configurations.
-No GPU was available. The [validation record](../packages/MOSSQuantumCUDA/VALIDATION.md)
+No GPU was available. The [validation record](https://github.com/LeeQY1996/MOSSGPU/blob/main/VALIDATION.md)
 separates these checks from pending hardware execution and performance tests.
 
 ## Completed milestone: generic array containers and backend routing

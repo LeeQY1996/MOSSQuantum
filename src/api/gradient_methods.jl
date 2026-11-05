@@ -49,9 +49,15 @@ Unknown combinations return `false`. Forward execution support is separate;
 successful evaluation does not imply any differentiation capability.
 """
 supports_gradient(::AbstractGradientMethod, objective) = false
+supports_gradient(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real}) = supports_gradient(method, objective)
 
 function _require_gradient_support(method::AbstractGradientMethod, objective)
     supports_gradient(method, objective) || throw(UnsupportedGradient(method, objective))
+    return nothing
+end
+
+function _require_gradient_support(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real})
+    supports_gradient(method, objective, values) || throw(UnsupportedGradient(method, objective))
     return nothing
 end
 
@@ -105,7 +111,7 @@ the default gradient and pullback hooks. External methods implementing only the
 gradient hook can therefore use the optional AD adapter unchanged.
 """
 function value_and_pullback(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real})
-    _require_gradient_support(method, objective)
+    _require_gradient_support(method, objective, values)
     _check_gradient_input(values)
     value, gradient = value_and_gradient(method, objective, values)
     _check_objective_value(value)

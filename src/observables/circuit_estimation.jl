@@ -38,6 +38,7 @@ function estimate(plan::MeasurementPlan, circuit::QCircuit, initial_state::Abstr
                   backend::AbstractBackend=MOSSQuantum.backend(initial_state),
                   noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(),
                   parallel::Bool=false, chunk_size::Integer=256, classical=nothing)
+    QuantumCircuits._require_bound_parameters(circuit)
     circuit,errors = _noise_configuration(circuit,noise_model,readout)
     allocations = _check_circuit_estimation(plan, circuit, initial_state, shots)
     _check_noise_execution(circuit,initial_state,backend,method,Int[],errors;classical=classical)
@@ -67,6 +68,7 @@ function estimate(plan::MeasurementPlan, circuit::QCircuit,
                   backend::AbstractBackend=MOSSQuantum.backend(initial_state),
                   noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(),
                   parallel::Bool=false, chunk_size::Integer=256, classical=nothing)
+    QuantumCircuits._require_bound_parameters(circuit)
     circuit,errors = _noise_configuration(circuit,noise_model,readout)
     _check_circuit_estimation(plan, circuit, initial_state, shots)
     _check_noise_execution(circuit,initial_state,backend,method,Int[],errors;classical=classical)

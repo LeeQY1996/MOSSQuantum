@@ -20,6 +20,8 @@ function run_sweep(plan::Union{ExecutionPlan,EstimationPlan},parameters::Abstrac
     Base.require_one_based_indexing(parameters)
     execution = plan isa ExecutionPlan ? plan : plan.execution
     size(parameters,1)==nparameters(execution.parameter_map) || throw(DimensionMismatch("parameter rows must match independent parameters"))
+    _is_symbolic_map(execution.parameter_map) && any(x -> x isa Bool,parameters) &&
+        throw(ArgumentError("symbolic parameter values must be real numbers, not Bool"))
     xs = Matrix{Float64}(parameters)
     all(isfinite,xs) || throw(ArgumentError("parameters must be finite Float64 values"))
     perpoint = plan isa ExecutionPlan ? _prepared_options(shots,result,false,chunk_size,plan.method) : _estimation_cost(plan,shots,allocation)

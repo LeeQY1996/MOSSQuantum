@@ -1,8 +1,0 @@
-Test Summary:                                        | Pass  Total   Time
-Generic dense storage preserves family and ownership |  656    656  15.4s
-Test Summary:                                                  | Pass  Total  Time
-Preserved views retain opt-in aliasing and independent samples |   56     56  2.4s
-Test Summary:                                                      | Pass  Total  Time
-Storage metadata validation precedes allocation and payload access |   32     32  0.2s
-Test Summary:                                       | Pass  Total  Time
-Dense storage selects and guards execution backends |  143    143  3.8s

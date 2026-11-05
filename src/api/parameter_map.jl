@@ -1,3 +1,6 @@
+"""A parameter map expands independent inputs into active instruction slots."""
+abstract type AbstractParameterMap end
+
 """
     ParameterMap(indices)
     ParameterMap(template::AbstractInstruction)
@@ -18,7 +21,7 @@ After changing instruction order or activation, rebuild or review the map.
 Binding detects slot-count mismatches, but cannot detect a changed layout with
 the same number of slots.
 """
-struct ParameterMap
+struct ParameterMap <: AbstractParameterMap
     indices::Tuple{Vararg{Int}}
     count::Int
 
@@ -38,14 +41,17 @@ end
 ParameterMap(indices::Union{AbstractVector,Tuple}) =
     throw(ArgumentError("parameter indices must be integers."))
 
-function _check_parameter_map(template::AbstractInstruction, map::ParameterMap)
+function _check_parameter_map(template::AbstractInstruction, map::AbstractParameterMap)
     expected = nparameters(template)
     length(map) == expected ||
         throw(DimensionMismatch("expected $expected active parameter slots, received a map with $(length(map)) slots."))
     return map
 end
 
-ParameterMap(template::AbstractInstruction) = ParameterMap(collect(1:nparameters(template)))
+function ParameterMap(template::AbstractInstruction)
+    QuantumCircuits._has_parameterized(template) && throw(ArgumentError("named parameter templates compile their own affine map; use compile_parameters"))
+    return ParameterMap(collect(1:nparameters(template)))
+end
 ParameterMap(template::AbstractInstruction, indices) = _check_parameter_map(template, ParameterMap(indices))
 
 Base.length(map::ParameterMap) = length(map.indices)
@@ -61,6 +67,26 @@ Return an independent vector of the parameter identity for each active slot.
 Changing this vector does not change `map`.
 """
 parameter_indices(map::ParameterMap) = Int[map.indices...]
+
+"""Return independent input IDs in vector-binding order."""
+parameter_order(map::ParameterMap) = collect(1:nparameters(map))
+independent_parameters(map::ParameterMap) = parameter_order(map)
+trainable_parameters(map::ParameterMap) = parameter_order(map)
+_is_symbolic_map(::AbstractParameterMap) = false
+_parameter_row(map::ParameterMap, slot::Integer) = (map.indices[slot] => 1,)
+
+"""
+    expand_parameters(map::AbstractParameterMap, values)
+
+Expand independent inputs into active gate-slot order. Integer maps gather
+shared inputs; compiled affine maps also apply coefficients and offsets.
+"""
+function expand_parameters(map::ParameterMap, values::AbstractVector{<:Real})
+    Base.require_one_based_indexing(values)
+    length(values) == nparameters(map) || throw(DimensionMismatch("expected $(nparameters(map)) independent parameters, received $(length(values))."))
+    all(isfinite, values) || throw(ArgumentError("parameter values must be finite."))
+    return [values[index] for index in map.indices]
+end
 
 """
     accumulate_parameter_gradients(map::ParameterMap, slot_gradients::AbstractVector{<:Real})

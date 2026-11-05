@@ -8,9 +8,9 @@
 计算紧凑布局，尽可能减少电路深度。
 
 # 算法
-1. 使用拓扑排序处理门依赖关系
-2. 将独立门放在同一时间步
-3. 优化量子位使用
+1. 按指令顺序保留量子位上的依赖关系
+2. 将可并行的指令放在同一时间步，避免连接线重叠
+3. 将测量、后选择与经典条件作为全局顺序屏障
 
 # 参数
 - `circuit::QCircuit`: 量子电路
@@ -18,105 +18,14 @@
 # 返回
 - `Dict{Tuple{Int,Int}, Any}`: 门位置网格
 """
-function compute_compact_layout(circuit::QCircuit)
-    # 简化版本：使用贪心算法，但考虑门之间的依赖关系
-    all_qubits = Set{Int}()
-    for gate in circuit
-        for pos in positions(gate)
-            push!(all_qubits, pos)
-        end
-    end
-
-    if isempty(all_qubits)
-        return Dict{Tuple{Int,Int}, Any}()
-    end
-
-    nqubits = length(all_qubits)
-    qubit_list = sort(collect(all_qubits))
-    qubit_to_row = Dict(q => i for (i, q) in enumerate(qubit_list))
-
-    # 初始化
-    max_time = 0
-    occupied = Dict{Tuple{Int,Int}, Bool}()
-    gate_positions = Dict{Tuple{Int,Int}, Any}()
-
-    # 简单依赖分析：如果门共享量子位或跨度重叠，它们不能在同一时间步
-    for gate in circuit
-        gate_pos = positions(gate)
-        gate_rows = [qubit_to_row[q] for q in gate_pos]
-
-        # 多量子位门占据其跨度范围内的所有行
-        span_rows = minimum(gate_rows):maximum(gate_rows)
-
-        # 检查冲突：查找第一个没有冲突的时间步
-        time = 1
-        conflicting = true
-        while conflicting
-            conflicting = false
-            for r in span_rows
-                if get(occupied, (time, r), false)
-                    conflicting = true
-                    time += 1
-                    break
-                end
-            end
-        end
-
-        # 占据位置
-        for r in span_rows
-            occupied[(time, r)] = true
-        end
-
-        # 记录门位置
-        main_row = qubit_to_row[gate_pos[1]]
-        gate_positions[(time, main_row)] = (gate, gate_rows)
-
-        max_time = max(max_time, time)
-    end
-
-    return gate_positions
-end
+compute_compact_layout(circuit::QCircuit) = last(_compute_layout(circuit))
 
 """
-    compute_sequential_layout(circuit::QCircuit) -> Dict{Tuple{Int,Int}, Any}
+    compute_sequential_layout(circuit::QCircuit) -> Dict
 
-计算顺序布局，每个门占据单独的时间步。
-
-# 参数
-- `circuit::QCircuit`: 量子电路
-
-# 返回
-- `Dict{Tuple{Int,Int}, Any}`: 门位置网格
+按执行顺序逐个放置指令，每个指令占一列。
 """
-function compute_sequential_layout(circuit::QCircuit)
-    all_qubits = Set{Int}()
-    for gate in circuit
-        for pos in positions(gate)
-            push!(all_qubits, pos)
-        end
-    end
-
-    if isempty(all_qubits)
-        return Dict{Tuple{Int,Int}, Any}()
-    end
-
-    nqubits = length(all_qubits)
-    qubit_list = sort(collect(all_qubits))
-    qubit_to_row = Dict(q => i for (i, q) in enumerate(qubit_list))
-
-    gate_positions = Dict{Tuple{Int,Int}, Any}()
-
-    # 每个门占据单独的时间步
-    for (time, gate) in enumerate(circuit)
-        gate_pos = positions(gate)
-        gate_rows = [qubit_to_row[q] for q in gate_pos]
-
-        main_row = qubit_to_row[gate_pos[1]]
-        gate_positions[(time, main_row)] = (gate, gate_rows)
-    end
-
-    return gate_positions
-end
+compute_sequential_layout(circuit::QCircuit) = last(_compute_layout(circuit; sequential=true))
 
 """
     validate_layout(circuit::QCircuit, layout::Dict) -> Bool

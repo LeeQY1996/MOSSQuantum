@@ -27,84 +27,85 @@
 - `nqubits::Int`: 量子位数
 - `grid::Dict{Tuple{Int,Int}, Any}`: 门位置网格，(time, qubit) -> 门信息
 """
-function compute_circuit_layout(circuit::QCircuit)
-    # 收集所有量子位
-    all_qubits = Set{Int}()
-    for gate in circuit
-        for pos in positions(gate)
-            push!(all_qubits, pos)
+# Nested circuits execute recursively, so lay out their leaves in execution order.
+function _plot_instructions(circuit::QCircuit)
+    instructions = Any[]
+    for instruction in circuit
+        if instruction isa QCircuit
+            append!(instructions, _plot_instructions(instruction))
+        else
+            push!(instructions, instruction)
         end
     end
-
-    # 如果没有门，返回默认值
-    if isempty(all_qubits)
-        return 1, 1, Dict{Tuple{Int,Int}, Any}()
-    end
-
-    nqubits = length(all_qubits)
-    qubit_list = sort(collect(all_qubits))
-
-    # 创建量子位映射：实际量子位索引 -> 绘图行号
-    qubit_to_row = Dict(q => i for (i, q) in enumerate(qubit_list))
-
-    # 初始化时间步网格
-    max_time = 0
-    occupied = Dict{Tuple{Int,Int}, Bool}()  # (time, row) -> occupied
-    gate_positions = Dict{Tuple{Int,Int}, Any}()  # (time, row) -> gate信息
-
-    # 贪心布局算法
-    for gate in circuit
-        gate_pos = positions(gate)
-        gate_rows = [qubit_to_row[q] for q in gate_pos]
-
-        # 多量子位门占据其跨度范围内的所有行（避免竖直线与其他门重叠）
-        span_rows = minimum(gate_rows):maximum(gate_rows)
-
-        # 找到第一个可用的时间步
-        time = 1
-        while any(get(occupied, (time, r), false) for r in span_rows)
-            time += 1
-        end
-
-        # 占据该时间步跨度范围内的所有行
-        for r in span_rows
-            occupied[(time, r)] = true
-        end
-
-        # 记录门位置（使用第一个量子位作为主位置）
-        main_row = qubit_to_row[gate_pos[1]]
-        gate_positions[(time, main_row)] = (gate, gate_rows)
-
-        max_time = max(max_time, time)
-    end
-
-    return max_time, nqubits, gate_positions
+    return instructions
 end
 
-"""
-    compute_circuit_stats(circuit::QCircuit) -> (nqubits::Int, depth::Int, gate_count::Dict)
+function _plot_qubits(circuit::QCircuit)
+    return sort!(unique!(Int[q for instruction in _plot_instructions(circuit)
+                             for q in positions(instruction)]))
+end
 
-计算电路统计信息。
+# Measurements, post-selection and conditional feedback can carry dependencies
+# beyond their quantum wires. Keep them ordered relative to the whole diagram.
+_is_layout_barrier(instruction) = instruction isa Union{QMeasure,QSelect,QuantumCircuits.Conditional}
+
+function _compute_layout(circuit::QCircuit; sequential::Bool=false)
+    instructions = _plot_instructions(circuit)
+    qubit_list = _plot_qubits(circuit)
+    qubit_to_row = Dict(q => i for (i, q) in enumerate(qubit_list))
+    occupied = Set{Tuple{Int,Int}}()
+    last_on_wire = zeros(Int, length(qubit_list))
+    gate_positions = Dict{Tuple{Int,Int}, Any}()
+    depth = 0
+    fence = 1
+
+    for instruction in instructions
+        rows = Int[qubit_to_row[q] for q in positions(instruction)]
+        if isempty(rows)
+            # A condition with empty branches still reads classical data and
+            # has an execution position, but must not invent a quantum wire.
+            instruction isa QuantumCircuits.Conditional ||
+                throw(ArgumentError("cannot draw $(typeof(instruction)): it has no quantum positions"))
+            depth += 1
+            gate_positions[(depth, 0)] = (instruction, rows)
+            fence = depth + 1
+            continue
+        end
+        span = minimum(rows):maximum(rows)
+        barrier = _is_layout_barrier(instruction)
+        # A visual span may cover wires which are not operands; occupancy keeps
+        # its connecting line clear, while last_on_wire preserves execution order.
+        time = sequential || barrier ? depth + 1 : max(fence, maximum(last_on_wire[rows]) + 1)
+        while any((time, row) in occupied for row in span)
+            time += 1
+        end
+        for row in span
+            push!(occupied, (time, row))
+        end
+        for row in rows
+            last_on_wire[row] = time
+        end
+        gate_positions[(time, first(rows))] = (instruction, rows)
+        depth = max(depth, time)
+        barrier && (fence = time + 1)
+    end
+    return depth, length(qubit_list), gate_positions
+end
+
+compute_circuit_layout(circuit::QCircuit) = _compute_layout(circuit)
+
+"""
+    compute_circuit_stats(circuit::QCircuit) -> (nqubits, depth, gate_count)
+
+计算展平嵌套电路后的量子位数、布局深度和指令类型统计。
 """
 function compute_circuit_stats(circuit::QCircuit)
-    all_qubits = Set{Int}()
-    gate_counts = Dict{String, Int}()
-
-    for gate in circuit
-        for pos in positions(gate)
-            push!(all_qubits, pos)
-        end
-
-        # 统计门类型
-        gate_type = string(typeof(gate).name.name)
-        gate_counts[gate_type] = get(gate_counts, gate_type, 0) + 1
+    depth, nqubits, _ = compute_circuit_layout(circuit)
+    gate_counts = Dict{String,Int}()
+    for instruction in _plot_instructions(circuit)
+        name = string(typeof(instruction).name.name)
+        gate_counts[name] = get(gate_counts, name, 0) + 1
     end
-
-    nqubits = length(all_qubits)
-
-    # 计算深度（简化版本，实际深度需要布局算法）
-    depth = isempty(circuit) ? 1 : length(circuit)
-
     return nqubits, depth, gate_counts
 end
 
@@ -118,27 +119,7 @@ end
 内部电路绘制函数，执行实际绘图工作。
 """
 function plot_circuit_internal(circuit::QCircuit; kwargs...)
-    # 计算布局
-    depth, nqubits, gate_grid = compute_circuit_layout(circuit)
-
-    # 创建绘图画布
-    plt = new_circuit_plot(nqubits, depth; kwargs...)
-
-    # 绘制所有门
-    for ((time, row), (gate, rows)) in gate_grid
-        # 根据门类型调用相应的绘制函数
-        if length(rows) == 1
-            draw_gate!(plt, gate, time, rows[1])
-        elseif length(rows) == 2
-            draw_gate!(plt, gate, time, (rows[1], rows[2]))
-        elseif length(rows) == 3
-            draw_gate!(plt, gate, time, (rows[1], rows[2], rows[3]))
-        else
-            error("门绘制尚未实现：$(typeof(gate))（$(length(rows))量子位）")
-        end
-    end
-
-    return plt
+    return plot(circuit; kwargs...)
 end
 
 """

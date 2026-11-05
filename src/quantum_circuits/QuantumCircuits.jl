@@ -1,6 +1,11 @@
 module QuantumCircuits
 
 using SparseArrays, LinearAlgebra, TensorOperations
+using UUIDs, Random
+
+export Parameter, ParameterExpr, UnboundParameterError
+export parameterize, materialize_parameters, parameter_slots, parameter_expressions, independent_parameters
+export substitute_parameters, parameter_order, trainable_parameters
 
 # gates
 export nqubits, positions, mat, ordered_positions, ordered_mat, change_positions, shift, differentiate
@@ -32,6 +37,7 @@ export QubitsTerm, oplist, coeff, QubitsOperator, matrix, simplify
 abstract type QuantumOperation end
 
 include("instructions.jl")
+include("parameters/expressions.jl")
 
 # auxiliary
 include("utils/tensor_ops.jl")
@@ -60,6 +66,7 @@ include("channels/one_qubit.jl")
 # circuit
 include("circuits/circuit.jl")
 include("circuits/classical_control.jl")
+include("parameters/instructions.jl")
 
 # qubit hamiltonian
 include("operators/qubits_term.jl")

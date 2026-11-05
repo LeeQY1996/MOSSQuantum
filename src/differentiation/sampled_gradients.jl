@@ -49,11 +49,11 @@ Noise rules are expanded once at construction and frozen, including rules that
 inspect gate angles. Use an explicit function with finite differences for a
 parameter-dependent noise model. Batch objectives are not implicit reductions.
 """
-struct ShotExpectationObjective{S<:AbstractQuantumState,B<:AbstractBackend,M}
+struct ShotExpectationObjective{S<:AbstractQuantumState,B<:AbstractBackend,M,P<:AbstractParameterMap}
     template::QCircuit
     plan::MeasurementPlan
     initial_state::S
-    parameter_map::ParameterMap
+    parameter_map::P
     shots::Int
     backend::B
     method::M
@@ -62,33 +62,42 @@ struct ShotExpectationObjective{S<:AbstractQuantumState,B<:AbstractBackend,M}
     prepared::Union{Nothing,EstimationPlan}
     allocation::Union{Symbol,VarianceAllocation}
 end
-function ShotExpectationObjective(template::QCircuit,observable::Union{QubitsTerm,QubitsOperator},initial::AbstractQuantumState;
-        shots::Integer,parameter_map::ParameterMap=ParameterMap(template),backend::AbstractBackend=MOSSQuantum.backend(initial),
+function ShotExpectationObjective(template::Union{QCircuit,_ParameterContext},observable::Union{QubitsTerm,QubitsOperator},initial::AbstractQuantumState;
+        shots::Integer,parameter_map=nothing,parameter_order=nothing,fixed=nothing,backend::AbstractBackend=MOSSQuantum.backend(initial),
         method=DensityMatrixEvolution(),noise_model=nothing,readout=ReadoutError[],classical=nothing,
         grouping::Symbol=:qwc,atol::Real=0,max_terms::Integer=100_000,allocation=:uniform)
     initial isa Union{BatchStateVector,BatchDensityMatrix} && throw(ArgumentError("a shot objective needs one state; reduce batch objectives explicitly"))
-    _check_parameter_map(template,parameter_map)
-    circuit,errors = _noise_configuration(copy_instruction(template),noise_model,readout)
-    _check_parameter_map(circuit,parameter_map)
+    circuit,map,errors = _prepare_execution_parameters(template;parameter_map,parameter_order,fixed,noise_model,readout)
     plan = measurement_plan(observable;grouping=grouping,atol=atol,max_terms=max_terms)
     budget = _execution_shots(shots)
     _check_circuit_estimation(plan,circuit,initial,budget)
     register = _initial_classical(classical)
-    _check_noise_execution(circuit,initial,backend,method,Int[],errors;classical=register)
+    if _is_symbolic_map(map)
+        validate_positions(circuit,nqubits(initial))
+        _validate_classical_flow(circuit,register)
+        _check_readout_errors(errors)
+    else
+        _check_noise_execution(circuit,initial,backend,method,Int[],errors;classical=register)
+    end
     prepared = backend isa CPUBackend && initial isa Union{StateVector,DensityMatrix} ? prepare_estimation(circuit,observable,initial;
-        method=method,readout=errors,classical=register,grouping=grouping,atol=atol,max_terms=max_terms) : nothing
+        parameter_map=map,method=method,readout=errors,classical=register,grouping=grouping,atol=atol,max_terms=max_terms) : nothing
     if isnothing(prepared)
         allocation === :uniform || throw(ArgumentError("adaptive allocation requires CPU prepared execution"))
     else
         _estimation_cost(prepared,budget,allocation)
     end
-    return ShotExpectationObjective(circuit,plan,copy(initial),parameter_map,budget,backend,method,errors,register,prepared,allocation)
+    return ShotExpectationObjective(circuit,plan,copy(initial),map,budget,backend,method,errors,register,prepared,allocation)
 end
+parameter_order(objective::ShotExpectationObjective) = parameter_order(objective.parameter_map)
+trainable_parameters(objective::ShotExpectationObjective) = trainable_parameters(objective.parameter_map)
+independent_parameters(objective::ShotExpectationObjective) = independent_parameters(objective.parameter_map)
+parameter_info(objective::ShotExpectationObjective) = parameter_info((;template=objective.template,parameter_map=objective.parameter_map))
+initial_parameters(objective::ShotExpectationObjective;kwargs...) = initial_parameters((;template=objective.template,parameter_map=objective.parameter_map);kwargs...)
 required_shots(objective::ShotExpectationObjective) = isempty(objective.plan.groups) ? 0 : objective.shots
 function estimate(objective::ShotExpectationObjective,values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng(),budget=nothing)
     x = _gradient_input(objective,values)
     if !isnothing(objective.prepared)
-        return estimate(objective.prepared,x[parameter_indices(objective.parameter_map)];shots=objective.shots,
+        return estimate(objective.prepared,x;shots=objective.shots,
                         allocation=objective.allocation,rng=rng,budget=budget)
     end
     bound = bind_parameters(objective.template,x,objective.parameter_map)
@@ -99,7 +108,8 @@ end
 evaluate(objective::ShotExpectationObjective,values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng(),budget=nothing) = estimate(objective,values;rng=rng,budget=budget).value
 function _sample_bound(objective::ShotExpectationObjective,bound,rng)
     if !isnothing(objective.prepared)
-        return estimate(objective.prepared,active_parameters(bound);shots=objective.shots,allocation=objective.allocation,rng=rng)
+        return estimate(_bind_estimation_flat(objective.prepared,active_parameters(bound));
+                        shots=objective.shots,allocation=objective.allocation,rng=rng)
     end
     return estimate(objective.plan,bound,objective.initial_state;shots=objective.shots,
         backend=objective.backend,method=objective.method,readout=objective.readout,classical=objective.classical,rng=rng)
@@ -157,10 +167,28 @@ function _shift_recipes!(recipes,circuit)
     end
     return true
 end
+const _KnownShiftGate = Union{RxGate,RyGate,RzGate,PHASEGate,CPHASEGate,CCPHASEGate,CRxGate,CRyGate,CRzGate}
+_known_shift_gate(operation::Gate) = operation isa _KnownShiftGate
+_known_shift_gate(operation::AdjointQuantumGate) = _known_shift_gate(operation.parent)
+function _static_shift_support(circuit::QCircuit)
+    for operation in circuit
+        if operation isa QCircuit
+            _static_shift_support(operation) || return false
+        elseif operation isa Conditional
+            _static_shift_support(operation.then_branch) && _static_shift_support(operation.else_branch) || return false
+        elseif nparameters(operation)>0
+            gate = operation isa QuantumCircuits.ParameterizedInstruction ? operation.prototype : operation
+            gate isa Gate && _known_shift_gate(gate) || return false
+        end
+    end
+    return true
+end
+
 function supports_gradient(::ParameterShift,objective::Union{ExpectationObjective,ShotExpectationObjective})
     try
         _check_parameter_map(objective.template,objective.parameter_map)
-        objective isa ExpectationObjective && !_shot_deterministic(objective.template) && return false
+        objective isa ExpectationObjective && !_parameter_deterministic(objective.template) && return false
+        _is_symbolic_map(objective.parameter_map) && return _static_shift_support(objective.template)
         return _shift_recipes!(Any[],objective.template)
     catch err
         err isa InterruptException && rethrow()
@@ -168,13 +196,63 @@ function supports_gradient(::ParameterShift,objective::Union{ExpectationObjectiv
     end
 end
 supports_gradient(::Union{FiniteDifference,SPSAGradient},::Union{ShotExpectationObjective,Function}) = true
-supports_gradient(::Union{FiniteDifference,SPSAGradient},objective::ExpectationObjective) = _shot_deterministic(objective.template)
+supports_gradient(::Union{FiniteDifference,SPSAGradient},objective::ExpectationObjective) = _parameter_deterministic(objective.template)
+
+function _check_gradient_gate_values(circuit::QCircuit)
+    for op in circuit
+        if op isa QCircuit
+            _check_gradient_gate_values(op)
+        elseif op isa Conditional
+            _check_gradient_gate_values(op.then_branch)
+            _check_gradient_gate_values(op.else_branch)
+        elseif op isa Gate
+            _check_batch_objective_gate(op)
+        end
+    end
+    return nothing
+end
+function _validate_sampled_bound(objective::ExpectationObjective,bound)
+    validate_positions(bound,nqubits(objective.initial_state))
+    validate_backend_execution(objective.backend,bound,objective.initial_state;mode=:apply)
+    supports(objective.backend,bound,objective.initial_state) ||
+        throw(UnsupportedOperation(objective.backend,bound,objective.initial_state,:apply))
+    objective.backend isa CPUBackend && _check_gradient_gate_values(bound)
+    return bound
+end
+function _validate_sampled_bound(objective::ShotExpectationObjective,bound)
+    _check_noise_execution(bound,objective.initial_state,objective.backend,objective.method,Int[],
+                           objective.readout;classical=objective.classical)
+    objective.backend isa CPUBackend && _check_gradient_gate_values(bound)
+    return bound
+end
+function supports_gradient(method::Union{ParameterShift,FiniteDifference,SPSAGradient},
+                           objective::Union{ExpectationObjective,ShotExpectationObjective},
+                           values::AbstractVector{<:Real})
+    try
+        x = _gradient_input(objective,values)
+        objective isa ExpectationObjective && !_parameter_deterministic(objective.template) && return false
+        bound = _validate_sampled_bound(objective,bind_parameters(objective.template,x,objective.parameter_map))
+        return !(method isa ParameterShift) || _shift_recipes!(Any[],bound)
+    catch err
+        err isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        return false
+    end
+end
+supports_gradient(method::Union{FiniteDifference,SPSAGradient},objective::Function,values::AbstractVector{<:Real}) =
+    supports_gradient(method,objective)
+
+function _require_sampled_gradient_support(method,objective,values)
+    supports_gradient(method,objective,values) || throw(UnsupportedGradient(method,objective))
+    return nothing
+end
 
 function _gradient_input(objective,values)
     _check_gradient_input(values)
     if objective isa Union{ExpectationObjective,ShotExpectationObjective}
         _check_parameter_map(objective.template,objective.parameter_map)
         length(values)==nparameters(objective.parameter_map) || throw(DimensionMismatch("independent parameter count disagrees"))
+        _is_symbolic_map(objective.parameter_map) && any(x -> x isa Bool,values) &&
+            throw(ArgumentError("symbolic parameter values must be real numbers, not Bool"))
     end
     result = Float64[values...]
     all(isfinite,result) || throw(ArgumentError("parameters overflow Float64"))
@@ -191,10 +269,12 @@ function _gradient_observation(objective,values,rng)
 end
 function _gradient_flat_observation(objective,flat,rng)
     if objective isa ShotExpectationObjective && !isnothing(objective.prepared)
-        sample = estimate(objective.prepared,flat;shots=objective.shots,allocation=objective.allocation,rng=rng)
+        sample = estimate(_bind_estimation_flat(objective.prepared,flat);
+                          shots=objective.shots,allocation=objective.allocation,rng=rng)
         return (value=sample.value,variance=sample.variance,shots=sample.shots)
     end
-    bound = bind_parameters(objective.template,flat)
+    bound = _is_symbolic_map(objective.parameter_map) ? _flat_bind(objective.template,flat) :
+        bind_parameters(objective.template,flat)
     if objective isa ShotExpectationObjective
         sample = _sample_bound(objective,bound,rng)
         return (value=sample.value,variance=sample.variance,shots=sample.shots)
@@ -215,36 +295,57 @@ end
 estimate_gradient(method::AbstractGradientMethod,objective,values::AbstractVector{<:Real};kwargs...) =
     throw(UnsupportedGradient(method,objective))
 function _estimate_gradient(method::ParameterShift,objective::Union{ExpectationObjective,ShotExpectationObjective},values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng())
-    _require_gradient_support(method,objective)
     x = _gradient_input(objective,values)
-    recipes = Any[]; _shift_recipes!(recipes,objective.template)
-    flat = x[parameter_indices(objective.parameter_map)]
+    _require_sampled_gradient_support(method,objective,x)
+    bound = bind_parameters(objective.template,x,objective.parameter_map)
+    recipes = Any[]
+    _shift_recipes!(recipes,bound) || throw(UnsupportedGradient(method,objective))
+    flat = expand_parameters(objective.parameter_map,x)
     # Validate all recipes before any objective sampling or RNG consumption.
+    if _is_symbolic_map(objective.parameter_map)
+        for (slot,recipe) in enumerate(recipes), (_,shift) in recipe
+            shifted = copy(flat); shifted[slot] += shift
+            _validate_sampled_bound(objective,_flat_bind(objective.template,shifted))
+        end
+    end
     value = _gradient_observation(objective,x,rng)
     gradient = zeros(length(x)); covariance = zeros(length(x),length(x))
     shots,evaluations = value.shots,1
     for (slot,recipe) in enumerate(recipes)
-        target = objective.parameter_map.indices[slot]
+        row = _parameter_row(objective.parameter_map,slot)
         for (weight,shift) in recipe
             shifted = copy(flat); shifted[slot] += shift
             sample = _gradient_flat_observation(objective,shifted,rng)
-            gradient[target] += weight*sample.value
-            covariance[target,target] += weight^2*sample.variance
+            for (target,coefficient) in row
+                gradient[target] += coefficient*weight*sample.value
+                for (other,other_coefficient) in row
+                    covariance[target,other] += coefficient*other_coefficient*weight^2*sample.variance
+                end
+            end
             shots = Base.checked_add(shots,sample.shots); evaluations += 1
         end
     end
     return _gradient_result(value,gradient,covariance,copy(covariance),shots,evaluations)
 end
 function _estimate_gradient(method::FiniteDifference,objective,values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng())
-    _require_gradient_support(method,objective)
     x = _gradient_input(objective,values)
-    value = _gradient_observation(objective,x,rng)
-    gradient = zeros(length(x)); covariance = zeros(length(x),length(x))
-    shots,evaluations = value.shots,1
+    _require_sampled_gradient_support(method,objective,x)
+    perturbations = Tuple{Vector{Float64},Vector{Float64}}[]
     for i in eachindex(x)
         plus,minus = copy(x),copy(x)
         plus[i] += method.step; minus[i] -= method.step
         plus[i] != minus[i] || throw(ArgumentError("difference step is below parameter resolution"))
+        all(isfinite,plus) && all(isfinite,minus) || throw(ArgumentError("difference step overflows parameter values"))
+        if objective isa Union{ExpectationObjective,ShotExpectationObjective} && _is_symbolic_map(objective.parameter_map)
+            _validate_sampled_bound(objective,bind_parameters(objective.template,plus,objective.parameter_map))
+            _validate_sampled_bound(objective,bind_parameters(objective.template,minus,objective.parameter_map))
+        end
+        push!(perturbations,(plus,minus))
+    end
+    value = _gradient_observation(objective,x,rng)
+    gradient = zeros(length(x)); covariance = zeros(length(x),length(x))
+    shots,evaluations = value.shots,1
+    for (i,(plus,minus)) in enumerate(perturbations)
         a,b = _gradient_observation(objective,plus,rng),_gradient_observation(objective,minus,rng)
         gradient[i] = (a.value-b.value)/(2method.step)
         covariance[i,i] = (a.variance+b.variance)/(4method.step^2)
@@ -253,8 +354,8 @@ function _estimate_gradient(method::FiniteDifference,objective,values::AbstractV
     return _gradient_result(value,gradient,covariance,copy(covariance),shots,evaluations)
 end
 function _estimate_gradient(method::SPSAGradient,objective,values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng())
-    _require_gradient_support(method,objective)
     x = _gradient_input(objective,values)
+    _require_sampled_gradient_support(method,objective,x)
     value = _gradient_observation(objective,x,rng)
     n,m = length(x),method.directions
     gradient = zeros(n); sampling = zeros(n,n)
@@ -281,11 +382,12 @@ function value_and_gradient(method::Union{ParameterShift,FiniteDifference,SPSAGr
 end
 
 function required_shots(method::Union{ParameterShift,FiniteDifference,SPSAGradient},objective,values::AbstractVector{<:Real})
-    _require_gradient_support(method,objective)
     x = _gradient_input(objective,values)
+    _require_sampled_gradient_support(method,objective,x)
     calls = if method isa ParameterShift
         recipes = Any[]
-        _shift_recipes!(recipes,objective.template)
+        bound = bind_parameters(objective.template,x,objective.parameter_map)
+        _shift_recipes!(recipes,bound) || throw(UnsupportedGradient(method,objective))
         Base.checked_add(1,sum(length,recipes;init=0))
     elseif method isa FiniteDifference
         Base.checked_add(1,Base.checked_mul(2,length(x)))

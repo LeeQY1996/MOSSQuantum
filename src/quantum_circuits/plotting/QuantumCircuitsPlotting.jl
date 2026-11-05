@@ -4,9 +4,13 @@
 module QuantumCircuitsPlotting
 
 using ..Plots, ..LaTeXStrings
+import ..Plots: plot, savefig
 import ..QuantumCircuits
 import ..QuantumCircuits: Gate, ParametricGate, QuantumGate, AdjointQuantumGate
 import ..QuantumCircuits: QCircuit, QMeasure, QSelect, AbstractQuantumMap
+import ..QuantumCircuits: AbstractInstruction, Conditional, parameters
+import ..QuantumCircuits: ParameterizedInstruction
+import ..MOSSQuantum: Delay, NoisyCircuit
 import ..QuantumCircuits: positions
 # 导入具体门类型
 import ..QuantumCircuits: XGate, YGate, ZGate, SGate, HGate, TGate, sqrtXGate, sqrtYGate
@@ -28,5 +32,6 @@ include("circuit.jl")
 include("layout.jl")
 include("styles.jl")
 include("api.jl")
+include("instructions.jl")
 
 end # module

@@ -97,7 +97,8 @@ end
 """
     validate_backend_execution(backend, circuit, state; mode=:apply)
 
-Optional backend preflight for a circuit. The default does nothing; a backend
+Optional backend preflight for a circuit. The default rejects unbound parameter
+templates and otherwise performs no backend-specific checks; a backend
 may specialize it to reject unsupported input with a more specific diagnostic.
 It must not mutate the circuit, state, or RNG. `mode` is `:apply`, `:simulate`,
 or `:execute`, and the original circuit is supplied so that an extension can
@@ -105,8 +106,8 @@ account for their different measurement and post-selection semantics. This
 hook supplements, rather than replaces, `supports` and position validation.
 Backend-specific circuit `apply!` implementations should call it themselves.
 """
-validate_backend_execution(::AbstractBackend, ::QCircuit, ::AbstractQuantumState;
-                           mode::Symbol=:apply) = nothing
+validate_backend_execution(::AbstractBackend, circuit::QCircuit, ::AbstractQuantumState;
+                           mode::Symbol=:apply) = QuantumCircuits._require_bound_parameters(circuit)
 
 # Dense state families; CPU support also requires an eligible storage layout.
 const _DenseCPUState = Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}
@@ -186,10 +187,12 @@ Unknown combinations throw `UnsupportedOperation`. Backend extensions validate
 positions before mutating their state and return the resulting state.
 """
 function apply!(b::AbstractBackend, operation, state::AbstractQuantumState; kwargs...)
+    operation isa AbstractInstruction && QuantumCircuits._require_bound_parameters(operation)
     throw(UnsupportedOperation(b, operation, state, :apply))
 end
 
 function apply!(b::CPUBackend, operation::AbstractInstruction, state::_DenseCPUState; kwargs...)
+    QuantumCircuits._require_bound_parameters(operation)
     _require_cpu_storage(state, operation)
     supports(b, operation, state) || throw(UnsupportedOperation(b, operation, state, :apply))
     validate_positions(operation, nqubits(state))
@@ -197,6 +200,7 @@ function apply!(b::CPUBackend, operation::AbstractInstruction, state::_DenseCPUS
 end
 
 function _apply_backend_circuit!(b::AbstractBackend, circuit::QCircuit, state::AbstractQuantumState)
+    QuantumCircuits._require_bound_parameters(circuit)
     validate_backend_execution(b, circuit, state; mode=:apply)
     supports(b, circuit, state) || throw(UnsupportedOperation(b, circuit, state, :apply))
     validate_positions(circuit, nqubits(state))
@@ -217,6 +221,7 @@ apply!(b::AbstractBackend, circuit::QCircuit, state::AbstractQuantumState) =
 # Resolve the circuit/backend intersection explicitly.
 function apply!(b::CPUBackend, circuit::QCircuit, state::_DenseCPUState;
                 rng::Random.AbstractRNG=Random.default_rng())
+    QuantumCircuits._require_bound_parameters(circuit)
     _require_cpu_storage(state, circuit)
     validate_backend_execution(b, circuit, state; mode=:apply)
     supports(b, circuit, state) || throw(UnsupportedOperation(b, circuit, state, :apply))
@@ -311,6 +316,7 @@ probabilities(state::_DenseCPUState; qubits=1:nqubits(state)) =
     probabilities(backend(state), state; qubits=qubits)
 
 function _apply_circuit_copy(circuit::QCircuit, state::_DenseCPUState)
+    QuantumCircuits._require_bound_parameters(circuit)
     chosen = backend(state)
     supports(chosen, circuit, state) || throw(UnsupportedOperation(chosen, circuit, state, :apply))
     validate_positions(circuit, nqubits(state))

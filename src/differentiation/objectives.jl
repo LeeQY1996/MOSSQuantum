@@ -83,11 +83,14 @@ function _supports_cpu_adjoint(objective::ExpectationObjective, template::QCircu
     observable = objective.observable
     observable isa Union{QubitsTerm,QubitsOperator} || return false
     try
-        _check_parameter_map(template, objective.parameter_map)
+        _check_parameter_map(objective.template, objective.parameter_map)
+        nparameters(template) == length(objective.parameter_map) || return false
         validate_positions(template, nqubits(objective.initial_state))
         validate_positions(observable, nqubits(objective.initial_state))
         _cpu_adjoint_observable_valid(observable) || return false
-        final_type = _cpu_adjoint_circuit_state(template, typeof(objective.initial_state))
+        final_type = QuantumCircuits._has_parameterized(template) ?
+            _static_cpu_adjoint_circuit_state(template, typeof(objective.initial_state)) :
+            _cpu_adjoint_circuit_state(template, typeof(objective.initial_state))
         return !isnothing(final_type) && _cpu_supports(observable, final_type, :expectation)
     catch error
         error isa Union{InterruptException,OutOfMemoryError} && rethrow()
@@ -96,6 +99,37 @@ function _supports_cpu_adjoint(objective::ExpectationObjective, template::QCircu
 end
 
 supports_gradient(::AdjointGradient, objective::ExpectationObjective) = _supports_cpu_adjoint(objective)
+
+_builtin_parameter_prototype(g::Gate) = g isa ParametricGate && parentmodule(typeof(g)) === QuantumCircuits
+_builtin_parameter_prototype(g::AdjointQuantumGate) = _builtin_parameter_prototype(g.parent)
+
+# Inspect known gate families without constructing or evaluating placeholder
+# matrices. External value-dependent gates are checked at their binding point.
+function _static_cpu_adjoint_circuit_state(circuit::QCircuit, state_type::Type)
+    for instruction in circuit
+        if instruction isa QCircuit
+            state_type = _static_cpu_adjoint_circuit_state(instruction, state_type)
+            isnothing(state_type) && return nothing
+        elseif instruction isa QuantumCircuits.ParameterizedInstruction
+            prototype = instruction.prototype
+            _builtin_parameter_prototype(prototype) && _cpu_supports(prototype, state_type, :apply) || return nothing
+        else
+            state_type = _cpu_adjoint_circuit_state(QCircuit([instruction]), state_type)
+            isnothing(state_type) && return nothing
+        end
+    end
+    return state_type
+end
+
+function supports_gradient(::AdjointGradient, objective::ExpectationObjective, values::AbstractVector{<:Real})
+    try
+        bound = bind_parameters(objective.template, values, objective.parameter_map)
+        return _supports_cpu_adjoint(objective, bound)
+    catch error
+        error isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        return false
+    end
+end
 
 # Legacy pure-state operator contractions allocate in the state's scalar domain.
 # Promote the observation workspace when a real state meets a complex Hermitian
@@ -119,8 +153,39 @@ end
 _cpu_objective_expectation_pullback(observable::QubitsOperator, state::Union{StateVector,DensityMatrix}) =
     _qop_expec_util(observable, state)
 
+# Reject structurally unsupported paths before any external numerical writer.
+# Gate domains and derivative matrices are still checked at the actual input.
+_adjoint_parameter_structure(::Gate) = true
+_adjoint_parameter_structure(::QuantumCircuits.ParameterizedInstruction) = true
+_adjoint_parameter_structure(instruction::QuantumMap) = nparameters(instruction) == 0
+_adjoint_parameter_structure(::AbstractInstruction) = false
+_adjoint_parameter_structure(circuit::QCircuit) = all(_adjoint_parameter_structure, circuit)
+function _require_adjoint_structure(method, objective)
+    valid = try
+        objective.backend isa CPUBackend &&
+            objective.initial_state isa Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix} &&
+            _cpu_storage_supported(storage(objective.initial_state)) &&
+            objective.observable isa Union{QubitsTerm,QubitsOperator} &&
+            _cpu_adjoint_observable_valid(objective.observable) &&
+            _adjoint_parameter_structure(objective.template) && begin
+                validate_positions(objective.template, nqubits(objective.initial_state))
+                validate_positions(objective.observable, nqubits(objective.initial_state))
+                true
+            end
+    catch error
+        error isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        false
+    end
+    valid || throw(UnsupportedGradient(method, objective))
+    return nothing
+end
+
 function value_and_pullback(method::AdjointGradient, objective::ExpectationObjective, values::AbstractVector{<:Real})
-    _require_gradient_support(method, objective)
+    if _is_symbolic_map(objective.parameter_map)
+        _require_adjoint_structure(method, objective)
+    else
+        _require_gradient_support(method, objective)
+    end
     _check_gradient_input(values)
     saved_values = copy(values)
     bound = bind_parameters(objective.template, saved_values, objective.parameter_map)
@@ -159,13 +224,16 @@ function _supports_cpu_batch_adjoint(objective::BatchExpectationObjective, templ
     observable isa Union{QubitsTerm,QubitsOperator} || return false
     try
         _check_batch_objective_configuration(objective)
-        _check_parameter_map(template, objective.parameter_map)
+        _check_parameter_map(objective.template, objective.parameter_map)
+        nparameters(template) == length(objective.parameter_map) || return false
         register_size = nqubits(objective.initial_state)
         validate_positions(template, register_size)
         validate_positions(observable, register_size)
         _cpu_adjoint_observable_valid(observable) || return false
         state_type = typeof(objective.initial_state)
-        final_type = _cpu_adjoint_circuit_state(template, state_type)
+        final_type = QuantumCircuits._has_parameterized(template) ?
+            _static_cpu_adjoint_circuit_state(template, state_type) :
+            _cpu_adjoint_circuit_state(template, state_type)
         return !isnothing(final_type) && _cpu_supports(observable, final_type, :expectation)
     catch error
         error isa Union{InterruptException,OutOfMemoryError} && rethrow()
@@ -175,9 +243,23 @@ end
 
 supports_gradient(::AdjointGradient, objective::BatchExpectationObjective) = _supports_cpu_batch_adjoint(objective)
 
+function supports_gradient(::AdjointGradient, objective::BatchExpectationObjective, values::AbstractVector{<:Real})
+    try
+        bound = bind_parameters(objective.template, values, objective.parameter_map)
+        return _supports_cpu_batch_adjoint(objective, bound)
+    catch error
+        error isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        return false
+    end
+end
+
 function value_and_pullback(method::AdjointGradient, objective::BatchExpectationObjective,
                             values::AbstractVector{<:Real})
-    _require_gradient_support(method, objective)
+    if _is_symbolic_map(objective.parameter_map)
+        _require_adjoint_structure(method, objective)
+    else
+        _require_gradient_support(method, objective)
+    end
     _check_gradient_input(values)
     saved_values = copy(values)
     bound = bind_parameters(objective.template, saved_values, objective.parameter_map)

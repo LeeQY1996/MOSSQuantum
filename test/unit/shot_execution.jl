@@ -1,10 +1,35 @@
 using Test, Random, MOSSQuantum
 
 module ShotExecutionBackendFixture
-using MOSSQuantum
+using MOSSQuantum, Random
 struct ProbeBackend <: AbstractBackend
     reads::Base.RefValue{Int}
     malformed::Symbol
+end
+
+# An independent backend that deliberately has no probability-table path.
+struct DirectBackend <: AbstractBackend
+    validations::Base.RefValue{Int}
+end
+struct DirectSampler <: AbstractVector{Int}
+    state::StateVector
+    qubits::Vector{Int}
+end
+Base.size(s::DirectSampler) = (length(s.qubits),)
+Base.getindex(s::DirectSampler, index::Int) = s.qubits[index]
+MOSSQuantum.supports(::DirectBackend, ::QCircuit, ::StateVector; action=:apply) = action === :apply
+MOSSQuantum.probabilities(::DirectBackend, ::StateVector; qubits=()) = error("probability table requested")
+function MOSSQuantum.validate_terminal_sampling(b::DirectBackend, state::StateVector, qubits)
+    b.validations[] += 1
+    probabilities(CPUBackend(), state; qubits=())
+    return nothing
+end
+MOSSQuantum.prepare_terminal_sampling(::DirectBackend, state::StateVector, qubits) =
+    DirectSampler(state, collect(qubits))
+function MOSSQuantum.draw_terminal_samples(rng::AbstractRNG, sampler::DirectSampler, shots::Integer)
+    distribution = probabilities(CPUBackend(), sampler.state; qubits=sampler.qubits)
+    return MOSSQuantum._draw_samples!(Matrix{Int}(undef, shots, length(sampler.qubits)),
+                                      rng, distribution, shots, length(sampler.qubits))
 end
 MOSSQuantum.supports(::ProbeBackend, ::QCircuit, ::StateVector; action=:apply) = action === :apply
 function MOSSQuantum.probabilities(b::ProbeBackend, state::StateVector; qubits=1:nqubits(state))
@@ -13,6 +38,20 @@ function MOSSQuantum.probabilities(b::ProbeBackend, state::StateVector; qubits=1
     b.malformed === :shape && return [0.5, 0.25, 0.25]
     return probabilities(CPUBackend(), state; qubits=qubits)
 end
+end
+
+@testset "Terminal sampler extension" begin
+    chosen = ShotExecutionBackendFixture.DirectBackend(Ref(0))
+    state = StateVector(2)
+    result = execute(QCircuit(), state; shots=12, backend=chosen, qubits=[2,1],
+                     rng=MersenneTwister(10))
+    @test result.counts == Dict("00" => 12)
+    @test chosen.validations[] > 0
+    @test execute(QCircuit(), state; shots=0, backend=chosen).shots == 0
+    readout = ReadoutError(2; p0_to_1=1.0, p1_to_0=1.0)
+    @test execute(QCircuit(), state; shots=12, backend=chosen, qubits=[2,1],
+                  readout=readout).counts == Dict("10" => 12)
+    @test estimate(QubitsTerm(1=>"Z"), state; shots=10, backend=chosen).value == 1
 end
 
 @testset "Circuit shots and terminal readout" begin

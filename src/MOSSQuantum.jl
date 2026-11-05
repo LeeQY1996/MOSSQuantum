@@ -14,10 +14,13 @@ include("quantum_circuits/QuantumCircuits.jl")
 using .QuantumCircuits
 using .QuantumCircuits.Gates
 using .QuantumCircuits: permute, _kron_ops, _get_op, get_largest_pos, QOP_DATA_VALUE_TYPE
+import .QuantumCircuits: independent_parameters, parameter_order, trainable_parameters
 
 include("api/exports.jl")
 include("api/parameter_map.jl")
 include("api/parameter_binding.jl")
+include("api/symbolic_parameters.jl")
+include("api/parameter_initialization.jl")
 
 # Shared indexing, tensor and sampling helpers.
 include("utils/distance.jl")
@@ -93,6 +96,7 @@ include("observables/shot_estimation.jl")
 include("observables/circuit_estimation.jl")
 include("observables/estimation_plans.jl")
 include("execution/experiments.jl")
+include("api/execution_capability.jl")
 
 # Differentiation and partial trace.
 include("differentiation/circuit.jl")

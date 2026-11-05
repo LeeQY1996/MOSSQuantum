@@ -29,11 +29,25 @@ end
 @adjoint expectation(m::Union{QubitsTerm,QubitsOperator}, state::Union{BatchStateVector,BatchDensityMatrix}) = _batch_expectation_adjoint(m, state)
 
 @adjoint bind_parameters(template::QCircuit, values::AbstractVector{<:Real}) = begin
+    if MOSSQuantum.QuantumCircuits._has_parameterized(template)
+        compiled = compile_parameters(template)
+        bound = bind_parameters(compiled.template, values, compiled.parameter_map)
+        return bound, gradient -> (nothing,
+            isnothing(gradient) ? nothing : Zygote.ProjectTo(values)(accumulate_parameter_gradients(compiled.parameter_map, gradient)))
+    end
     bound = bind_parameters(template, values)
-    return bound, gradient -> (nothing, Zygote.ProjectTo(values)(gradient))
+    return bound, gradient -> (nothing, isnothing(gradient) ? nothing : Zygote.ProjectTo(values)(gradient))
 end
 
-@adjoint bind_parameters(template::QCircuit, values::AbstractVector{<:Real}, map::ParameterMap) = begin
+@adjoint bind_parameters(compiled::MOSSQuantum._ParameterContext, values::AbstractVector{<:Real}) = begin
+    bound = bind_parameters(compiled, values)
+    map = compiled.parameter_map
+    project = Zygote.ProjectTo(values)
+    return bound, gradient -> (nothing,
+        isnothing(gradient) ? nothing : project(accumulate_parameter_gradients(map, gradient)))
+end
+
+@adjoint bind_parameters(template::QCircuit, values::AbstractVector{<:Real}, map::AbstractParameterMap) = begin
     bound = bind_parameters(template, values, map)
     return bound, gradient -> (nothing,
         isnothing(gradient) ? nothing : Zygote.ProjectTo(values)(accumulate_parameter_gradients(map, gradient)),

@@ -72,14 +72,17 @@ nparameters(x::Conditional) = nparameters(x.then_branch)+nparameters(x.else_bran
 parameters(x::Conditional) = vcat(parameters(x.then_branch),parameters(x.else_branch))
 active_parameters(x::Conditional) = vcat(active_parameters(x.then_branch),active_parameters(x.else_branch))
 function reset_parameters!(x::Conditional, values::AbstractVector{<:Real})
+    _require_numeric_parameter_mutation(x)
     _check_parameter_values(x,values)
     n = nparameters(x.then_branch)
     reset_parameters!(x.then_branch,view(values,1:n))
     reset_parameters!(x.else_branch,view(values,n+1:length(values)))
     return x
 end
-activate_parameters!(x::Conditional) = (activate_parameters!(x.then_branch);activate_parameters!(x.else_branch);x)
-deactivate_parameters!(x::Conditional) = (deactivate_parameters!(x.then_branch);deactivate_parameters!(x.else_branch);x)
+activate_parameters!(x::Conditional) = (_require_numeric_parameter_mutation(x);activate_parameters!(x.then_branch);activate_parameters!(x.else_branch);x)
+deactivate_parameters!(x::Conditional) = (_require_numeric_parameter_mutation(x);deactivate_parameters!(x.then_branch);deactivate_parameters!(x.else_branch);x)
+activate_parameter!(x::Conditional, ::Int) = (_require_numeric_parameter_mutation(x);x)
+deactivate_parameter!(x::Conditional, ::Int) = (_require_numeric_parameter_mutation(x);x)
 copy_instruction(x::Conditional) = Conditional(x.condition,x.then_branch;otherwise=x.else_branch)
 change_positions(x::Conditional,m::AbstractDict) = Conditional(x.condition,change_positions(x.then_branch,m);
     otherwise=change_positions(x.else_branch,m))

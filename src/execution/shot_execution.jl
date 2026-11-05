@@ -61,9 +61,9 @@ function _check_shot_execution(circuit::QCircuit, state::AbstractQuantumState, c
     checked = _shot_validation_circuit(circuit, state, chosen_backend)
     supports(chosen_backend, checked, state) ||
         throw(UnsupportedOperation(chosen_backend, circuit, state, :apply))
-    # Validate normalization and readout support even for zero shots. Ask for the
-    # requested marginal through the selected backend, never a CPU fallback.
-    probabilities(chosen_backend, state; qubits=indices)
+    # Validate even for zero shots, without requiring every backend to construct
+    # the requested marginal distribution merely to check the input state.
+    validate_terminal_sampling(chosen_backend, state, indices)
     return indices
 end
 
@@ -77,10 +77,57 @@ function _shot_distribution(state, chosen_backend, indices)
     return distribution
 end
 
+"""
+    validate_terminal_sampling(backend, state, qubits)
+
+Validate terminal sampling without consuming randomness or changing the state.
+Backends may specialize this independently of the sampler. The compatibility
+fallback validates the requested marginal with `probabilities`.
+"""
+function validate_terminal_sampling(backend::AbstractBackend, state::AbstractQuantumState, qubits)
+    probabilities(backend, state; qubits=qubits)
+    return nothing
+end
+
+"""
+    prepare_terminal_sampling(backend, state, qubits)
+
+Create a reusable terminal sampler for a normalized state and validated qubits.
+The sampler must not mutate the state. Extensions may return their own sampler
+type and implement `draw_terminal_samples`. The fallback uses probabilities.
+"""
+struct _ProbabilityTerminalSampler{T}
+    distribution::T
+    nqubits::Int
+end
+function prepare_terminal_sampling(backend::AbstractBackend, state::AbstractQuantumState, qubits)
+    return _ProbabilityTerminalSampler(_shot_distribution(state, backend, qubits), length(qubits))
+end
+
+"""
+    draw_terminal_samples(rng, sampler, shots)
+
+Return a `shots × length(qubits)` matrix of computational-basis bits in the
+requested qubit order. Drawing does not change the source state. Backends
+implement this for sampler objects returned by `prepare_terminal_sampling`.
+"""
+function draw_terminal_samples(rng::Random.AbstractRNG, sampler::_ProbabilityTerminalSampler, shots::Integer)
+    return _draw_samples!(Matrix{Int}(undef, shots, sampler.nqubits), rng,
+                          sampler.distribution, shots, sampler.nqubits)
+end
+
+function _checked_terminal_samples(rng, sampler, shots, nqubits)
+    draws = draw_terminal_samples(rng, sampler, shots)
+    draws isa AbstractMatrix{<:Integer} || throw(ArgumentError("terminal samples must be an integer matrix"))
+    Base.require_one_based_indexing(draws)
+    size(draws) == (shots, nqubits) || throw(DimensionMismatch("terminal samples must have shots × qubits shape"))
+    all(x -> x == 0 || x == 1, draws) || throw(ArgumentError("terminal samples must contain only zero or one"))
+    return draws
+end
+
 function _shot_samples(rng, state, chosen_backend, shots, indices)
-    distribution = _shot_distribution(state,chosen_backend,indices)
-    output = Matrix{Int}(undef, shots, length(indices))
-    return _draw_samples!(output, rng, distribution, shots, length(indices))
+    sampler = prepare_terminal_sampling(chosen_backend, state, indices)
+    return _checked_terminal_samples(rng, sampler, shots, length(indices))
 end
 
 function _shot_record(position, outcome, probability, kind)
@@ -136,6 +183,7 @@ function execute(circuit::QCircuit, initial_state::AbstractQuantumState;
                  rng::Random.AbstractRNG=Random.default_rng(), backend=MOSSQuantum.backend(initial_state),
                  noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(),
                  result::Symbol=:full, parallel::Bool=false, chunk_size::Integer=256, classical=nothing)
+    QuantumCircuits._require_bound_parameters(circuit)
     chunk_size > 0 && !(chunk_size isa Bool) || throw(ArgumentError("chunk_size must be positive"))
     if _has_classical(circuit) || !isnothing(classical) || !isnothing(noise_model) || readout isa ReadoutError || !isempty(readout) ||
        !(method isa DensityMatrixEvolution) || result !== :full || parallel
@@ -180,6 +228,7 @@ function execute(circuit::QCircuit, initial_state::Union{BatchStateVector,BatchD
                  rng::Random.AbstractRNG=Random.default_rng(), backend=MOSSQuantum.backend(initial_state),
                  noise_model=nothing, readout=ReadoutError[], method=DensityMatrixEvolution(),
                  result::Symbol=:full, parallel::Bool=false, chunk_size::Integer=256, classical=nothing)
+    QuantumCircuits._require_bound_parameters(circuit)
     _execution_shots(shots)
     result in (:full,:counts) || throw(ArgumentError("result must be :full or :counts"))
     chunk_size > 0 && !(chunk_size isa Bool) || throw(ArgumentError("chunk_size must be positive"))

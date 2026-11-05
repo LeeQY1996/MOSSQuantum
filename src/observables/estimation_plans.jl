@@ -10,10 +10,12 @@ struct BoundEstimationPlan{P}
     executions::Vector{BoundExecutionPlan}
     parameters::Vector{Float64}
 end
-function prepare_estimation(circuit::QCircuit,observable::Union{QubitsTerm,QubitsOperator},initial::AbstractQuantumState;
+function prepare_estimation(circuit::Union{QCircuit,_ParameterContext},observable::Union{QubitsTerm,QubitsOperator},initial::AbstractQuantumState;
                             grouping::Symbol=:qwc,atol::Real=0,max_terms::Integer=100_000,kwargs...)
     measurement = measurement_plan(observable;grouping,atol,max_terms)
-    _has_postselection(circuit) && throw(ArgumentError("estimation does not support post-selection"))
+    template = circuit isa _ParameterContext ? circuit.template : circuit
+    template isa QCircuit || throw(ArgumentError("prepared estimation requires a circuit template"))
+    _has_postselection(template) && throw(ArgumentError("estimation does not support post-selection"))
     measurement.nqubits<=nqubits(initial) || throw(ArgumentError("observable exceeds the state register"))
     execution = prepare_execution(circuit,initial;qubits=Int[],kwargs...)
     _has_postselection(execution.template) && throw(ArgumentError("estimation does not support post-selection"))
@@ -25,6 +27,14 @@ function bind_execution(plan::EstimationPlan,values::AbstractVector{<:Real}=Floa
     base = bind_execution(plan.execution,values)
     return _finish_estimation(plan,base)
 end
+function _bind_estimation_flat(plan::EstimationPlan,flat::AbstractVector{<:Real})
+    return _finish_estimation(plan,_bind_execution_flat(plan.execution,flat))
+end
+parameter_order(plan::EstimationPlan) = parameter_order(plan.execution)
+trainable_parameters(plan::EstimationPlan) = trainable_parameters(plan.execution)
+independent_parameters(plan::EstimationPlan) = independent_parameters(plan.execution)
+parameter_info(plan::EstimationPlan) = parameter_info(plan.execution)
+initial_parameters(plan::EstimationPlan;kwargs...) = initial_parameters(plan.execution;kwargs...)
 function _finish_estimation(plan,base)
     p = base.plan
     bound = BoundExecutionPlan[]

@@ -112,11 +112,24 @@ struct NoisyCircuit
     readout::Vector{ReadoutError}
 end
 
+"""Bind the quantum template and retain an independent readout configuration."""
+function bind_parameters(program::NoisyCircuit, values; kwargs...)
+    return NoisyCircuit(bind_parameters(program.circuit, values; kwargs...), deepcopy(program.readout))
+end
+QuantumCircuits.independent_parameters(program::NoisyCircuit) = independent_parameters(program.circuit)
+QuantumCircuits.parameter_expressions(program::NoisyCircuit) = parameter_expressions(program.circuit)
+function QuantumCircuits.substitute_parameters(program::NoisyCircuit, replacements)
+    return NoisyCircuit(substitute_parameters(program.circuit, replacements), deepcopy(program.readout))
+end
+
 function _append_noise!(output, instruction, rules, timing)
+    # A symbolic wrapper describes the same gate family and positions as its
+    # numeric prototype. Never pass placeholder angles to a user callback.
+    matched_instruction = instruction isa QuantumCircuits.ParameterizedInstruction ? instruction.prototype : instruction
     for rule in rules
         rule.when === timing || continue
         isnothing(rule.qubits) || rule.qubits == Tuple(positions(instruction)) || continue
-        matched = rule.matcher isa Type ? instruction isa rule.matcher : rule.matcher(copy_instruction(instruction))
+        matched = rule.matcher isa Type ? matched_instruction isa rule.matcher : rule.matcher(copy_instruction(instruction))
         matched isa Bool || throw(ArgumentError("noise predicate must return Bool"))
         matched || continue
         generated = rule.factory isa QuantumMap ? rule.factory : rule.factory(copy_instruction(instruction))
@@ -143,6 +156,10 @@ end
 
 """Expand noise once without mutating the source circuit. Re-expansion is rejected."""
 function with_noise(circuit::QCircuit, model::NoiseModel)
+    if QuantumCircuits._has_parameterized(circuit)
+        all(rule -> rule.matcher isa Type && rule.factory isa QuantumMap, model.rules) ||
+            throw(ArgumentError("unbound parameter templates accept only instruction-type noise rules with fixed QuantumMap values; bind parameters before using a noise predicate or factory"))
+    end
     _check_readout_errors(model.readout)
     output = AbstractInstruction[_physical_maps(model.preparation)...]
     _expand_noise!(output,circuit,model.rules)

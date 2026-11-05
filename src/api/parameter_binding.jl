@@ -16,7 +16,9 @@ parameter slots rather than symbolic shared parameters. Parameterless
 instructions are copied as well. The source instruction and parameter vector
 are not modified. Values must be finite and match `nparameters(instruction)`.
 """
-function bind_parameters(instruction::AbstractInstruction, values::AbstractVector{<:Real})
+function bind_parameters(instruction::AbstractInstruction, values::AbstractVector{<:Real}; parameter_order=nothing)
+    QuantumCircuits._has_parameterized(instruction) && return _bind_named_parameters(instruction, values; parameter_order)
+    isnothing(parameter_order) || throw(ArgumentError("parameter_order requires a named parameter template"))
     expected = QuantumCircuits._check_parameter_values(instruction, values)
     copied = QuantumCircuits._checked_instruction_result(copy_instruction(instruction), :copy_instruction)
     # A writer may retain its input vector as storage. Give each occurrence an
@@ -24,7 +26,9 @@ function bind_parameters(instruction::AbstractInstruction, values::AbstractVecto
     return _check_bound_instruction(reset_parameters!(copied, collect(values)), expected)
 end
 
-function bind_parameters(circuit::QCircuit, values::AbstractVector{<:Real})
+function bind_parameters(circuit::QCircuit, values::AbstractVector{<:Real}; parameter_order=nothing)
+    QuantumCircuits._has_parameterized(circuit) && return _bind_named_parameters(circuit, values; parameter_order)
+    isnothing(parameter_order) || throw(ArgumentError("parameter_order requires a named parameter template"))
     expected = QuantumCircuits._check_parameter_values(circuit, values)
     instructions = AbstractInstruction[]
     pos = 0
@@ -50,13 +54,10 @@ the returned instruction does not retain it. Keep the map alongside the
 template for future binding and gradient accumulation. Rebuild or review it
 after changing the template's active-slot layout.
 """
-function bind_parameters(template::AbstractInstruction, values::AbstractVector{<:Real}, map::ParameterMap)
+function bind_parameters(template::AbstractInstruction, values::AbstractVector{<:Real}, map::AbstractParameterMap)
+    QuantumCircuits._has_parameterized(template) && !_is_symbolic_map(map) &&
+        throw(ArgumentError("named templates cannot use an integer ParameterMap"))
     _check_parameter_map(template, map)
-    expected = nparameters(map)
-    length(values) == expected ||
-        throw(DimensionMismatch("expected $expected independent parameters, received $(length(values))."))
-    all(isfinite, values) || throw(ArgumentError("parameter values must be finite."))
-    Base.require_one_based_indexing(values)
-    expanded = [values[index] for index in map.indices]
-    return bind_parameters(template, expanded)
+    expanded = expand_parameters(map, values)
+    return _is_symbolic_map(map) ? _flat_bind(template, expanded) : bind_parameters(template, expanded)
 end

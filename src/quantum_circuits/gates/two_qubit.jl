@@ -87,7 +87,13 @@ struct CRxGate <:ParametricGate{2}
 end
 CRxGate(key::Tuple{Int, Int}, p::Real; isparas::Bool=false) = CRxGate(key, [convert(Float64, p)], [isparas])
 CRxGate(c::Int, t::Int, p::Real; isparas::Bool=false) = CRxGate((c, t), p, isparas=isparas)
-CRxGate(;control::Int, target::Int, θ::Real, isparas::Bool=false) = CRxGate(control, target, θ, isparas=isparas)
+function CRxGate(;control::Int, target::Int, θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return CRxGate(control, target, θ)
+    end
+    return CRxGate(control, target, θ; isparas=something(isparas, false))
+end
 
 mat(x::CRxGate) = CONTROL(Rx(x.paras[1]))
 change_positions(x::CRxGate, m::AbstractDict) = CRxGate(ntuple(i->m[x.pos[i]], 2), x.paras, x.isparas)
@@ -101,7 +107,13 @@ struct CRyGate <: ParametricGate{2}
 end
 CRyGate(key::Tuple{Int, Int}, p::Real; isparas::Bool=false) = CRyGate(key, [convert(Float64, p)], [isparas])
 CRyGate(c::Int, t::Int, p::Real; isparas::Bool=false) = CRyGate((c, t), p, isparas=isparas)
-CRyGate(;control::Int, target::Int, θ::Real, isparas::Bool=false) = CRyGate(control, target, θ, isparas=isparas)
+function CRyGate(;control::Int, target::Int, θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return CRyGate(control, target, θ)
+    end
+    return CRyGate(control, target, θ; isparas=something(isparas, false))
+end
 
 mat(x::CRyGate) = CONTROL(Ry(x.paras[1]))
 change_positions(x::CRyGate, m::AbstractDict) = CRyGate(ntuple(i->m[x.pos[i]], 2), x.paras, x.isparas)
@@ -114,7 +126,13 @@ struct CRzGate <: ParametricGate{2}
 end
 CRzGate(key::Tuple{Int, Int}, p::Real; isparas::Bool=false) = CRzGate(key, [convert(Float64, p)], [isparas])
 CRzGate(c::Int, t::Int, p::Real; isparas::Bool=false) = CRzGate((c, t), p, isparas=isparas)
-CRzGate(;control::Int, target::Int, θ::Real, isparas::Bool=false) = CRzGate(control, target, θ, isparas=isparas)
+function CRzGate(;control::Int, target::Int, θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return CRzGate(control, target, θ)
+    end
+    return CRzGate(control, target, θ; isparas=something(isparas, false))
+end
 
 mat(x::CRzGate) = CONTROL(Rz(x.paras[1]))
 change_positions(x::CRzGate, m::AbstractDict) = CRzGate(ntuple(i->m[x.pos[i]], 2), x.paras, x.isparas)
@@ -127,7 +145,13 @@ struct CPHASEGate <: ParametricGate{2}
 end
 CPHASEGate(key::Tuple{Int, Int}, p::Real; isparas::Bool=false) = CPHASEGate(key, [convert(Float64, p)], [isparas])
 CPHASEGate(c::Int, t::Int, p::Real; isparas::Bool=false) = CPHASEGate((c, t), p, isparas=isparas)
-CPHASEGate(;control::Int, target::Int, θ::Real, isparas::Bool=false) = CPHASEGate(control, target, θ, isparas=isparas)
+function CPHASEGate(;control::Int, target::Int, θ::Union{Real,_SymbolicParameter}, isparas::Union{Nothing,Bool}=nothing)
+    if θ isa _SymbolicParameter
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return CPHASEGate(control, target, θ)
+    end
+    return CPHASEGate(control, target, θ; isparas=something(isparas, false))
+end
 
 mat(x::CPHASEGate) = CONTROL(PHASE(x.paras[1]))
 change_positions(x::CPHASEGate, m::AbstractDict) = CPHASEGate(ntuple(i->m[x.pos[i]], 2), x.paras, x.isparas)
@@ -145,7 +169,14 @@ function FSIMGate(key::Tuple{Int, Int}, p::Vector{<:Real}; isparas::Vector{Bool}
 	return FSIMGate(key, convert(Vector{Float64}, p) , isparas)
 end 
 FSIMGate(c::Int, t::Int, p::Vector{<:Real}; isparas::Vector{Bool}=[false for j in p]) = FSIMGate((c, t), p, isparas=isparas)
-FSIMGate(;control::Int, target::Int, θs::Vector{<:Real}, isparas::Vector{Bool}=[false for j in θs]) = FSIMGate(control, target, θs, isparas=isparas)
+function FSIMGate(;control::Int, target::Int, θs::AbstractVector, isparas::Union{Nothing,Vector{Bool}}=nothing)
+    if any(x -> x isa _SymbolicParameter, θs)
+        isnothing(isparas) || throw(ArgumentError("use fixed on a named objective instead of isparas"))
+        return FSIMGate(control, target, θs)
+    end
+    θs isa Vector{<:Real} || throw(ArgumentError("numeric FSIM parameters must be a real vector"))
+    return FSIMGate(control, target, θs; isparas=something(isparas, fill(false,length(θs))))
+end
 
 mat(x::FSIMGate) = FSIM(x.paras...)
 change_positions(x::FSIMGate, m::AbstractDict) = FSIMGate(ntuple(i->m[x.pos[i]], 2), x.paras, x.isparas)

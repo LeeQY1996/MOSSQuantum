@@ -60,13 +60,18 @@ export post_select, post_select!
 export partial_tr
 export AbstractInstruction, validate_positions, AbstractQuantumState
 export AbstractBackend, CPUBackend, backend, supports, validate_backend_execution, UnsupportedOperation
+export CapabilityIssue, CapabilityStep, ExecutionCapability, execution_capability, execution_capability_step, execution_capability_backend
+export validate_terminal_sampling, prepare_terminal_sampling, draw_terminal_samples
 export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
 export BatchSimulationResult
 export execute, ShotResult
 export measurement_plan, estimate, MeasurementPlan, MeasurementGroup, PauliMeasurementTerm
 export ExpectationEstimate, GroupEstimate
 export bind_parameters, copy_instruction
-export ParameterMap, parameter_indices, accumulate_parameter_gradients
+export Parameter, ParameterExpr, parameterize, materialize_parameters, parameter_slots, UnboundParameterError
+export parameter_info, initial_parameters
+export parameter_expressions, independent_parameters, trainable_parameters, parameter_order, substitute_parameters
+export AbstractParameterMap, ParameterMap, parameter_indices, expand_parameters, accumulate_parameter_gradients, compile_parameters
 export AbstractGradientMethod, AdjointGradient, UnsupportedGradient, ExpectationObjective
 export BatchExpectationObjective, evaluate_batch
 export evaluate, supports_gradient, value_and_gradient, value_and_pullback, differentiable_value

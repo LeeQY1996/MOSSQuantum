@@ -15,6 +15,7 @@ MOSSQuantum merges the circuit representation of [QuantumCircuits.jl](https://gi
 - **Simulation utilities**: Ground-state solvers, time evolution, spin Hamiltonian builders, and finite-shot optimization (`MOSSQuantum.Optimization`). MOSSAlgorithmZoo is a separate collection of runnable quantum algorithm examples.
 - **Readout and results**: Probabilities, seeded samples/counts, batch measurement and post-selection, and execution results retaining intermediate records for each sample.
 - **Extension interfaces**: Custom instructions, implicit states, selectable backends, opt-in generic storage in all four dense containers, capability queries, public parameter reset/copy hooks, and parameter binding with explicit sharing maps.
+- **CPU backend capability matrix**: Compare dense, MPS, and stabilizer representations and query complete execution configurations; see [backend capabilities](docs/backend-capabilities.md).
 - **Visualization**: Optional circuit diagrams through Plots.jl and LaTeXStrings.
 
 `MOSSAlgorithmZoo` is an independent collection of examples that use the public interfaces of MOSSQuantum and its companion packages.
@@ -25,7 +26,7 @@ The package was previously named MOSS. Update `using MOSS` to `using MOSSQuantum
 and qualified references such as `MOSS.Utilities` to `MOSSQuantum.Utilities`.
 The package UUID is unchanged. In environments that list `MOSS` as a dependency,
 remove it with `Pkg.rm("MOSS")`, then develop this checkout again as shown below. The CUDA
-companion is now named `MOSSQuantumCUDA`.
+companion is now the independent `MOSSGPU` package.
 
 MOSSQuantum requires Julia 1.10 or later. Julia 1.13 is the primary development and acceptance version; the minimum-version checks target Julia 1.10.
 
@@ -116,7 +117,7 @@ implicit host conversion. Device kernels belong to companion implementations.
 Existing `StateVector{T}` constructor and dispatch syntax remains valid; exact
 instance types now also include a storage parameter `A`.
 
-The independent [MOSSQuantumCUDA companion](packages/MOSSQuantumCUDA/README.md) implements
+The independent [MOSSGPU companion](https://github.com/LeeQY1996/MOSSGPU#readme) implements
 the first CUDA device-array path: single pure states, 1–5-qubit gates, nested
 gate-only circuits, expectations and terminal readout. Its hardware acceptance
 is pending; CPU-only checks do not establish GPU correctness or performance.
@@ -326,6 +327,23 @@ push!(circuit, QMeasure(2))
 plt = MOSSQuantum.QuantumCircuits.plot(circuit)
 savefig(plt, "circuit.png")
 ```
+
+The plotting extension requires both Plots and LaTeXStrings. Circuit diagrams
+preserve instruction dependencies; independent operations may share a column.
+Use `layout_algorithm=:sequential` to show one instruction per column, or
+`:compact` (also the `:auto` default) to pack independent operations.
+`show_parameters=false` hides parameter values on supported parameterized gates.
+Default wire labels use the actual qubit positions, including sparse positions;
+`qubit_names` overrides them in ascending position order.
+
+Nested circuits are expanded in execution order. Measurements and conditional
+instructions have numbered notes describing their classical keys and options;
+conditional blocks summarize both branches rather than implying that both run.
+Channels appear as Kraus blocks, since their original constructor name is not
+retained. A `NoisyCircuit` from `with_noise` can also be plotted: its expanded
+circuit is shown and its classical readout error configuration is listed in the
+title. Generic multi-qubit gates use numbered ports; port 0 is the first position
+and the least significant local matrix bit.
 
 ## Gate library
 
