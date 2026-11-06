@@ -1,8 +1,10 @@
 # MOSSQuantum 文档
 
+<img src="assets/brand/moos-qubit-grid.png" alt="MOOS 家族展示图标" width="200">
+
 量子线路、稠密状态模拟、参数绑定、噪声、采样和梯度。
 
-[API 与函数索引](api.md) · [安装与快速开始](../README.md) · [GitHub 仓库](https://github.com/LeeQY1996/MOSSQuantum) · [家族图标与字标](branding.md)
+[API 与函数索引](api.md) · [安装与快速开始](../README.md) · [GitHub 仓库](https://github.com/LeeQY1996/MOSSQuantum) · [图标与品牌素材](branding.md)
 
 ## 使用这份参考
 

@@ -1,6 +1,8 @@
 # MOSSQuantum
 
-[家族图标与字标](https://leeqy1996.github.io/MOSSQuantum/branding.html)
+<img src="docs/assets/brand/moos-qubit-grid.png" alt="MOOS 家族展示图标" width="192">
+
+[图标与品牌素材](https://leeqy1996.github.io/MOSSQuantum/branding.html)
 
 MOSSQuantum is a Julia package for quantum computing simulation, variational quantum algorithms, and quantum machine learning. It provides a dense CPU simulator, explicit readout and experiment results, and public state/backend interfaces for companion packages. Optional Zygote integration supports analytic gradients for supported deterministic circuit workflows.
 

@@ -7,6 +7,7 @@ import html
 import json
 import posixpath
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
@@ -99,15 +100,52 @@ def main():
     def e(value):
         return html.escape(str(value), quote=True)
 
+
+    def rewrite_html_images(content, source):
+        offsets = [0] + [match.end() for match in re.finditer("\n", content)]
+        replacements = []
+        attribute_pattern = re.compile(
+            r"""(?P<name>[^\s"'<>/=]+)(?:(?P<assignment>\s*=\s*)(?:(?P<quote>["'])(?P<quoted>.*?)(?P=quote)|(?P<bare>[^\s"'\x60=<>]+)))?""",
+            re.I | re.S)
+
+        class ImageParser(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                if tag != 'img':
+                    return
+                attributes = attribute_pattern.finditer(self.get_starttag_text(), 4)
+                attribute = next((item for item in attributes
+                                  if item.group('name').lower() == 'src' and item.group('assignment')), None)
+                if attribute is None:
+                    return
+                mark = attribute.group('quote') or '"'
+                url = attribute.group('quoted') if attribute.group('quote') else attribute.group('bare')
+                replacement = attribute.group('name') + attribute.group('assignment') + mark + e(link(html.unescape(url), source)) + mark
+                line, column = self.getpos()
+                offset = offsets[line - 1] + column
+                replacements.append((offset + attribute.start(), offset + attribute.end(), replacement))
+
+            handle_startendtag = handle_starttag
+
+        parser = ImageParser(convert_charrefs=False)
+        parser.feed(content)
+        parser.close()
+        for start, end, replacement in reversed(replacements):
+            content = content[:start] + replacement + content[end:]
+        return content
+
     search = []
     for source, route in routes.items():
         tokens, headings, anchors, title = parsed[source]
         for token in tokens:
+            if token.type == 'html_block':
+                token.content = rewrite_html_images(token.content, source)
             for child in token.children or []:
                 if child.type == 'link_open':
                     child.attrSet('href', link(child.attrGet('href') or '', source))
                 elif child.type == 'image':
                     child.attrSet('src', link(child.attrGet('src') or '', source))
+                elif child.type == 'html_inline':
+                    child.content = rewrite_html_images(child.content, source)
         content = markdown.renderer.render(tokens, markdown.options, {})
         nav = []
         for label, path in config['navigation']:
@@ -120,19 +158,18 @@ def main():
         toc = ''.join(f'<a href="#{e(anchor)}">{e(re.sub(r"`", "", label))}</a>' for level, label, anchor in headings if level == 2)
         home = relative_url('index.html', source)
         style = relative_url('assets/style.css', source)
-        brand_icon = relative_url('assets/brand/moss-icon.svg', source)
-        brand_wordmark = relative_url('assets/brand/wordmark.svg', source)
-        brand_wordmark_dark = relative_url('assets/brand/wordmark-dark.svg', source)
-        brand_wordmark_compact = relative_url('assets/brand/wordmark-compact.svg', source)
-        brand_wordmark_compact_dark = relative_url('assets/brand/wordmark-compact-dark.svg', source)
+        brand_icon = relative_url('assets/brand/moos-qubit-grid.png', source)
+        brand_label = e(config['title'])
+        if config['title'].startswith('MOSS'):
+            brand_label = 'MOSS<wbr>' + e(config['title'][4:])
         js = relative_url('assets/search.js', source)
         index = relative_url('search-index.json', source)
         canonical = site_url + quote(route, safe='/')
         page = f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)} · {e(config['title'])}</title><meta name="description" content="{e(config['description'])}">
-<link rel="canonical" href="{e(canonical)}"><link rel="icon" type="image/svg+xml" href="{e(brand_icon)}"><link rel="stylesheet" href="{e(style)}"></head>
-<body><a class="skip" href="#main">跳至正文</a><header><a class="brand" href="{e(home)}" aria-label="{e(config['title'])}"><img class="brand-icon" src="{e(brand_icon)}" alt="" width="36" height="36"><picture class="brand-wordmark-picture"><source media="(max-width:480px) and (prefers-color-scheme:dark)" srcset="{e(brand_wordmark_compact_dark)}"><source media="(max-width:480px)" srcset="{e(brand_wordmark_compact)}"><source media="(prefers-color-scheme:dark)" srcset="{e(brand_wordmark_dark)}"><img class="brand-wordmark" src="{e(brand_wordmark)}" alt="{e(config['title'])}"></picture></a><a href="{origin}">GitHub ↗</a></header>
+<link rel="canonical" href="{e(canonical)}"><link rel="icon" type="image/png" href="{e(brand_icon)}"><link rel="stylesheet" href="{e(style)}"></head>
+<body><a class="skip" href="#main">跳至正文</a><header><a class="brand" href="{e(home)}" aria-label="{e(config['title'])}" title="{e(config['title'])}"><img class="brand-icon" src="{e(brand_icon)}" alt="" width="56" height="56"><span class="brand-name">{brand_label}</span></a><a href="{origin}">GitHub ↗</a></header>
 <div class="layout"><aside class="sidebar"><label for="search">搜索 API / 函数</label><input id="search" type="search" placeholder="输入函数名或关键词" autocomplete="off" data-index="{e(index)}"><div id="search-results" aria-live="polite"></div><nav aria-label="文档">{''.join(nav)}</nav><details><summary>MOSS 家族</summary>{family}</details></aside>
 <main id="main"><article>{content}</article><footer>由仓库源码维护 · <a href="{origin}/blob/{quote(branch, safe='')}/{quote(source.relative_to(root).as_posix(), safe='/')}">查看 / 编辑本页源文件</a></footer></main><aside class="toc"><strong>本页目录</strong>{toc}</aside></div>
 <script src="{e(js)}" defer></script></body></html>'''

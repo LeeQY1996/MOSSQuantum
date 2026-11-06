@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Generate the original MOSS pixel identity using only Python's standard library.
+"""Distribute the approved PNG identity and generate package wordmark exports.
 
-Run ``python3 docs/generate_brand.py`` from the MOSSQuantum repository. The core
-repository receives the shared mark, every package's exports and the overview;
-neighboring family checkouts receive their corresponding flat asset set.
-The glyphs are original geometry. No installed or embedded font is used.
+Run ``python3 docs/generate_brand.py`` from MOSSQuantum. The approved icon is
+copied byte-for-byte; only the independent package wordmarks are generated.
+The download kit contains the original PNG and font-independent SVG wordmarks.
 """
 from __future__ import annotations
 
 from html import escape
+import hashlib
+import json
+import zipfile
 from pathlib import Path
 import re
 
@@ -17,6 +19,8 @@ GREEN = '#389826'
 PURPLE = '#9558B2'
 INK = '#202331'
 PAPER = '#EEF0F6'
+ICON_NAME = 'moos-qubit-grid.png'
+APPROVED_ICON_SHA256 = '354838f61a8d1c5cb78106e435b5a4f1854357927aa00a6ccde8cab97ea4d915'
 
 PACKAGES = (
     ('MOSSQuantum', 'Quantum', PURPLE, 'CORE SIMULATOR'),
@@ -133,16 +137,6 @@ def wordmark_geometry(name: str, suffix: str, accent: str, *, dark=False,
     return prefix + pixel_text(suffix, x + 24 * unit, y, unit, accent)
 
 
-def icon_geometry(x=0, y=0, size=32) -> str:
-    # The two square heads anchor the upright stems. Three inward pixel steps
-    # join the heads into an M with an intentionally open central counter.
-    return (f'<g transform="translate({x} {y}) scale({size / 32:g})">'
-            f'<path fill="{RED}" d="M4 7h6v21H4zM3 3h8v8H3z"/>'
-            f'<path fill="{GREEN}" d="M22 7h6v21h-6zM21 3h8v8h-8z"/>'
-            f'<path fill="{PURPLE}" d="M10 10h4v6h-4zM14 14h4v6h-4zM18 10h4v6h-4z"/>'
-            '</g>')
-
-
 def svg(width, height, body, label, *, display_width=None, display_height=None,
         description='Original MOSS pixel identity. Geometric paths; no font dependency.'):
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{display_width or width}" '
@@ -163,42 +157,7 @@ def package_assets(name, suffix, accent):
             assets[f'wordmark{layout}{ending}.svg'] = svg(
                 width, height, wordmark_geometry(name, suffix, accent, dark=dark, compact=compact),
                 name, display_width=width * 2, display_height=height * 2)
-        width = 16 + 32 + 12 + full_width * 2
-        body = icon_geometry(8, 8, 32) + wordmark_geometry(
-            name, suffix, accent, dark=dark, x=52, y=17, unit=2)
-        assets[f'lockup{ending}.svg'] = svg(width, 48, body, name)
     return assets
-
-
-def overview():
-    body = ['<path fill="#FAFAF8" d="M0 0h1600v1600H0z"/>',
-            icon_geometry(80, 76, 128),
-            pixel_text('MOSS', 256, 92, 12, INK),
-            pixel_text('QUANTUM SOFTWARE FAMILY', 256, 206, 3, '#73776F'),
-            pixel_text('07 PACKAGES', 1309, 112, 3, INK),
-            '<path fill="#D9DDD5" d="M96 282h1408v2H96z"/>',
-            pixel_text('LIGHT', 220, 300, 2, '#73776F'),
-            pixel_text('DARK', 968, 300, 2, '#73776F')]
-    for index, (name, suffix, accent, descriptor) in enumerate(PACKAGES):
-        y = 340 + 132 * index
-        body.extend([
-            f'<path fill="#FFFFFF" d="M96 {y}h1408v112H96z"/>',
-            f'<path fill="{INK}" d="M904 {y}h600v112H904z"/>',
-            icon_geometry(116, y + 24, 64),
-            wordmark_geometry(name, suffix, accent, x=220, y=y + 23, unit=4),
-            pixel_text(descriptor, 220, y + 75, 2, '#73776F'),
-            icon_geometry(924, y + 24, 64),
-            wordmark_geometry(name, suffix, accent, dark=True, x=1020, y=y + 34, unit=3),
-        ])
-    body.append('<path fill="#D9DDD5" d="M96 1334h1408v2H96z"/>')
-    body.append(pixel_text('JULIA PALETTE', 96, 1370, 2, INK))
-    for x, color, label in [(96, RED, '#CB3C33'), (416, GREEN, '#389826'), (736, PURPLE, '#9558B2')]:
-        body.append(f'<path fill="{color}" d="M{x} 1410h256v40H{x}z"/>')
-        body.append(pixel_text(label, x, 1466, 2, '#73776F'))
-    body.append(pixel_text('ORIGINAL PIXEL GEOMETRY', 96, 1534, 2, '#73776F'))
-    body.append(pixel_text('SVG / LIGHT + DARK', 1290, 1534, 2, '#73776F'))
-    return svg(1600, 1600, ''.join(body), 'MOSS family: seven package identities',
-               description='Seven exact CamelCase package wordmarks with the shared MOSS mark, light and dark variants, and the red, green and purple Julia palette.')
 
 
 def write_assets(directory, assets):
@@ -211,16 +170,60 @@ def main():
     core = Path(__file__).resolve().parents[1]
     workspace = core.parent
     brand = core / 'docs/assets/brand'
-    icon = svg(32, 32, icon_geometry(), 'MOSS',
-               description='Shared MOSS mark: red and green square-headed stems joined by a purple pixel valley.')
+    icon = (brand / ICON_NAME).read_bytes()
+    if not icon.startswith(bytes.fromhex('89504e470d0a1a0a')):
+        raise SystemExit('Approved icon must be a PNG')
+    if hashlib.sha256(icon).hexdigest() != APPROVED_ICON_SHA256:
+        raise SystemExit('Approved icon differs; review and update its fingerprint before distribution')
+    identity = json.dumps({
+        'display_name': 'MOOS',
+        'family_name': 'MOSS',
+        'letter_rows': ['MO', 'OS'],
+        'icon': ICON_NAME,
+        'icon_sha256': APPROVED_ICON_SHA256,
+        'format': 'image/png',
+        'transparent_background': True,
+        'packages': [item[0] for item in PACKAGES],
+    }, ensure_ascii=False, indent=2) + '\n'
     for name, suffix, accent, _ in PACKAGES:
         assets = package_assets(name, suffix, accent)
         write_assets(brand / 'packages' / name, assets)
+        package_exports = brand / 'packages' / name
+        for old in ('lockup.svg', 'lockup-dark.svg'):
+            (package_exports / old).unlink(missing_ok=True)
         checkout = workspace / name
         if checkout.is_dir():
-            write_assets(checkout / 'docs/assets/brand', {'moss-icon.svg': icon, **assets})
-    write_assets(brand, {'moss-icon.svg': icon, 'family-overview.svg': overview()})
-    print('Generated shared MOSS mark, seven exact-name SVG identity sets and family overview.')
+            target = checkout / 'docs/assets/brand'
+            write_assets(target, {**assets, 'identity.json': identity})
+            (target / ICON_NAME).write_bytes(icon)
+            for old in ('moss-icon.svg', 'lockup.svg', 'lockup-dark.svg'):
+                (target / old).unlink(missing_ok=True)
+    (brand / 'family-overview.svg').unlink(missing_ok=True)
+    # Preserve the previously shared PNG URL while showing the approved image.
+    (brand / 'family-overview.png').write_bytes(icon)
+    (brand / 'identity.json').write_text(identity)
+    note = (
+        'MOSS family display assets\n'
+        'The approved MOOS mark reads MO / OS in a two-by-two layout.\n'
+        'The green and purple O letters contain cartoon qubit arcs and red state dots.\n'
+        'The icon is the original transparent PNG, not a vector tracing.\n'
+        'Package and repository names retain their canonical MOSS names.\n'
+        'Package wordmarks are separate SVG paths with light/dark and compact variants.\n'
+        'Keep the original aspect ratio. The icon artwork is identical across the family.\n'
+    )
+    files = {'README.txt': note.encode(), 'shared/' + ICON_NAME: icon,
+             'shared/identity.json': identity.encode()}
+    for name, _, _, _ in PACKAGES:
+        for asset in sorted((brand / 'packages' / name).glob('wordmark*.svg')):
+            files[f'packages/{name}/{asset.name}'] = asset.read_bytes()
+    with zipfile.ZipFile(brand / 'moss-family-brand-kit.zip', 'w') as archive:
+        for filename, data in sorted(files.items()):
+            entry = zipfile.ZipInfo(filename, date_time=(2026, 11, 6, 0, 0, 0))
+            entry.compress_type = zipfile.ZIP_DEFLATED
+            entry.create_system = 3
+            entry.external_attr = 0o644 << 16
+            archive.writestr(entry, data)
+    print(f'Distributed approved PNG unchanged; generated wordmarks and {len(files)}-file download kit.')
 
 
 if __name__ == '__main__':
