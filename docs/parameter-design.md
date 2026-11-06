@@ -351,7 +351,7 @@ CPU、MPS 和稳定子后端都接收编译后的原数值门。能绑定参数�
 | [执行计划](../src/execution/execution_plans.jl)、[估计计划](../src/observables/estimation_plans.jl)与[参数扫描](../src/execution/experiments.jl) | 统一展开、维度、顺序及快照语义 |
 | [噪声模型](../src/execution/noise_models.jl) | 固定规则按原型匹配，拒绝未绑定值相关工厂 |
 | 打印、绘图与可选 AD 扩展 | 展示符号表达式；AD 继续通过编译目标和现有数值梯度工作 |
-| MOSSChemistry | 在核心能力验收后复用参数缩放，逐步替换私有槽展开及回传 |
+| MOSSQuantumChemistry | 在核心能力验收后复用参数缩放，逐步替换私有槽展开及回传 |
 
 ## 验收标准
 

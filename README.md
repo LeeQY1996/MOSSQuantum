@@ -4,6 +4,10 @@ MOSSQuantum is a Julia package for quantum computing simulation, variational qua
 
 MOSSQuantum merges the circuit representation of [QuantumCircuits.jl](https://github.com/guochu/QuantumCircuits.jl) and the simulation/differentiation capabilities of [VQC.jl](https://github.com/LeeQY1996/VQC.jl) into a single unified package.
 
+## API 文档
+
+完整的 [API 与函数文档](docs/api.md) 包含状态、门与通道、参数、执行与实验、梯度与优化、Utilities，以及[全部公开接口的逐项参考](docs/api/reference.md)。
+
 ## Features
 
 - **Quantum circuit representation**: Single-qubit, two-qubit, and three-qubit gates, parametric gates, measurements, post-selection, and quantum channels (Kraus operators).

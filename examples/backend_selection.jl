@@ -1,4 +1,4 @@
-# Develop MOSSQuantum, MOSSMPS and MOSSStabilizer in one Julia environment.
+# Develop MOSSQuantum, MOSSQuantumMPS and MOSSQuantumStabilizer in one Julia environment.
 using MOSSQuantum, Random
 using MOSSQuantumMPS: zero_state_mps, MatrixProductBackend, NoTruncation
 using MOSSQuantumStabilizer: StabilizerState, StabilizerBackend

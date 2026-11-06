@@ -1,0 +1,66 @@
+{
+  "title": "MOSSQuantum",
+  "repository": "MOSSQuantum",
+  "branch": "main",
+  "description": "量子线路、稠密状态模拟、参数绑定、噪声、采样和梯度。",
+  "family": [
+    "MOSSQuantum",
+    "MOSSQuantumMPS",
+    "MOSSQuantumStabilizer",
+    "MOSSQuantumChemistry",
+    "MOSSFragmentTN",
+    "MOSSGPU",
+    "MOSSAlgorithmZoo"
+  ],
+  "sources": [
+    "docs/*.md",
+    "docs/api/*.md",
+    "README.md"
+  ],
+  "navigation": [
+    [
+      "首页",
+      "docs/index.md"
+    ],
+    [
+      "API / 函数索引",
+      "docs/api.md"
+    ],
+    [
+      "状态与编码",
+      "docs/api/states.md"
+    ],
+    [
+      "门、线路与算符",
+      "docs/api/gates.md"
+    ],
+    [
+      "参数",
+      "docs/api/parameters.md"
+    ],
+    [
+      "执行与采样",
+      "docs/api/execution.md"
+    ],
+    [
+      "梯度与优化",
+      "docs/api/differentiation.md"
+    ],
+    [
+      "Utilities",
+      "docs/api/utilities.md"
+    ],
+    [
+      "全部符号与原生帮助",
+      "docs/api/reference.md"
+    ],
+    [
+      "安装与使用",
+      "README.md"
+    ],
+    [
+      "文档维护",
+      "docs/BUILDING.md"
+    ]
+  ]
+}

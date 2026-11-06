@@ -6,3 +6,5 @@
 /docs/build/
 *.cov
 *.mem
+/_site/
+/.docs-env/
