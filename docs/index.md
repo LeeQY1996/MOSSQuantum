@@ -15,14 +15,14 @@
 | 文档站点 | 仓库 |
 | --- | --- |
 | [MOSSQuantum](https://leeqy1996.github.io/MOSSQuantum/) | [GitHub](https://github.com/LeeQY1996/MOSSQuantum) |
-| [MOSSQuantumMPS](https://leeqy1996.github.io/MOSSQuantumMPS/) | [GitHub](https://github.com/LeeQY1996/MOSSQuantumMPS) |
-| [MOSSQuantumStabilizer](https://leeqy1996.github.io/MOSSQuantumStabilizer/) | [GitHub](https://github.com/LeeQY1996/MOSSQuantumStabilizer) |
-| [MOSSQuantumChemistry](https://leeqy1996.github.io/MOSSQuantumChemistry/) | [GitHub](https://github.com/LeeQY1996/MOSSQuantumChemistry) |
+| [MOSSMPS](https://leeqy1996.github.io/MOSSMPS/) | [GitHub](https://github.com/LeeQY1996/MOSSMPS) |
+| [MOSSStabilizer](https://leeqy1996.github.io/MOSSStabilizer/) | [GitHub](https://github.com/LeeQY1996/MOSSStabilizer) |
+| [MOSSChemistry](https://leeqy1996.github.io/MOSSChemistry/) | [GitHub](https://github.com/LeeQY1996/MOSSChemistry) |
 | [MOSSFragmentTN](https://leeqy1996.github.io/MOSSFragmentTN/) | [GitHub](https://github.com/LeeQY1996/MOSSFragmentTN) |
 | [MOSSGPU](https://leeqy1996.github.io/MOSSGPU/) | [GitHub](https://github.com/LeeQY1996/MOSSGPU) |
 | [MOSSAlgorithmZoo](https://leeqy1996.github.io/MOSSAlgorithmZoo/) | [GitHub](https://github.com/LeeQY1996/MOSSAlgorithmZoo) |
 
-`MOSSQuantumMPS`、`MOSSQuantumChemistry`、`MOSSQuantumStabilizer` 分别由历史仓库 `MOSSMPS`、`MOSSChemistry`、`MOSSStabilizer` 更名而来。克隆和设置远程时使用新名称。`MOSSAlgorithmZoo` 是案例集合，按脚本加载，不是独立 Julia 库。
+仅核心包 `MOSSQuantum` 的名称保留 `Quantum`；其余库包使用 `MOSSMPS`、`MOSSStabilizer`、`MOSSChemistry`、`MOSSFragmentTN` 和 `MOSSGPU`，Julia 包名与仓库名保持一致。`MOSSAlgorithmZoo` 是案例集合，按脚本加载，不是独立 Julia 库。
 
 ## 文档范围
 

@@ -1,7 +1,7 @@
 using Test, Random
 using MOSSQuantum
-using MOSSQuantumMPS: zero_state_mps, MatrixProductBackend, NoTruncation
-using MOSSQuantumStabilizer: StabilizerState, StabilizerBackend
+using MOSSMPS: zero_state_mps, MatrixProductBackend, NoTruncation
+using MOSSStabilizer: StabilizerState, StabilizerBackend
 
 # Run in a separate environment that develops MOSSQuantum and both companions.
 # Do not require the companion packages in the core package's test environment.

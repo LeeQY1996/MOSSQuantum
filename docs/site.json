@@ -5,9 +5,9 @@
   "description": "量子线路、稠密状态模拟、参数绑定、噪声、采样和梯度。",
   "family": [
     "MOSSQuantum",
-    "MOSSQuantumMPS",
-    "MOSSQuantumStabilizer",
-    "MOSSQuantumChemistry",
+    "MOSSMPS",
+    "MOSSStabilizer",
+    "MOSSChemistry",
     "MOSSFragmentTN",
     "MOSSGPU",
     "MOSSAlgorithmZoo"

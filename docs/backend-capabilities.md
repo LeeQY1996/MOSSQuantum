@@ -1,7 +1,7 @@
 # CPU backend capabilities
 
 This page describes the current local packages `MOSSQuantum`,
-`MOSSQuantumMPS`, and `MOSSQuantumStabilizer`. A backend capability depends on
+`MOSSMPS`, and `MOSSStabilizer`. A backend capability depends on
 the **state representation, instruction, execution entry point, and options**.
 A supported primitive does not by itself guarantee every experiment combination.
 Use the detailed package documentation and the configuration query below for
@@ -23,8 +23,8 @@ Dense gate execution supports local gates on up to five qubits; dense channel
 execution supports one or two local qubits. The stabilizer representation does
 not implement arbitrary non-Clifford gates or arbitrary Kraus channels. MPS
 backends retain their selected truncation policy; readout requires normalized
-states. See [MPS boundaries](https://github.com/LeeQY1996/MOSSQuantumMPS#supported-operations-and-boundaries)
-and [stabilizer boundaries](https://github.com/LeeQY1996/MOSSQuantumStabilizer#readme) for operation-level
+states. See [MPS boundaries](https://github.com/LeeQY1996/MOSSMPS#supported-operations-and-boundaries)
+and [stabilizer boundaries](https://github.com/LeeQY1996/MOSSStabilizer#readme) for operation-level
 details and examples.
 
 `simulate` returns one state and records; `execute` performs attempted shots.
@@ -50,8 +50,8 @@ Prebuilt plans and batch or gradient APIs should not be inferred from basic
 gate support. Individual operations may reject invalid positions, unsupported
 states, or incompatible options even if their general category is supported.
 The cross-backend contract test below covers the common subset. Companion
-integration coverage is maintained in `MOSSQuantumMPS/test/moss_integration.jl` and
-`MOSSQuantumStabilizer/test/runtests.jl`; dense execution, estimation, noise and
+integration coverage is maintained in `MOSSMPS/test/moss_integration.jl` and
+`MOSSStabilizer/test/runtests.jl`; dense execution, estimation, noise and
 capability coverage is in `MOSSQuantum/test/unit/`.
 
 ## Query a particular circuit
@@ -97,8 +97,8 @@ using Pkg
 Pkg.activate("/path/to/backend-test-env")
 Pkg.develop([
     PackageSpec(path="/path/to/MOSSQuantum"),
-    PackageSpec(path="/path/to/MOSSQuantumMPS"),
-    PackageSpec(path="/path/to/MOSSQuantumStabilizer"),
+    PackageSpec(path="/path/to/MOSSMPS"),
+    PackageSpec(path="/path/to/MOSSStabilizer"),
 ])
 include("/path/to/MOSSQuantum/test/cross_backend/runtests.jl")
 ```

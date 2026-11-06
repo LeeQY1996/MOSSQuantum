@@ -37,7 +37,7 @@ adds scalar/zero operator semantics, tensor-product algebra, exact term
 simplification, repeated circuit execution with explicit post-selection
 acceptance, and Pauli-group expectation estimates with standard errors.
 Molecular chemistry will be implemented subsequently as a separate
-`MOSSQuantumChemistry` companion, reusing these core interfaces.
+`MOSSChemistry` companion, reusing these core interfaces.
 
 ## Gate-level noise simulation
 
@@ -262,7 +262,7 @@ All three steps passed local acceptance. [Ownership and migration conventions](c
 
 ## Follow-up work
 
-The next implementation step is a separate `MOSSQuantumChemistry` companion,
+The next implementation step is a separate `MOSSChemistry` companion,
 building molecular Hamiltonians on the operator and measurement interfaces above.
 Chemistry engines and fermionic mappings remain outside the main package.
 

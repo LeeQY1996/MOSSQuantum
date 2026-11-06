@@ -1,7 +1,7 @@
-# Develop MOSSQuantum, MOSSQuantumMPS and MOSSQuantumStabilizer in one Julia environment.
+# Develop MOSSQuantum, MOSSMPS and MOSSStabilizer in one Julia environment.
 using MOSSQuantum, Random
-using MOSSQuantumMPS: zero_state_mps, MatrixProductBackend, NoTruncation
-using MOSSQuantumStabilizer: StabilizerState, StabilizerBackend
+using MOSSMPS: zero_state_mps, MatrixProductBackend, NoTruncation
+using MOSSStabilizer: StabilizerState, StabilizerBackend
 
 circuit = QCircuit([HGate(1), CNOTGate(1, 2)])
 observable = QubitsTerm(1=>"Z", 2=>"Z")

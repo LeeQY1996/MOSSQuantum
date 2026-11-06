@@ -167,7 +167,7 @@ exact meaning.
 ## Chemistry boundary
 
 Molecule input, electronic-structure drivers, fermionic mappings, active spaces
-and chemistry ansatzes will belong to a separate `MOSSQuantumChemistry` package.
+and chemistry ansatzes will belong to a separate `MOSSChemistry` package.
 This foundation adds no Python or chemistry-engine dependency to the main
 package. The chemistry package is a subsequent implementation step, not part of
 this change.
