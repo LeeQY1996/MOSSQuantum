@@ -2,7 +2,7 @@
 
 量子线路、稠密状态模拟、参数绑定、噪声、采样和梯度。
 
-[API 与函数索引](api.md) · [安装与快速开始](../README.md) · [GitHub 仓库](https://github.com/LeeQY1996/MOSSQuantum)
+[API 与函数索引](api.md) · [安装与快速开始](../README.md) · [GitHub 仓库](https://github.com/LeeQY1996/MOSSQuantum) · [家族图标与字标](branding.md)
 
 ## 使用这份参考
 
@@ -10,7 +10,7 @@
 
 本网站由当前默认分支的 Markdown 构建，不是按发行版本冻结的文档。精确行为以同一提交的源码为准，函数条目可从页底返回源文件。
 
-## MOSSQuantum 家族
+## MOSS 家族
 
 | 文档站点 | 仓库 |
 | --- | --- |

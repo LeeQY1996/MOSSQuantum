@@ -84,7 +84,7 @@ def main():
         elif target.exists() and target.is_relative_to(root):
             relative = target.relative_to(root).as_posix()
             if relative.startswith('docs/assets/'):
-                result = relative_url('assets/' + target.name, source)
+                result = relative_url('assets/' + target.relative_to(root / 'docs/assets').as_posix(), source)
             else:
                 result = origin + ('/tree/' if target.is_dir() else '/blob/') + quote(branch, safe='') + '/' + quote(relative, safe='/')
         else:
@@ -120,15 +120,20 @@ def main():
         toc = ''.join(f'<a href="#{e(anchor)}">{e(re.sub(r"`", "", label))}</a>' for level, label, anchor in headings if level == 2)
         home = relative_url('index.html', source)
         style = relative_url('assets/style.css', source)
+        brand_icon = relative_url('assets/brand/moss-icon.svg', source)
+        brand_wordmark = relative_url('assets/brand/wordmark.svg', source)
+        brand_wordmark_dark = relative_url('assets/brand/wordmark-dark.svg', source)
+        brand_wordmark_compact = relative_url('assets/brand/wordmark-compact.svg', source)
+        brand_wordmark_compact_dark = relative_url('assets/brand/wordmark-compact-dark.svg', source)
         js = relative_url('assets/search.js', source)
         index = relative_url('search-index.json', source)
         canonical = site_url + quote(route, safe='/')
         page = f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)} · {e(config['title'])}</title><meta name="description" content="{e(config['description'])}">
-<link rel="canonical" href="{e(canonical)}"><link rel="stylesheet" href="{e(style)}"></head>
-<body><a class="skip" href="#main">跳至正文</a><header><a class="brand" href="{e(home)}">{e(config['title'])}</a><a href="{origin}">GitHub ↗</a></header>
-<div class="layout"><aside class="sidebar"><label for="search">搜索 API / 函数</label><input id="search" type="search" placeholder="输入函数名或关键词" autocomplete="off" data-index="{e(index)}"><div id="search-results" aria-live="polite"></div><nav aria-label="文档">{''.join(nav)}</nav><details><summary>MOSSQuantum 家族</summary>{family}</details></aside>
+<link rel="canonical" href="{e(canonical)}"><link rel="icon" type="image/svg+xml" href="{e(brand_icon)}"><link rel="stylesheet" href="{e(style)}"></head>
+<body><a class="skip" href="#main">跳至正文</a><header><a class="brand" href="{e(home)}" aria-label="{e(config['title'])}"><img class="brand-icon" src="{e(brand_icon)}" alt="" width="36" height="36"><picture class="brand-wordmark-picture"><source media="(max-width:480px) and (prefers-color-scheme:dark)" srcset="{e(brand_wordmark_compact_dark)}"><source media="(max-width:480px)" srcset="{e(brand_wordmark_compact)}"><source media="(prefers-color-scheme:dark)" srcset="{e(brand_wordmark_dark)}"><img class="brand-wordmark" src="{e(brand_wordmark)}" alt="{e(config['title'])}"></picture></a><a href="{origin}">GitHub ↗</a></header>
+<div class="layout"><aside class="sidebar"><label for="search">搜索 API / 函数</label><input id="search" type="search" placeholder="输入函数名或关键词" autocomplete="off" data-index="{e(index)}"><div id="search-results" aria-live="polite"></div><nav aria-label="文档">{''.join(nav)}</nav><details><summary>MOSS 家族</summary>{family}</details></aside>
 <main id="main"><article>{content}</article><footer>由仓库源码维护 · <a href="{origin}/blob/{quote(branch, safe='')}/{quote(source.relative_to(root).as_posix(), safe='/')}">查看 / 编辑本页源文件</a></footer></main><aside class="toc"><strong>本页目录</strong>{toc}</aside></div>
 <script src="{e(js)}" defer></script></body></html>'''
         target = output / route
@@ -138,9 +143,9 @@ def main():
         search.append({'title': title, 'url': route, 'text': html.unescape(plain)})
     if errors:
         raise SystemExit('Link validation failed:\n' + '\n'.join(sorted(set(errors))))
-    for asset in (root / 'docs/assets').iterdir():
+    for asset in sorted((root / 'docs/assets').rglob('*')):
         if asset.is_file():
-            target = output / 'assets' / asset.name
+            target = output / 'assets' / asset.relative_to(root / 'docs/assets')
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(asset.read_bytes())
     (output / 'search-index.json').write_text(json.dumps(search, ensure_ascii=False))
