@@ -19,8 +19,8 @@ GREEN = '#389826'
 PURPLE = '#9558B2'
 INK = '#202331'
 PAPER = '#EEF0F6'
-ICON_NAME = 'moos-qubit-grid.png'
-APPROVED_ICON_SHA256 = '354838f61a8d1c5cb78106e435b5a4f1854357927aa00a6ccde8cab97ea4d915'
+ICON_NAME = 'moss-qubit-grid.png'
+APPROVED_ICON_SHA256 = 'e0ea35fc103e8dfdc54b56e7b5c11c89d69aa49999e0fe4bef4635ac334f4525'
 
 PACKAGES = (
     ('MOSSQuantum', 'Quantum', PURPLE, 'CORE SIMULATOR'),
@@ -176,9 +176,9 @@ def main():
     if hashlib.sha256(icon).hexdigest() != APPROVED_ICON_SHA256:
         raise SystemExit('Approved icon differs; review and update its fingerprint before distribution')
     identity = json.dumps({
-        'display_name': 'MOOS',
+        'display_name': 'MOSS',
         'family_name': 'MOSS',
-        'letter_rows': ['MO', 'OS'],
+        'letter_rows': ['MO', 'SS'],
         'icon': ICON_NAME,
         'icon_sha256': APPROVED_ICON_SHA256,
         'format': 'image/png',
@@ -204,8 +204,8 @@ def main():
     (brand / 'identity.json').write_text(identity)
     note = (
         'MOSS family display assets\n'
-        'The approved MOOS mark reads MO / OS in a two-by-two layout.\n'
-        'The green and purple O letters contain cartoon qubit arcs and red state dots.\n'
+        'The corrected MOSS mark reads MO / SS in a two-by-two layout.\n'
+        'The green O contains a cartoon qubit arc and red state dot.\n'
         'The icon is the original transparent PNG, not a vector tracing.\n'
         'Package and repository names retain their canonical MOSS names.\n'
         'Package wordmarks are separate SVG paths with light/dark and compact variants.\n'

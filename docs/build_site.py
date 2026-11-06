@@ -158,7 +158,7 @@ def main():
         toc = ''.join(f'<a href="#{e(anchor)}">{e(re.sub(r"`", "", label))}</a>' for level, label, anchor in headings if level == 2)
         home = relative_url('index.html', source)
         style = relative_url('assets/style.css', source)
-        brand_icon = relative_url('assets/brand/moos-qubit-grid.png', source)
+        brand_icon = relative_url('assets/brand/moss-qubit-grid.png', source)
         brand_label = e(config['title'])
         if config['title'].startswith('MOSS'):
             brand_label = 'MOSS<wbr>' + e(config['title'][4:])

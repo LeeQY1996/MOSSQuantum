@@ -1,12 +1,12 @@
 {
-  "display_name": "MOOS",
+  "display_name": "MOSS",
   "family_name": "MOSS",
   "letter_rows": [
     "MO",
-    "OS"
+    "SS"
   ],
-  "icon": "moos-qubit-grid.png",
-  "icon_sha256": "354838f61a8d1c5cb78106e435b5a4f1854357927aa00a6ccde8cab97ea4d915",
+  "icon": "moss-qubit-grid.png",
+  "icon_sha256": "e0ea35fc103e8dfdc54b56e7b5c11c89d69aa49999e0fe4bef4635ac334f4525",
   "format": "image/png",
   "transparent_background": true,
   "packages": [

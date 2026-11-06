@@ -1,6 +1,6 @@
 # MOSSQuantum 文档
 
-<img src="assets/brand/moos-qubit-grid.png" alt="MOOS 家族展示图标" width="200">
+<img src="assets/brand/moss-qubit-grid.png" alt="MOSS 家族展示图标" width="200">
 
 量子线路、稠密状态模拟、参数绑定、噪声、采样和梯度。
 

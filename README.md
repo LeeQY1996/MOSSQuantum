@@ -1,6 +1,6 @@
 # MOSSQuantum
 
-<img src="docs/assets/brand/moos-qubit-grid.png" alt="MOOS 家族展示图标" width="192">
+<img src="docs/assets/brand/moss-qubit-grid.png" alt="MOSS 家族展示图标" width="192">
 
 [图标与品牌素材](https://leeqy1996.github.io/MOSSQuantum/branding.html)
 
