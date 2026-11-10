@@ -45,3 +45,13 @@ end
 	    @test check_statevector_init_3(L)
 	end
 end
+
+@testset "Amplitude encoding rejects invalid norms" begin
+    for input in (zeros(2), [NaN, 1.0], [Inf, 1.0])
+        @test_throws ArgumentError amplitude_encoding(input)
+        @test_throws ArgumentError amplitude_encoding(Float32, input)
+    end
+    input = [3.0, 0.0, 4.0]
+    @test storage(amplitude_encoding(input)) ≈ [0.6, 0.0, 0.8, 0.0]
+    @test input == [3.0, 0.0, 4.0]
+end

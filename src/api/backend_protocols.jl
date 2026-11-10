@@ -112,6 +112,29 @@ validate_backend_execution(::AbstractBackend, circuit::QCircuit, ::AbstractQuant
 # Dense state families; CPU support also requires an eligible storage layout.
 const _DenseCPUState = Union{StateVector,DensityMatrix,BatchStateVector,BatchDensityMatrix}
 
+function _check_cpu_gate_positions(operation)
+    if operation isa QCircuit
+        for instruction in operation
+            _check_cpu_gate_positions(instruction)
+        end
+    elseif operation isa Conditional
+        _check_cpu_gate_positions(operation.then_branch)
+        _check_cpu_gate_positions(operation.else_branch)
+    elseif operation isa Gate
+        register = positions(operation)
+        length(register) == nqubits(operation) && allunique(register) ||
+            throw(ArgumentError("gate positions must be distinct and match its qubit count"))
+    end
+    return nothing
+end
+
+function validate_backend_execution(::CPUBackend, circuit::QCircuit, ::AbstractQuantumState;
+                                    mode::Symbol=:apply)
+    QuantumCircuits._require_bound_parameters(circuit)
+    _check_cpu_gate_positions(circuit)
+    return nothing
+end
+
 function supports(::CPUBackend, operation, state::AbstractQuantumState; action::Symbol=:apply)
     return state isa _DenseCPUState && _cpu_storage_supported(state.data) &&
         _cpu_supports(operation, typeof(state), action)
@@ -195,6 +218,7 @@ function apply!(b::CPUBackend, operation::AbstractInstruction, state::_DenseCPUS
     QuantumCircuits._require_bound_parameters(operation)
     _require_cpu_storage(state, operation)
     supports(b, operation, state) || throw(UnsupportedOperation(b, operation, state, :apply))
+    _check_cpu_gate_positions(operation)
     validate_positions(operation, nqubits(state))
     return _cpu_apply!(operation, state; kwargs...)
 end
@@ -247,9 +271,8 @@ function expectation(b::AbstractBackend, observable, state::AbstractQuantumState
     throw(UnsupportedOperation(b, observable, state, :expectation))
 end
 
-function expectation(b::CPUBackend, observable, state::_DenseCPUState)
-    supports(b, observable, state; action=:expectation) ||
-        throw(UnsupportedOperation(b, observable, state, :expectation))
+function _check_cpu_observable(observable, state::_DenseCPUState)
+    _check_cpu_gate_positions(observable)
     if observable isa AbstractMatrix
         dimension = 2^nqubits(state)
         size(observable) == (dimension, dimension) ||
@@ -257,6 +280,13 @@ function expectation(b::CPUBackend, observable, state::_DenseCPUState)
     else
         validate_positions(observable, nqubits(state))
     end
+    return nothing
+end
+
+function expectation(b::CPUBackend, observable, state::_DenseCPUState)
+    supports(b, observable, state; action=:expectation) ||
+        throw(UnsupportedOperation(b, observable, state, :expectation))
+    _check_cpu_observable(observable, state)
     return _cpu_expectation(observable, state)
 end
 
@@ -272,6 +302,13 @@ end
 function expectation(b::CPUBackend, left::_DenseCPUState, observable, right::_DenseCPUState)
     _require_cpu_storage(left, observable, :expectation)
     _require_cpu_storage(right, observable, :expectation)
+    if observable isa AbstractMatrix
+        size(observable) == (2^nqubits(left), 2^nqubits(right)) ||
+            throw(DimensionMismatch("observable dimensions must match the left and right states"))
+    else
+        nqubits(left) == nqubits(right) || throw(DimensionMismatch("states must have the same number of qubits"))
+        _check_cpu_observable(observable, right)
+    end
     return _cpu_cross_expectation(left, observable, right)
 end
 expectation(left::StateVector, observable, right::StateVector) =
@@ -291,6 +328,7 @@ apply(operation::Union{QMeasure,QSelect}, state::_DenseCPUState; kwargs...) =
 
 function apply(b::CPUBackend, observable::Union{QubitsTerm,QubitsOperator,AbstractMatrix}, state::_DenseCPUState)
     _require_cpu_storage(state, observable)
+    _check_cpu_observable(observable, state)
     return _cpu_linear_apply(observable, state)
 end
 _cpu_linear_apply(observable::Union{QubitsTerm,QubitsOperator}, state::_DenseBatchState) =

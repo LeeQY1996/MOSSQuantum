@@ -3,6 +3,46 @@ using LinearAlgebra
 using MOSSQuantum
 using MOSSQuantum.Utilities
 
+@testset "CPU observable register boundaries" begin
+    for state in (StateVector(1), DensityMatrix(1), BatchStateVector(1, 2), BatchDensityMatrix(1, 2))
+        before = copy(storage(state))
+        term = QubitsTerm(2 => "X")
+        for observable in (term, QubitsOperator(term))
+            @test_throws ArgumentError observable * state
+            if state isa Union{StateVector,BatchStateVector}
+                @test_throws ArgumentError expectation(state, observable, state)
+            end
+        end
+        @test storage(state) == before
+    end
+    for (left, right) in ((StateVector(1), StateVector(2)), (StateVector(2), StateVector(1)))
+        @test_throws DimensionMismatch expectation(left, QubitsTerm(1 => "X"), right)
+    end
+    @test_throws DimensionMismatch expectation(StateVector(1), ones(3, 3), StateVector(1))
+    @test expectation(StateVector(1), ones(2, 4), StateVector(2)) ≈ 1
+    state = StateVector(ComplexF64[1, im] / sqrt(2))
+    @test expectation(state, QubitsTerm(1 => "Y"), state) ≈ 1
+end
+
+@testset "CPU gate positions are checked before circuit writes" begin
+    for gate in (CNOTGate(1, 1), SWAPGate(1, 1), CZGate(1, 1),
+                 QuantumGate((1, 1), Matrix{Float64}(I, 4, 4)))
+        for state in (StateVector(2), DensityMatrix(2), BatchStateVector(2, 2), BatchDensityMatrix(2, 2))
+            before = copy(storage(state))
+            @test_throws ArgumentError apply!(gate, state)
+            @test storage(state) == before
+            @test_throws ArgumentError apply!(QCircuit([XGate(1), QCircuit([gate])]), state)
+            @test storage(state) == before
+        end
+        @test_throws ArgumentError expectation(gate, StateVector(2))
+        @test_throws ArgumentError expectation(StateVector(2), gate, StateVector(2))
+        for branch in (Conditional(:bit, gate), Conditional(:bit, XGate(1); otherwise=gate))
+            circuit = QCircuit([XGate(1), branch])
+            @test_throws ArgumentError execute(circuit, StateVector(2); shots=0, classical=Dict(:bit=>0))
+        end
+    end
+end
+
 @testset "channel targets and Kraus ordering" begin
     for channel in (AmplitudeDamping(2; γ=1.0), PhaseDamping(2; γ=1.0), Depolarizing(2; p=1.0))
         @test positions(channel) == (2,)

@@ -156,6 +156,7 @@ qstate(n::Int) = StateVector(ComplexF64, n)
 
 function amplitude_encoding(::Type{T}, v::AbstractVector{<:Number}; nqubits::Int=ceil(Int, log2(length(v)))) where {T<:Number}
     vn = norm(v)
+    isfinite(vn) && vn > 0 || throw(ArgumentError("amplitude input must have positive finite norm"))
     (vn ≈ 1.) || println("input vector is not normalized, it will be renormalized as a quantum state.")
     vv = zeros(T, 2^nqubits)
     for i in 1:length(v)
