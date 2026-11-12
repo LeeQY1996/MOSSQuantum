@@ -1,7 +1,7 @@
 abstract type AbstractNoiseMethod end
 """Exact Kraus sum on density matrices (the default execution method)."""
 struct DensityMatrixEvolution <: AbstractNoiseMethod end
-"""Independent pure-state Kraus trajectories; CPU pure states and batches only."""
+"""Independent pure-state Kraus trajectories; state/backend pairs declare support."""
 struct KrausTrajectory <: AbstractNoiseMethod end
 
 # Companion backends can supply their own stochastic evolution method without

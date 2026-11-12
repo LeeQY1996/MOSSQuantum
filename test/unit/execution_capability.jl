@@ -2,6 +2,21 @@ using Test, Random, MOSSQuantum
 
 struct CapabilityUnknownBackend <: MOSSQuantum.AbstractBackend end
 
+struct CapabilityPromotingBackend <: MOSSQuantum.AbstractBackend end
+MOSSQuantum.execution_capability_backend(::CapabilityPromotingBackend, ::StateVector; mode, method) =
+    CapabilityStep(:supported, (DensityMatrix,))
+MOSSQuantum.execution_capability_step(::CapabilityPromotingBackend, ::MOSSQuantum.Gate,
+                                      ::Type{S}; mode, method) where {S<:DensityMatrix} =
+    CapabilityStep(:supported, (S,))
+
+@testset "backend capability initial state transitions" begin
+    for circuit in (QCircuit(), QCircuit([XGate(1)]))
+        report = execution_capability(CapabilityPromotingBackend(), circuit, StateVector(1))
+        @test report.status === :supported
+        @test report.final_state_types == Type[DensityMatrix]
+    end
+end
+
 @testset "configuration-level execution capability" begin
     backend = CPUBackend()
     initial = StateVector(2)

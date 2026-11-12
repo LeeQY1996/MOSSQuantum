@@ -13,7 +13,7 @@ or a particular gradient algorithm.
 """
 abstract type AbstractGradientMethod end
 
-"""The existing deterministic dense CPU circuit reverse pass."""
+"""Adjoint differentiation; supported objective/backend pairs declare their capabilities."""
 struct AdjointGradient <: AbstractGradientMethod end
 
 """A gradient strategy does not support this objective."""

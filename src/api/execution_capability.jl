@@ -265,7 +265,8 @@ function execution_capability(b::AbstractBackend, circuit::QCircuit, state::Abst
             end
         end
     end
-    types = _capability_walk!(issues,b,circuit,Type[typeof(state)],mode,method,nqubits(state),())
+    initial_types = modecap.status === :supported ? Type[modecap.state_types...] : Type[typeof(state)]
+    types = _capability_walk!(issues,b,circuit,initial_types,mode,method,nqubits(state),())
     status = any(i -> i.status === :unsupported,issues) ? :unsupported :
              any(i -> i.status === :unknown,issues) ? :unknown : :supported
     return ExecutionCapability(status,issues,types)
