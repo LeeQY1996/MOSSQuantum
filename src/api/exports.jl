@@ -62,7 +62,7 @@ export AbstractInstruction, validate_positions, AbstractQuantumState
 export AbstractBackend, CPUBackend, backend, supports, validate_backend_execution, UnsupportedOperation
 export CapabilityIssue, CapabilityStep, ExecutionCapability, execution_capability, execution_capability_step, execution_capability_backend
 export validate_terminal_sampling, prepare_terminal_sampling, draw_terminal_samples
-export probabilities, sample, counts, simulate, SimulationResult, MeasurementRecord
+export probabilities, sample, counts, simulate, simulate_circuit!, SimulationResult, MeasurementRecord
 export BatchSimulationResult
 export execute, ShotResult
 export measurement_plan, estimate, MeasurementPlan, MeasurementGroup, PauliMeasurementTerm

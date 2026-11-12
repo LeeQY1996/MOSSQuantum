@@ -19,6 +19,58 @@ function MOSSQuantum.validate_backend_execution(::PreflightBackend, circuit::MOS
     seen[] = (mode, circuit)
     throw(ArgumentError("preflight rejected circuit"))
 end
+
+struct RecordingBackend <: MOSSQuantum.AbstractBackend
+    events::Vector{Symbol}
+end
+MOSSQuantum.supports(::RecordingBackend, ::Union{MOSSQuantum.Gate,MOSSQuantum.QMeasure},
+                     ::MOSSQuantum.StateVector; action::Symbol=:apply) = action === :apply
+function MOSSQuantum.apply!(backend::RecordingBackend, gate::MOSSQuantum.Gate, state::MOSSQuantum.StateVector)
+    push!(backend.events, :gate)
+    return MOSSQuantum.apply!(MOSSQuantum.CPUBackend(), gate, state)
+end
+MOSSQuantum.apply!(::RecordingBackend, ::MOSSQuantum.QCircuit, ::MOSSQuantum.StateVector) =
+    error("the default simulation hook must retain per-instruction dispatch")
+function MOSSQuantum.measure!(backend::RecordingBackend, state::MOSSQuantum.StateVector, position::Int;
+                             auto_reset::Bool=true, rng)
+    push!(backend.events, :measurement)
+    return MOSSQuantum.measure!(MOSSQuantum.CPUBackend(), state, position; auto_reset, rng)
+end
+
+struct BadSimulationBackend <: MOSSQuantum.AbstractBackend end
+MOSSQuantum.supports(::BadSimulationBackend, ::MOSSQuantum.QCircuit, ::MOSSQuantum.StateVector;
+                     action::Symbol=:apply) = action === :apply
+MOSSQuantum.simulate_circuit!(::BadSimulationBackend, ::MOSSQuantum.QCircuit, state, rng,
+                             records::Vector{MOSSQuantum.MeasurementRecord}) = nothing
+end
+
+@testset "simulation hook preserves default dispatch and records" begin
+    backend = BackendContractFailures.RecordingBackend(Symbol[])
+    initial = StateVector(1)
+    rng = MersenneTwister(781)
+    untouched = copy(rng)
+    gates = QCircuit([HGate(1), QCircuit([XGate(1)])])
+    result = simulate(gates, initial; backend, rng)
+    @test backend.events == [:gate, :gate]
+    @test result.state ≈ gates * initial
+    @test initial == StateVector(1)
+    @test isempty(result.measurements)
+    @test rand(rng) == rand(untouched)
+
+    empty!(backend.events)
+    circuit = QCircuit([HGate(1), QCircuit([QMeasure(1; auto_reset=false), XGate(1)]),
+                        QMeasure(1; auto_reset=false)])
+    rng, reference_rng = MersenneTwister(782), MersenneTwister(782)
+    result = simulate(circuit, initial; backend, rng)
+    reference = simulate(circuit, initial; rng=reference_rng)
+    @test backend.events == [:gate, :measurement, :gate, :measurement]
+    @test result.state ≈ reference.state
+    @test getproperty.(result.measurements, :outcome) == getproperty.(reference.measurements, :outcome)
+    @test getproperty.(result.measurements, :probability) ≈ getproperty.(reference.measurements, :probability)
+    @test getproperty.(result.measurements, :position) == [1, 1]
+    @test rand(rng) == rand(reference_rng)
+    @test initial == StateVector(1)
+    @test_throws ArgumentError simulate(QCircuit(), initial; backend=BackendContractFailures.BadSimulationBackend())
 end
 
 @testset "backend preflight hook" begin

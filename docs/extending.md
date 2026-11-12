@@ -132,6 +132,8 @@ For circuit-level diagnostics, a backend may specialize `validate_backend_execut
 
 The two-argument methods `apply!(instruction, state)` and `expectation(observable, state)` select `backend(state)`. Generic backend circuit execution visits nested instructions, retains replacement states, and rejects unsupported capabilities. A default circuit capability query checks each instruction against the supplied state. Backends that change representation should specialize that query to follow their state transitions; the dense CPU backend does so for pure-to-mixed channel application.
 
+Nonbatch `simulate` calls `simulate_circuit!(backend, circuit, copied_state, rng, records)` after its usual preflight; the default preserves per-instruction dispatch, while a backend may specialize record-free bulk execution and must return the resulting quantum state without bypassing measurement records or RNG semantics.
+
 An explicit CPU instruction call uses the core CPU matrix implementation.
 Specialized legacy two-argument instruction methods still participate in direct
 calls and CPU circuit traversal. Put custom backend behavior in the

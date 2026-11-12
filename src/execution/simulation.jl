@@ -164,6 +164,17 @@ function _simulate!(circuit::QCircuit, state, chosen_backend, rng, records)
 end
 
 """
+    simulate_circuit!(backend, circuit, state, rng, records)
+
+Backend execution hook for nonbatch `simulate`, after preflight and copying the
+initial state. Return the resulting quantum state and append measurement records
+in execution order, using the supplied RNG. The default visits each instruction;
+a backend may execute a record-free circuit in bulk.
+"""
+simulate_circuit!(backend::AbstractBackend, circuit::QCircuit, state, rng,
+                  records::Vector{MeasurementRecord}) = _simulate!(circuit, state, backend, rng, records)
+
+"""
     simulate(circuit, initial_state; backend=backend(initial_state), rng=Random.default_rng())
 
 Execute a circuit on a copy of its initial state and retain measurement records.
@@ -183,7 +194,9 @@ function simulate(circuit::QCircuit, state; backend=MOSSQuantum.backend(state), 
     supports(backend, circuit, state) || throw(UnsupportedOperation(backend, circuit, state, :apply))
     validate_positions(circuit, nqubits(state))
     records = MeasurementRecord[]
-    result = _simulate!(circuit, copy(state), backend, rng, records)
+    result = simulate_circuit!(backend, circuit, copy(state), rng, records)
+    result isa AbstractQuantumState ||
+        throw(ArgumentError("simulate_circuit! must return an AbstractQuantumState"))
     return SimulationResult(result, records)
 end
 
