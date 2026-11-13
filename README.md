@@ -125,13 +125,16 @@ implicit host conversion. Device kernels belong to companion implementations.
 Existing `StateVector{T}` constructor and dispatch syntax remains valid; exact
 instance types now also include a storage parameter `A`.
 
-The independent [MOSSGPU companion](https://github.com/LeeQY1996/MOSSGPU#readme) implements
-the first CUDA device-array path: single pure states, 1–5-qubit gates, nested
-gate-only circuits, expectations and terminal readout. Its hardware acceptance
-is pending; CPU-only checks do not establish GPU correctness or performance.
-It adds no CUDA dependency to the MOSSQuantum core. Device execution requires a
-functional NVIDIA GPU and driver; GPU batch/density execution and gradients
-remain follow-up work.
+The independent [MOSSGPU companion](https://github.com/LeeQY1996/MOSSGPU#readme)
+implements CUDA pure and density states, shared-circuit batches, local gates,
+fixed Kraus channels, observations and supported parameter gradients. Native
+adjoints cover pure states and explicit density-batch inputs within its declared
+limits; single-state dynamic execution and Kraus trajectories are also available.
+Its [hardware acceptance records](https://github.com/LeeQY1996/MOSSGPU/blob/main/VALIDATION.md)
+identify the tested RTX 6000D workloads and toolchains. Core 0.1.2 supplies the
+shared batch parameter-shift and finite-difference algorithms without a CUDA
+dependency. Device execution requires a functional NVIDIA GPU and driver;
+the companion documents unsupported combinations and memory costs.
 
 ### Independent parameter binding
 
