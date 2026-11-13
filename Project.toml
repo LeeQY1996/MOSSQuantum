@@ -1,6 +1,6 @@
 name = "MOSSQuantum"
 uuid = "a9444a5f-c7f1-4505-aa0b-1b1f5991640b"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Guo Chu <guochu604b@gmail.com>"]
 
 [deps]

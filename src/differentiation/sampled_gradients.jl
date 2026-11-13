@@ -184,19 +184,29 @@ function _static_shift_support(circuit::QCircuit)
     return true
 end
 
-function supports_gradient(::ParameterShift,objective::Union{ExpectationObjective,ShotExpectationObjective})
+function supports_gradient(::ParameterShift,objective::Union{ExpectationObjective,BatchExpectationObjective,ShotExpectationObjective})
     try
         _check_parameter_map(objective.template,objective.parameter_map)
-        objective isa ExpectationObjective && !_parameter_deterministic(objective.template) && return false
+        objective isa BatchExpectationObjective && _check_batch_objective_configuration(objective)
+        !(objective isa ShotExpectationObjective) && !_parameter_deterministic(objective.template) && return false
         _is_symbolic_map(objective.parameter_map) && return _static_shift_support(objective.template)
         return _shift_recipes!(Any[],objective.template)
     catch err
-        err isa InterruptException && rethrow()
+        err isa Union{InterruptException,OutOfMemoryError} && rethrow()
         return false
     end
 end
 supports_gradient(::Union{FiniteDifference,SPSAGradient},::Union{ShotExpectationObjective,Function}) = true
 supports_gradient(::Union{FiniteDifference,SPSAGradient},objective::ExpectationObjective) = _parameter_deterministic(objective.template)
+function supports_gradient(::FiniteDifference,objective::BatchExpectationObjective)
+    try
+        _check_batch_objective_configuration(objective)
+        return _parameter_deterministic(objective.template)
+    catch err
+        err isa Union{InterruptException,OutOfMemoryError} && rethrow()
+        return false
+    end
+end
 
 function _check_gradient_gate_values(circuit::QCircuit)
     for op in circuit
@@ -225,12 +235,19 @@ function _validate_sampled_bound(objective::ShotExpectationObjective,bound)
     objective.backend isa CPUBackend && _check_gradient_gate_values(bound)
     return bound
 end
+function _validate_sampled_bound(objective::BatchExpectationObjective,bound)
+    _check_batch_objective_configuration(objective)
+    _check_batch_objective_execution(objective,bound)
+    validate_backend_execution(objective.backend,bound,objective.initial_state;mode=:apply)
+    return bound
+end
 function supports_gradient(method::Union{ParameterShift,FiniteDifference,SPSAGradient},
-                           objective::Union{ExpectationObjective,ShotExpectationObjective},
+                           objective::Union{ExpectationObjective,BatchExpectationObjective,ShotExpectationObjective},
                            values::AbstractVector{<:Real})
     try
         x = _gradient_input(objective,values)
-        objective isa ExpectationObjective && !_parameter_deterministic(objective.template) && return false
+        objective isa BatchExpectationObjective && method isa SPSAGradient && return false
+        !(objective isa ShotExpectationObjective) && !_parameter_deterministic(objective.template) && return false
         bound = _validate_sampled_bound(objective,bind_parameters(objective.template,x,objective.parameter_map))
         return !(method isa ParameterShift) || _shift_recipes!(Any[],bound)
     catch err
@@ -248,7 +265,7 @@ end
 
 function _gradient_input(objective,values)
     _check_gradient_input(values)
-    if objective isa Union{ExpectationObjective,ShotExpectationObjective}
+    if objective isa Union{ExpectationObjective,BatchExpectationObjective,ShotExpectationObjective}
         _check_parameter_map(objective.template,objective.parameter_map)
         length(values)==nparameters(objective.parameter_map) || throw(DimensionMismatch("independent parameter count disagrees"))
         _is_symbolic_map(objective.parameter_map) && any(x -> x isa Bool,values) &&
@@ -280,7 +297,17 @@ function _gradient_flat_observation(objective,flat,rng)
         return (value=sample.value,variance=sample.variance,shots=sample.shots)
     end
     state = apply!(objective.backend,bound,copy(objective.initial_state))
-    value = Float64(real(expectation(objective.backend,objective.observable,state)))
+    expectations = expectation(objective.backend,objective.observable,state)
+    value = if objective isa BatchExpectationObjective
+        expectations isa AbstractVector{<:Number} ||
+            throw(ArgumentError("a batch expectation objective must produce a vector of sample expectations"))
+        length(expectations) == batch_size(objective.initial_state) ||
+            throw(DimensionMismatch("the number of expectations must match the input batch"))
+        Base.require_one_based_indexing(expectations)
+        Float64(_reduce_batch_objective(objective,real.(expectations)))
+    else
+        Float64(real(expectations))
+    end
     isfinite(value) || throw(ArgumentError("objective must be finite"))
     return (value=value,variance=0.0,shots=0)
 end
@@ -294,7 +321,7 @@ end
 """Estimate a gradient with explicit RNG, statistical uncertainty and shot accounting."""
 estimate_gradient(method::AbstractGradientMethod,objective,values::AbstractVector{<:Real};kwargs...) =
     throw(UnsupportedGradient(method,objective))
-function _estimate_gradient(method::ParameterShift,objective::Union{ExpectationObjective,ShotExpectationObjective},values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng())
+function _estimate_gradient(method::ParameterShift,objective::Union{ExpectationObjective,BatchExpectationObjective,ShotExpectationObjective},values::AbstractVector{<:Real};rng::Random.AbstractRNG=Random.default_rng())
     x = _gradient_input(objective,values)
     _require_sampled_gradient_support(method,objective,x)
     bound = bind_parameters(objective.template,x,objective.parameter_map)
@@ -302,10 +329,12 @@ function _estimate_gradient(method::ParameterShift,objective::Union{ExpectationO
     _shift_recipes!(recipes,bound) || throw(UnsupportedGradient(method,objective))
     flat = expand_parameters(objective.parameter_map,x)
     # Validate all recipes before any objective sampling or RNG consumption.
-    if _is_symbolic_map(objective.parameter_map)
+    if objective isa BatchExpectationObjective || _is_symbolic_map(objective.parameter_map)
         for (slot,recipe) in enumerate(recipes), (_,shift) in recipe
             shifted = copy(flat); shifted[slot] += shift
-            _validate_sampled_bound(objective,_flat_bind(objective.template,shifted))
+            shifted_bound = _is_symbolic_map(objective.parameter_map) ? _flat_bind(objective.template,shifted) :
+                bind_parameters(objective.template,shifted)
+            _validate_sampled_bound(objective,shifted_bound)
         end
     end
     value = _gradient_observation(objective,x,rng)
@@ -336,7 +365,8 @@ function _estimate_gradient(method::FiniteDifference,objective,values::AbstractV
         plus[i] += method.step; minus[i] -= method.step
         plus[i] != minus[i] || throw(ArgumentError("difference step is below parameter resolution"))
         all(isfinite,plus) && all(isfinite,minus) || throw(ArgumentError("difference step overflows parameter values"))
-        if objective isa Union{ExpectationObjective,ShotExpectationObjective} && _is_symbolic_map(objective.parameter_map)
+        if objective isa BatchExpectationObjective ||
+                objective isa Union{ExpectationObjective,ShotExpectationObjective} && _is_symbolic_map(objective.parameter_map)
             _validate_sampled_bound(objective,bind_parameters(objective.template,plus,objective.parameter_map))
             _validate_sampled_bound(objective,bind_parameters(objective.template,minus,objective.parameter_map))
         end

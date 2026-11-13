@@ -202,7 +202,7 @@ loss(values) = differentiable_value(method, objective, values)
 gradient = Zygote.gradient(loss, values)[1]
 ```
 
-External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSQuantumDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Additional numerical gradient algorithms are separate future work; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines the current contracts.
+External methods specialize public `value_and_gradient`/`value_and_pullback` hooks, and external objectives implement `evaluate` without requiring a quantum state or simulator inheritance. The [independent differentiation fixture](test/fixtures/MOSSQuantumDemoDifferentiation) demonstrates replacing both. Existing Zygote circuit interfaces remain available. Parameter-shift and finite-difference methods also use this protocol; the [extension guide](docs/extending.md#execution-and-replaceable-differentiation) defines its contracts.
 
 ### Pure-state batches
 
@@ -230,8 +230,11 @@ All samples share the circuit, parameter vector, and observable. Scalar batch
 objectives support `:mean`, `:sum`, and `:weighted_sum`; weights are explicit and
 are not normalized. Forward execution stays independent of the gradient method,
 and the optional `differentiable_value` adapter works with the selected method.
-CPU batch gradients cover deterministic unitary gates and fixed `QuantumMap`
-channels with supported Hermitian observables. Measurement and post-selection
+CPU batch adjoints cover deterministic unitary gates and fixed `QuantumMap`
+channels with supported Hermitian observables. `ParameterShift()` and
+`FiniteDifference(step=...)` also support scalar pure/mixed batch objectives on
+their selected deterministic execution backend, using the configured sample
+reduction and independent parameter map. Measurement and post-selection
 are forward capabilities. See the
 [batch guide](docs/batching.md) for shapes, measurement semantics, supported
 encoding derivatives, and gradient boundaries.

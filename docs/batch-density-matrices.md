@@ -182,6 +182,18 @@ preserves precision and underflow behavior. For a `BatchDensityMatrix` initial
 state, the same prepared CPU adjoint may be called concurrently; other paths follow
 the [general ownership rules](conventions.md#repeated-evaluation-and-pullback-ownership).
 
+`ParameterShift()` and `FiniteDifference(step=...)` support the same scalar batch
+adapter through deterministic forward evaluation on its selected backend. Fixed
+channels, including complete damping, can appear between trainable gates; channel
+configuration itself is fixed. Parameter shift requires a valid gate-family
+recipe and shifts each occurrence before accumulating shared/affine parameters.
+Both methods reduce sample expectations using the configured weights, return only
+the independent parameter gradient, and preserve the initial batch. Numerical
+methods do not require the CPU adjoint's Hermitian observable representation:
+their scalar objective remains `real.(expectation(...))` followed by reduction.
+Measurement and post-selection remain unsupported for these deterministic batch
+gradients, and `SPSAGradient` is not declared for this adapter.
+
 Core evaluation and explicit gradients load no AD framework. Optional AD uses the
 selected numerical method through the existing adapter:
 

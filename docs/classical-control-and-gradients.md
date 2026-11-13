@@ -121,7 +121,14 @@ included. Near-deterministic finite samples can underestimate uncertainty.
 These explicit stochastic gradient methods do not make random draws differentiable
 through Zygote. Deterministic `ExpectationObjective` also supports these methods;
 finite differences and SPSA additionally accept scalar functions through the
-existing `evaluate` protocol. Batch objectives require an explicit reduction.
+existing `evaluate` protocol. `BatchExpectationObjective` supports parameter shift
+and finite differences through its explicit `:mean`, `:sum`, or `:weighted_sum`
+reduction, on pure or mixed batches with deterministic execution and fixed Kraus
+channels. Its gradient uses the same sample reduction and independent parameter
+order; no implicit sample reduction is added to ordinary batch expectations.
+SPSA is not declared for this batch adapter. Exact batch estimates consume zero
+shots and have zero sampling covariance; numerical error and difference bias are
+not represented by that covariance.
 
 ## Optimization workflow
 

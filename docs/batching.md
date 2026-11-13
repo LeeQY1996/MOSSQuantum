@@ -154,6 +154,16 @@ from backend execution capabilities. Other gradient methods can implement the
 [public protocol](extending.md#execution-and-replaceable-differentiation); no fallback is
 silently chosen.
 
+`ParameterShift()` and `FiniteDifference(step=...)` also accept this scalar batch
+objective on any backend that supports its deterministic forward execution,
+including fixed Kraus channels. Both use the same sample reduction as `evaluate`;
+the returned gradient has one entry per independent parameter, not per sample.
+Parameter shifts act on gate occurrences before shared or affine parameter slots
+are accumulated. Unknown shift recipes are rejected; finite differences do not
+require a shift recipe. `SPSAGradient` is not declared for batch objectives.
+`estimate_gradient` reports zero shots and zero sampling variance for these exact
+batch evaluations; finite-difference truncation and floating-point error remain.
+
 With optional Zygote installed, the explicit scalar adapter also works:
 
 ```julia

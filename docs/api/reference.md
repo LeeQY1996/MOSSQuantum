@@ -5098,12 +5098,12 @@ estimate(plan::EstimationPlan, values::AbstractVector{<:Real}; kwargs...)
 estimate(plan::EstimationPlan; ...)
 estimate(bound::BoundEstimationPlan; shots, rng, allocation, budget, parallel, chunk_size)
 estimate(objective::ShotExpectationObjective, values::AbstractVector{<:Real}; rng, budget)
-estimate(observable::Union{QubitsOperator, QubitsTerm}, state::AbstractQuantumState; shots, rng, grouping, atol, max_terms, backend, readout)
 estimate(observable::Union{QubitsOperator, QubitsTerm}, circuit::QCircuit, initial_state::AbstractQuantumState; shots, rng, grouping, atol, max_terms, backend, noise_model, readout, method, parallel, chunk_size, classical)
+estimate(observable::Union{QubitsOperator, QubitsTerm}, state::AbstractQuantumState; shots, rng, grouping, atol, max_terms, backend, readout)
 estimate(observable, program::NoisyCircuit, initial::AbstractQuantumState; noise_model, readout, kwargs...)
 ```
 
-源码：[src/observables/shot_estimation.jl:296](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L296) · [src/observables/shot_estimation.jl:276](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L276) · [src/observables/circuit_estimation.jl:65](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L65) · [src/observables/circuit_estimation.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L36) · [src/observables/estimation_plans.jl:136](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L136) · [src/observables/estimation_plans.jl:117](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L117) · [src/differentiation/sampled_gradients.jl:97](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L97) · [src/observables/shot_estimation.jl:268](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L268) · [src/observables/circuit_estimation.jl:17](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L17) · [src/observables/circuit_estimation.jl:82](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L82)
+源码：[src/observables/shot_estimation.jl:296](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L296) · [src/observables/shot_estimation.jl:276](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L276) · [src/observables/circuit_estimation.jl:65](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L65) · [src/observables/circuit_estimation.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L36) · [src/observables/estimation_plans.jl:136](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L136) · [src/observables/estimation_plans.jl:117](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L117) · [src/differentiation/sampled_gradients.jl:97](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L97) · [src/observables/circuit_estimation.jl:17](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L17) · [src/observables/shot_estimation.jl:268](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/shot_estimation.jl#L268) · [src/observables/circuit_estimation.jl:82](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/circuit_estimation.jl#L82)
 
 原生帮助：
 
@@ -5422,15 +5422,15 @@ An operation still needs named parameter binding before numerical use.
 
 ```julia
 parameter_info(map::ParameterMap)
-parameter_info(objective::ShotExpectationObjective)
-parameter_info(plan::EstimationPlan)
-parameter_info(plan::ExecutionPlan)
-parameter_info(objective::Union{BatchExpectationObjective, ExpectationObjective})
-parameter_info(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
 parameter_info(map::MOSSQuantum.AffineParameterMap)
+parameter_info(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
+parameter_info(objective::Union{BatchExpectationObjective, ExpectationObjective})
+parameter_info(plan::ExecutionPlan)
+parameter_info(plan::EstimationPlan)
+parameter_info(objective::ShotExpectationObjective)
 ```
 
-源码：[src/api/parameter_initialization.jl:119](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L119) · [src/differentiation/sampled_gradients.jl:94](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L94) · [src/observables/estimation_plans.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L36) · [src/execution/execution_plans.jl:203](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L203) · [src/api/objectives.jl:246](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L246) · [src/api/parameter_initialization.jl:120](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L120) · [src/api/parameter_initialization.jl:27](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L27)
+源码：[src/api/parameter_initialization.jl:119](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L119) · [src/api/parameter_initialization.jl:27](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L27) · [src/api/parameter_initialization.jl:120](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L120) · [src/api/objectives.jl:246](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L246) · [src/execution/execution_plans.jl:203](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L203) · [src/observables/estimation_plans.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L36) · [src/differentiation/sampled_gradients.jl:94](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L94)
 
 原生帮助：
 
@@ -5451,15 +5451,15 @@ An integer `ParameterMap` alone has no template from which to recover initial va
 
 ```julia
 initial_parameters(map::ParameterMap; values)
-initial_parameters(objective::ShotExpectationObjective; kwargs...)
-initial_parameters(plan::EstimationPlan; kwargs...)
-initial_parameters(plan::ExecutionPlan; kwargs...)
-initial_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective}; kwargs...)
-initial_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}}; values)
 initial_parameters(map::MOSSQuantum.AffineParameterMap; values)
+initial_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}}; values)
+initial_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective}; kwargs...)
+initial_parameters(plan::ExecutionPlan; kwargs...)
+initial_parameters(plan::EstimationPlan; kwargs...)
+initial_parameters(objective::ShotExpectationObjective; kwargs...)
 ```
 
-源码：[src/api/parameter_initialization.jl:218](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L218) · [src/differentiation/sampled_gradients.jl:95](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L95) · [src/observables/estimation_plans.jl:37](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L37) · [src/execution/execution_plans.jl:204](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L204) · [src/api/objectives.jl:248](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L248) · [src/api/parameter_initialization.jl:222](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L222) · [src/api/parameter_initialization.jl:214](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L214)
+源码：[src/api/parameter_initialization.jl:218](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L218) · [src/api/parameter_initialization.jl:214](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L214) · [src/api/parameter_initialization.jl:222](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_initialization.jl#L222) · [src/api/objectives.jl:248](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L248) · [src/execution/execution_plans.jl:204](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L204) · [src/observables/estimation_plans.jl:37](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L37) · [src/differentiation/sampled_gradients.jl:95](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L95)
 
 原生帮助：
 
@@ -5499,16 +5499,16 @@ Return every symbolic expression slot, including constants, in occurrence order.
 ```julia
 independent_parameters(program::NoisyCircuit)
 independent_parameters(map::ParameterMap)
-independent_parameters(map::MOSSQuantum.AffineParameterMap)
-independent_parameters(objective::ShotExpectationObjective)
+independent_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
+independent_parameters(plan::ExecutionPlan)
 independent_parameters(plan::EstimationPlan)
 independent_parameters(x::AbstractInstruction)
-independent_parameters(plan::ExecutionPlan)
-independent_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
+independent_parameters(map::MOSSQuantum.AffineParameterMap)
+independent_parameters(objective::ShotExpectationObjective)
 independent_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective})
 ```
 
-源码：[src/execution/noise_models.jl:119](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/noise_models.jl#L119) · [src/api/parameter_map.jl:73](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L73) · [src/api/symbolic_parameters.jl:16](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L16) · [src/differentiation/sampled_gradients.jl:93](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L93) · [src/observables/estimation_plans.jl:35](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L35) · [src/quantum_circuits/parameters/instructions.jl:135](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/quantum_circuits/parameters/instructions.jl#L135) · [src/execution/execution_plans.jl:202](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L202) · [src/api/symbolic_parameters.jl:274](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L274) · [src/api/objectives.jl:99](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L99)
+源码：[src/execution/noise_models.jl:119](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/noise_models.jl#L119) · [src/api/parameter_map.jl:73](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L73) · [src/api/symbolic_parameters.jl:274](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L274) · [src/execution/execution_plans.jl:202](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L202) · [src/observables/estimation_plans.jl:35](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L35) · [src/quantum_circuits/parameters/instructions.jl:135](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/quantum_circuits/parameters/instructions.jl#L135) · [src/api/symbolic_parameters.jl:16](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L16) · [src/differentiation/sampled_gradients.jl:93](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L93) · [src/api/objectives.jl:99](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L99)
 
 原生帮助：
 
@@ -5523,15 +5523,15 @@ Return named free variables in deterministic first-occurrence order. Compile a t
 
 ```julia
 trainable_parameters(map::ParameterMap)
-trainable_parameters(objective::ShotExpectationObjective)
-trainable_parameters(plan::EstimationPlan)
-trainable_parameters(plan::ExecutionPlan)
-trainable_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective})
-trainable_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
 trainable_parameters(map::MOSSQuantum.AffineParameterMap)
+trainable_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
+trainable_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective})
+trainable_parameters(plan::ExecutionPlan)
+trainable_parameters(plan::EstimationPlan)
+trainable_parameters(objective::ShotExpectationObjective)
 ```
 
-源码：[src/api/parameter_map.jl:74](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L74) · [src/differentiation/sampled_gradients.jl:92](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L92) · [src/observables/estimation_plans.jl:34](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L34) · [src/execution/execution_plans.jl:201](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L201) · [src/api/objectives.jl:100](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L100) · [src/api/symbolic_parameters.jl:275](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L275) · [src/api/symbolic_parameters.jl:17](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L17)
+源码：[src/api/parameter_map.jl:74](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L74) · [src/api/symbolic_parameters.jl:17](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L17) · [src/api/symbolic_parameters.jl:275](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L275) · [src/api/objectives.jl:100](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L100) · [src/execution/execution_plans.jl:201](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L201) · [src/observables/estimation_plans.jl:34](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L34) · [src/differentiation/sampled_gradients.jl:92](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L92)
 
 原生帮助：
 
@@ -5543,18 +5543,18 @@ No documentation found for public binding `MOSSQuantum.QuantumCircuits.trainable
 # 7 methods for generic function "trainable_parameters" from MOSSQuantum.QuantumCircuits:
  [1] trainable_parameters(map::ParameterMap)
      @ ~/Code/Quantum/MOSSQuantum/src/api/parameter_map.jl:74
- [2] trainable_parameters(objective::ShotExpectationObjective)
-     @ ~/Code/Quantum/MOSSQuantum/src/differentiation/sampled_gradients.jl:92
- [3] trainable_parameters(plan::EstimationPlan)
-     @ ~/Code/Quantum/MOSSQuantum/src/observables/estimation_plans.jl:34
- [4] trainable_parameters(plan::ExecutionPlan)
-     @ ~/Code/Quantum/MOSSQuantum/src/execution/execution_plans.jl:201
- [5] trainable_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective})
-     @ ~/Code/Quantum/MOSSQuantum/src/api/objectives.jl:100
- [6] trainable_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
-     @ ~/Code/Quantum/MOSSQuantum/src/api/symbolic_parameters.jl:275
- [7] trainable_parameters(map::MOSSQuantum.AffineParameterMap)
+ [2] trainable_parameters(map::MOSSQuantum.AffineParameterMap)
      @ ~/Code/Quantum/MOSSQuantum/src/api/symbolic_parameters.jl:17
+ [3] trainable_parameters(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
+     @ ~/Code/Quantum/MOSSQuantum/src/api/symbolic_parameters.jl:275
+ [4] trainable_parameters(objective::Union{BatchExpectationObjective, ExpectationObjective})
+     @ ~/Code/Quantum/MOSSQuantum/src/api/objectives.jl:100
+ [5] trainable_parameters(plan::ExecutionPlan)
+     @ ~/Code/Quantum/MOSSQuantum/src/execution/execution_plans.jl:201
+ [6] trainable_parameters(plan::EstimationPlan)
+     @ ~/Code/Quantum/MOSSQuantum/src/observables/estimation_plans.jl:34
+ [7] trainable_parameters(objective::ShotExpectationObjective)
+     @ ~/Code/Quantum/MOSSQuantum/src/differentiation/sampled_gradients.jl:92
 ```
 
 
@@ -5566,16 +5566,16 @@ No documentation found for public binding `MOSSQuantum.QuantumCircuits.trainable
 
 ```julia
 parameter_order(map::ParameterMap)
-parameter_order(map::MOSSQuantum.AffineParameterMap)
 parameter_order(objective::ShotExpectationObjective)
-parameter_order(plan::EstimationPlan)
-parameter_order(x::AbstractInstruction)
 parameter_order(plan::ExecutionPlan)
+parameter_order(x::AbstractInstruction)
+parameter_order(map::MOSSQuantum.AffineParameterMap)
+parameter_order(plan::EstimationPlan)
 parameter_order(context::NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}})
 parameter_order(objective::Union{BatchExpectationObjective, ExpectationObjective})
 ```
 
-源码：[src/api/parameter_map.jl:72](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L72) · [src/api/symbolic_parameters.jl:15](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L15) · [src/differentiation/sampled_gradients.jl:91](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L91) · [src/observables/estimation_plans.jl:33](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L33) · [src/quantum_circuits/parameters/instructions.jl:140](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/quantum_circuits/parameters/instructions.jl#L140) · [src/execution/execution_plans.jl:200](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L200) · [src/api/symbolic_parameters.jl:273](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L273) · [src/api/objectives.jl:98](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L98)
+源码：[src/api/parameter_map.jl:72](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/parameter_map.jl#L72) · [src/differentiation/sampled_gradients.jl:91](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L91) · [src/execution/execution_plans.jl:200](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/execution/execution_plans.jl#L200) · [src/quantum_circuits/parameters/instructions.jl:140](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/quantum_circuits/parameters/instructions.jl#L140) · [src/api/symbolic_parameters.jl:15](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L15) · [src/observables/estimation_plans.jl:33](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/observables/estimation_plans.jl#L33) · [src/api/symbolic_parameters.jl:273](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/symbolic_parameters.jl#L273) · [src/api/objectives.jl:98](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L98)
 
 原生帮助：
 
@@ -5864,14 +5864,14 @@ Execute a shared bound circuit and return one real expectation per sample, witho
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
-evaluate(objective::ShotExpectationObjective, values::AbstractVector{<:Real}; rng, budget)
-evaluate(objective::BatchExpectationObjective, values::AbstractVector{<:Real})
-evaluate(objective::ExpectationObjective, values::AbstractVector{<:Real})
 evaluate(objective::Function, values::AbstractVector{<:Real})
+evaluate(objective::ExpectationObjective, values::AbstractVector{<:Real})
+evaluate(objective::BatchExpectationObjective, values::AbstractVector{<:Real})
+evaluate(objective::ShotExpectationObjective, values::AbstractVector{<:Real}; rng, budget)
 evaluate(objective, values::AbstractVector{<:Real})
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:108](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L108) · [src/api/objectives.jl:237](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L237) · [src/api/objectives.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L36) · [src/api/gradient_methods.jl:42](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L42) · [src/api/gradient_methods.jl:39](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L39)
+源码：[src/api/gradient_methods.jl:42](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L42) · [src/api/objectives.jl:36](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L36) · [src/api/objectives.jl:237](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/objectives.jl#L237) · [src/differentiation/sampled_gradients.jl:108](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L108) · [src/api/gradient_methods.jl:39](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L39)
 
 原生帮助：
 
@@ -5889,20 +5889,21 @@ Execute a scalar objective without selecting or invoking a gradient method. Impl
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
+supports_gradient(::FiniteDifference, objective::BatchExpectationObjective)
 supports_gradient(::AdjointGradient, objective::ExpectationObjective)
 supports_gradient(::AdjointGradient, objective::ExpectationObjective, values::AbstractVector{<:Real})
 supports_gradient(::AdjointGradient, objective::BatchExpectationObjective)
 supports_gradient(::AdjointGradient, objective::BatchExpectationObjective, values::AbstractVector{<:Real})
-supports_gradient(::ParameterShift, objective::Union{ExpectationObjective, ShotExpectationObjective})
+supports_gradient(::ParameterShift, objective::Union{BatchExpectationObjective, ExpectationObjective, ShotExpectationObjective})
+supports_gradient(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective::Union{BatchExpectationObjective, ExpectationObjective, ShotExpectationObjective}, values::AbstractVector{<:Real})
+supports_gradient(method::Union{FiniteDifference, SPSAGradient}, objective::Function, values::AbstractVector{<:Real})
+supports_gradient(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real})
 supports_gradient(::Union{FiniteDifference, SPSAGradient}, ::Union{Function, ShotExpectationObjective})
 supports_gradient(::Union{FiniteDifference, SPSAGradient}, objective::ExpectationObjective)
 supports_gradient(::AbstractGradientMethod, objective)
-supports_gradient(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective::Union{ExpectationObjective, ShotExpectationObjective}, values::AbstractVector{<:Real})
-supports_gradient(method::Union{FiniteDifference, SPSAGradient}, objective::Function, values::AbstractVector{<:Real})
-supports_gradient(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real})
 ```
 
-源码：[src/differentiation/objectives.jl:101](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L101) · [src/differentiation/objectives.jl:124](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L124) · [src/differentiation/objectives.jl:244](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L244) · [src/differentiation/objectives.jl:246](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L246) · [src/differentiation/sampled_gradients.jl:187](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L187) · [src/differentiation/sampled_gradients.jl:198](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L198) · [src/differentiation/sampled_gradients.jl:199](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L199) · [src/api/gradient_methods.jl:51](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L51) · [src/differentiation/sampled_gradients.jl:228](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L228) · [src/differentiation/sampled_gradients.jl:241](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L241) · [src/api/gradient_methods.jl:52](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L52)
+源码：[src/differentiation/sampled_gradients.jl:201](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L201) · [src/differentiation/objectives.jl:101](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L101) · [src/differentiation/objectives.jl:124](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L124) · [src/differentiation/objectives.jl:244](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L244) · [src/differentiation/objectives.jl:246](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L246) · [src/differentiation/sampled_gradients.jl:187](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L187) · [src/differentiation/sampled_gradients.jl:244](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L244) · [src/differentiation/sampled_gradients.jl:258](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L258) · [src/api/gradient_methods.jl:52](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L52) · [src/differentiation/sampled_gradients.jl:199](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L199) · [src/differentiation/sampled_gradients.jl:200](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L200) · [src/api/gradient_methods.jl:51](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L51)
 
 原生帮助：
 
@@ -5920,13 +5921,13 @@ Query support for derivatives of the objective's explicit parameter vector. Unkn
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
-value_and_gradient(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real}; rng, budget)
-value_and_gradient(method::AdjointGradient, objective::BatchExpectationObjective, values::AbstractVector{<:Real})
 value_and_gradient(method::AdjointGradient, objective::ExpectationObjective, values::AbstractVector{<:Real})
+value_and_gradient(method::AdjointGradient, objective::BatchExpectationObjective, values::AbstractVector{<:Real})
+value_and_gradient(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real}; rng, budget)
 value_and_gradient(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real})
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:379](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L379) · [src/differentiation/objectives.jl:292](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L292) · [src/differentiation/objectives.jl:215](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L215) · [src/api/gradient_methods.jl:96](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L96)
+源码：[src/differentiation/objectives.jl:215](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L215) · [src/differentiation/objectives.jl:292](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/objectives.jl#L292) · [src/differentiation/sampled_gradients.jl:409](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L409) · [src/api/gradient_methods.jl:96](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/api/gradient_methods.jl#L96)
 
 原生帮助：
 
@@ -6273,11 +6274,11 @@ Histogram of final classical bits (all attempts by default, including rejected s
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
-ShotExpectationObjective(template::Union{QCircuit, NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}}}, observable::Union{QubitsOperator, QubitsTerm}, initial::AbstractQuantumState; shots, parameter_map, parameter_order, fixed, backend, method, noise_model, readout, classical, grouping, atol, max_terms, allocation)
 ShotExpectationObjective(template::QCircuit, plan::MeasurementPlan, initial_state::S, parameter_map::P, shots::Int64, backend::B, method::M, readout::Vector{ReadoutError}, classical::ClassicalRegister, prepared::Union{Nothing, EstimationPlan}, allocation::Union{VarianceAllocation, Symbol}) where {S<:AbstractQuantumState, B<:AbstractBackend, M, P<:AbstractParameterMap}
+ShotExpectationObjective(template::Union{QCircuit, NamedTuple{(:template, :parameter_map), <:Tuple{AbstractInstruction, AbstractParameterMap}}}, observable::Union{QubitsOperator, QubitsTerm}, initial::AbstractQuantumState; shots, parameter_map, parameter_order, fixed, backend, method, noise_model, readout, classical, grouping, atol, max_terms, allocation)
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:65](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L65) · [src/differentiation/sampled_gradients.jl:53](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L53)
+源码：[src/differentiation/sampled_gradients.jl:53](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L53) · [src/differentiation/sampled_gradients.jl:65](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L65)
 
 原生帮助：
 
@@ -6347,13 +6348,13 @@ Average independent Rademacher simultaneous perturbations using central differen
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
-parameter_shift_rule(g::AdjointQuantumGate, i::Integer)
-parameter_shift_rule(g::Union{CRxGate, CRyGate, CRzGate}, i::Integer)
 parameter_shift_rule(g::Union{CCPHASEGate, CPHASEGate, PHASEGate, RxGate, RyGate, RzGate}, i::Integer)
+parameter_shift_rule(g::Union{CRxGate, CRyGate, CRzGate}, i::Integer)
+parameter_shift_rule(g::AdjointQuantumGate, i::Integer)
 parameter_shift_rule(::Gate, ::Integer)
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:40](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L40) · [src/differentiation/sampled_gradients.jl:34](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L34) · [src/differentiation/sampled_gradients.jl:30](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L30) · [src/differentiation/sampled_gradients.jl:29](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L29)
+源码：[src/differentiation/sampled_gradients.jl:30](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L30) · [src/differentiation/sampled_gradients.jl:34](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L34) · [src/differentiation/sampled_gradients.jl:40](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L40) · [src/differentiation/sampled_gradients.jl:29](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L29)
 
 原生帮助：
 
@@ -6375,7 +6376,7 @@ estimate_gradient(method::Union{ParameterShift, FiniteDifference, SPSAGradient},
 estimate_gradient(method::AbstractGradientMethod, objective, values::AbstractVector{<:Real}; kwargs...)
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:399](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L399) · [src/differentiation/sampled_gradients.jl:295](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L295)
+源码：[src/differentiation/sampled_gradients.jl:429](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L429) · [src/differentiation/sampled_gradients.jl:322](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L322)
 
 原生帮助：
 
@@ -6760,11 +6761,11 @@ No documentation found for public binding `MOSSQuantum.remaining_shots`.
 参数、返回值和使用限制请按 [API 主题目录](../api.md) 查阅；以下签名直接取自当前实现。
 
 ```julia
-required_shots(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real})
 required_shots(objective::ShotExpectationObjective)
+required_shots(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real})
 ```
 
-源码：[src/differentiation/sampled_gradients.jl:384](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L384) · [src/differentiation/sampled_gradients.jl:96](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L96)
+源码：[src/differentiation/sampled_gradients.jl:96](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L96) · [src/differentiation/sampled_gradients.jl:414](https://github.com/LeeQY1996/MOSSQuantum/blob/main/src/differentiation/sampled_gradients.jl#L414)
 
 原生帮助：
 
@@ -6774,10 +6775,10 @@ No documentation found for public binding `MOSSQuantum.required_shots`.
 
 ```
 # 2 methods for generic function "required_shots" from MOSSQuantum:
- [1] required_shots(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real})
-     @ ~/Code/Quantum/MOSSQuantum/src/differentiation/sampled_gradients.jl:384
- [2] required_shots(objective::ShotExpectationObjective)
+ [1] required_shots(objective::ShotExpectationObjective)
      @ ~/Code/Quantum/MOSSQuantum/src/differentiation/sampled_gradients.jl:96
+ [2] required_shots(method::Union{ParameterShift, FiniteDifference, SPSAGradient}, objective, values::AbstractVector{<:Real})
+     @ ~/Code/Quantum/MOSSQuantum/src/differentiation/sampled_gradients.jl:414
 ```
 
 

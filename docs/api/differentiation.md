@@ -52,6 +52,8 @@ estimate_gradient(method,objective,values; rng=Random.default_rng(),budget=nothi
 
 `ParameterShift` 按门的每次出现逐槽移位，再汇总共享参数，未知门需要 `parameter_shift_rule(gate,active_index)`。该钩子返回 `(coefficient,shift)` 对列表或 `nothing`；规则必须对整个门族成立，不能从某个角度矩阵推断。受控旋转通常需要四点评估。`FiniteDifference` 是中心差分；`SPSAGradient` 平均独立 Rademacher 同时扰动方向。
 
+`BatchExpectationObjective` 正式支持 `ParameterShift` 和 `FiniteDifference`，两者沿用所选后端的确定性前向、固定 Kraus 通道和既定样本归约，返回独立参数梯度。参数移位先逐门槽求导再累加共享或仿射参数，不能直接整体移位共享独立变量。精确批量评估的 shots 和采样协方差为零；差分截断及浮点误差仍存在。批量目标尚未声明 `SPSAGradient`，测量、后选择和噪声配置参数的梯度也不包含在此接口中。
+
 `GradientEstimate` 返回目标值、梯度、采样不确定度/协方差、shot 数与评估数；`value_and_gradient` 可取相同方法的 `(value,gradient)`。差分的截断偏差不属于采样标准误，小步长会放大采样方差。SPSA 不保证单次方向的无偏梯度等于精确导数。按 `required_shots(method,objective,values)` 计算真实评估成本，不应将单次目标预算误当成整个梯度预算。
 
 ## `MOSSQuantum.Optimization`
