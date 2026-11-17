@@ -18,7 +18,8 @@ function apply_threaded!(gt::PHASEGate, v::AbstractVector)
 
     exp_phi = convert(eltype(v), exp(im * parameters(gt)[1] ))
     total_itr = div(L, 2)
-    parallel_run(total_itr, Threads.nthreads(), f, sizek+1, mask0, mask1, exp_phi, v)
+    parallel_run(total_itr, Threads.nthreads(), f, sizek+1, mask0, mask1, exp_phi, v;
+                 min_work=_CPU_PHASE_MIN_WORK)
 end
 
 """
@@ -39,5 +40,6 @@ function apply_threaded!(gt::XGate, v::AbstractVector)
     end
 
     total_itr = div(L, 2)
-    parallel_run(total_itr, Threads.nthreads(), f, sizek, mask0, mask1, v)
+    parallel_run(total_itr, Threads.nthreads(), f, sizek, mask0, mask1, v;
+                 min_work=_CPU_SWAP_MIN_WORK)
 end

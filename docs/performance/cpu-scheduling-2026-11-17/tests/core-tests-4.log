@@ -1,0 +1,353 @@
+Test Summary:          | Pass  Total  Time
+Bounded CPU scheduling |  148    148  1.3s
+Test Summary:                                                    | Pass  Total  Time
+Scheduled gate kernels preserve complex amplitudes and ownership |   85     85  7.7s
+Test Summary:                                          | Pass  Total  Time
+Many small batch states share a bounded outer task set |   11     11  0.5s
+Test Summary:                                                         | Pass  Total  Time
+Many small density matrices preserve promotion, channels and adjoints |   19     19  7.1s
+Test Summary:                | Pass  Total   Time
+test quantum gate operations |   27     27  57.4s
+input vector is not normalized, it will be renormalized as a quantum state.
+Test Summary:                     | Pass  Total  Time
+test quantum state initialization |   12     12  0.9s
+Test Summary:                  | Pass  Total  Time
+Dense state ownership controls |   80     80  0.8s
+Test Summary:                          | Pass  Total  Time
+Ownership across state representations |   21     21  0.3s
+Test Summary:                           | Pass  Total  Time
+Circuit ownership and container returns |   53     53  1.4s
+Test Summary:                        | Pass  Total  Time
+Scalar identities and zero operators |   68     68  1.4s
+Test Summary:                                    | Pass  Total  Time
+Operator arithmetic follows dense matrix algebra |  113    113  3.5s
+Test Summary:                                            | Pass  Total  Time
+Canonical simplification and explicit coefficient cutoff |   18     18  1.1s
+Test Summary:                                 | Pass  Total  Time
+Operator validation and independent ownership |   22     22  0.4s
+Test Summary:                                          | Pass  Total  Time
+Trotter retains constant energy and zero-time identity |   21     21  1.4s
+Test Summary:                                 | Pass  Total  Time
+Constant and zero operators across CPU states |  746    746  9.5s
+Test Summary:                                   | Pass  Total  Time
+Scalar gates preserve phase and density scaling |   84     84  0.9s
+Test Summary:                                      | Pass  Total  Time
+Constant offsets retain analytic circuit gradients |   26     26  4.2s
+Test Summary:              | Pass  Total  Time
+Terminal sampler extension |    5      5  3.4s
+Test Summary:                      | Pass  Total  Time
+Circuit shots and terminal readout |   13     13  2.1s
+Test Summary:                                                  | Pass  Total  Time
+Shot execution respects selected backend and register contract |    5      5  0.6s
+Test Summary:                               | Pass  Total  Time
+Each shot replays intermediate measurements |   11     11  0.3s
+Test Summary:                           | Pass  Total  Time
+Post-selection consumes attempted shots |   19     19  0.3s
+Test Summary:               | Pass  Total  Time
+Shot boundaries and batches |   21     21  2.0s
+Test Summary:                    | Pass  Total  Time
+Finite-shot measurement planning |   28     28  0.9s
+Test Summary:                                    | Pass  Total  Time
+Pauli basis rotations and finite-shot statistics |   37     37  1.2s
+Test Summary:                                      | Pass  Total  Time
+Constants, zero observables and batch shot budgets |   41     41  0.8s
+Test Summary:                   | Pass  Total  Time
+Readout-only backend estimation |    4      4  0.1s
+Test Summary:                    | Pass  Total  Time
+Finite-shot circuit expectations |   23     23  0.4s
+Test Summary:                         | Pass  Total   Time
+Physical noise channels and contracts |  207    207  10.7s
+Test Summary:                                 | Pass  Total  Time
+Two-qubit correlated noise and position order |   20     20  2.4s
+Test Summary:               | Pass  Total  Time
+Noise constructor precision |   14     14  2.8s
+Test Summary:              | Pass  Total  Time
+Readout errors and records |   17     17  1.0s
+Test Summary:                       | Pass  Total  Time
+Noise rules and explicit idle times |   12     12  0.7s
+Test Summary:                                | Pass  Total  Time
+Independent Kraus trajectories and streaming |   23     23  2.8s
+Test Summary:                | Pass  Total  Time
+Noisy expectation statistics |    7      7  0.6s
+Test Summary:                                     | Pass  Total  Time
+Trajectory simulation states and noise edge cases |   82     82  1.0s
+Test Summary:                            | Pass  Total  Time
+State readout convenience and batch axes |   30     30  0.8s
+Test Summary:                                     | Pass  Total  Time
+Noise respects explicit backend and distributions |    7      7  0.7s
+Test Summary:                              | Pass  Total  Time
+Classical register and conditional binding |   16     16  1.0s
+Test Summary:                                       | Pass  Total  Time
+Independent reported and physical classical control |   32     32  1.8s
+Test Summary:                                 | Pass  Total  Time
+Dynamic circuit preflight, branches and noise |   42     42  1.1s
+Test Summary:                           | Pass  Total  Time
+Teleportation with measurement feedback |   64     64  0.4s
+Test Summary:                                 | Pass  Total  Time
+Empty dynamic batches validate post-selection |    4      4  0.1s
+Test Summary:                                      | Pass  Total  Time
+Exact parameter-shift and independent shared slots |   58     58  6.7s
+Test Summary:                                 | Pass  Total  Time
+Finite shot gradients, budgets and covariance |   19     19  2.0s
+Test Summary:                               | Pass  Total  Time
+Numerical strategies and feedback gradients |    9      9  1.3s
+Test Summary:                                         | Pass  Total   Time
+Batch parameter-shift and finite-difference gradients | 2454   2454  24.6s
+Test Summary:                      | Pass  Total  Time
+Finite-shot optimization workflows |   12     12  1.4s
+Test Summary:         | Pass  Total  Time
+Optimizer shot budget |    4      4  0.4s
+Test Summary:                       | Pass  Total  Time
+Adaptive optimizer final statistics |    4      4  0.4s
+Test Summary:                     | Pass  Total  Time
+Execution plans snapshot and bind |   26     26  1.3s
+Test Summary:                                 | Pass  Total  Time
+Prepared feedback, post-selection and readout |   12     12  0.4s
+Test Summary:                          | Pass  Total  Time
+Prepared estimation and ordered sweeps |   30     30  0.9s
+Test Summary:                                | Pass  Total  Time
+backend capability initial state transitions |    4      4  0.0s
+Test Summary:                            | Pass  Total  Time
+configuration-level execution capability |   41     41  1.4s
+Test Summary:                | Pass  Total  Time
+capability execution options |   19     19  0.5s
+Test Summary:                                      | Pass  Total  Time
+Independent pilot allocation and hard shot budgets |  116    116  0.4s
+Test Summary:             | Pass  Total  Time
+Gradient budget preflight |    7      7  0.0s
+input vector is not normalized, it will be renormalized as a quantum state.
+input vector is not normalized, it will be renormalized as a quantum state.
+input vector is not normalized, it will be renormalized as a quantum state.
+input vector is not normalized, it will be renormalized as a quantum state.
+Test Summary:           | Pass  Total  Time
+test batch state vector |  135    135  1.3s
+Test Summary:              | Pass  Total  Time
+test batch gate operations |   44     44  1.3s
+Testing matrix expectation for batch...
+✓ Matrix expectation for batch passed
+Testing gate expectation for batch...
+✓ Gate expectation for batch passed
+Testing QubitsTerm expectation for batch...
+✓ QubitsTerm expectation for batch passed
+Testing QubitsOperator expectation for batch...
+✓ QubitsOperator expectation for batch passed
+Testing two-state batch expectation...
+✓ Two-state batch expectation passed
+Testing performance comparison...
+Computing expectation for batch size 100, nqubits=4
+Batch time: 1.2261e-5 seconds
+Loop time: 4.5722e-5 seconds
+Speedup: 3.729059619933121x
+✓ Performance comparison completed
+
+All batch expectation tests passed!
+Test Summary:                       | Pass  Total  Time
+test batch expectation computations |   15     15  1.9s
+Test Summary:                     | Pass  Total   Time
+test qubit hamiltonian operations |   37     37  46.2s
+Test Summary:           | Pass  Total  Time
+test circuit parameters |   72     72  0.2s
+Test Summary:           | Pass  Total  Time
+test measure and select |    6      6  0.5s
+Test Summary:                                | Pass  Total  Time
+Variational circuits and dense ground states |    6      6  3.3s
+Test Summary: | Pass  Total  Time
+test utility  |    3      3  1.9s
+Test Summary:                 | Pass  Total   Time
+test quantum circuit gradient |  176    176  16.0s
+Test Summary:                   | Pass  Total  Time
+test expectation value gradient |   52     52  5.4s
+Test Summary:                                                         | Pass  Total  Time
+test quantum state gradient (may not variable via a quantum computer) |  104    104  5.2s
+Test Summary:                  | Pass  Total  Time
+test density matrix operations |    4      4  0.5s
+Test Summary:              | Pass  Total  Time
+test noisy quantum circuit |   52     52  7.4s
+input vector is not normalized, it will be renormalized as a quantum state.
+input vector is not normalized, it will be renormalized as a quantum state.
+Test Summary:           | Pass  Total   Time
+correctness regressions |  477    477  23.8s
+Test Summary:            | Pass  Total  Time
+QuantumCircuits plotting |   10     10  5.2s
+Test Summary:          | Pass  Total  Time
+Circuit drawing layout |   17     17  0.8s
+Test Summary:          | Pass  Total  Time
+Gate drawing semantics |   24     24  0.3s
+Test Summary:                | Pass  Total  Time
+circuit instruction diagrams |   23     23  0.5s
+Test Summary:            | Pass  Total  Time
+Public API compatibility |  347    347  0.2s
+Test Summary:            | Pass  Total  Time
+Squared Uhlmann fidelity |   27     27  1.2s
+Test Summary:                           | Pass  Total  Time
+Two-sided density-matrix time evolution |   37     37  4.1s
+Test Summary:                         | Pass  Total  Time
+Independent circuit parameter binding |   33     33  1.2s
+Test Summary:                          | Pass  Total  Time
+Public instruction parameter protocols |   76     76  1.5s
+Test Summary:           | Pass  Total  Time
+Explicit parameter maps |  107    107  1.6s
+Test Summary:                                      | Pass  Total  Time
+Symbolic parameter identity and affine expressions |   30     30  1.4s
+Test Summary:                             | Pass  Total  Time
+Symbolic instructions and materialization |   70     70  1.8s
+Test Summary:                | Pass  Total  Time
+Physical parameter slot keys |   19     19  0.5s
+Test Summary:                              | Pass  Total  Time
+Raw mixed discovery and named substitution |   17     17  0.4s
+Test Summary:                                | Pass  Total  Time
+Materialization replaces active placeholders |    9      9  0.0s
+Test Summary:                             | Pass  Total  Time
+Named parameter compilation and ownership |   31     31  3.0s
+Test Summary:                        | Pass  Total  Time
+Unbound parameter writers are atomic |   12     12  0.0s
+Test Summary:                               | Pass  Total  Time
+Named deterministic objectives and freezing |   36     36  1.2s
+Test Summary:          | Pass  Total  Time
+Named batch objectives |    8      8  0.7s
+Test Summary:                        | Pass  Total  Time
+Value-dependent external named gates |    8      8  0.6s
+Test Summary:                                             | Pass  Total  Time
+Affine independent coordinates and gate-occurrence shifts |   28     28  1.5s
+Test Summary:                             | Pass  Total  Time
+Affine finite-shot covariance and budgets |   19     19  1.7s
+Test Summary:                                   | Pass  Total  Time
+Named prepared execution, estimation and sweeps |   27     27  2.8s
+Test Summary:                                            | Pass  Total  Time
+Prepared symbolic feedback and real-point external gates |   11     11  1.0s
+Test Summary:                        | Pass  Total  Time
+Named parameter execution boundaries |   32     32  0.7s
+Test Summary:                            | Pass  Total  Time
+Fixed noise on named parameter templates |   13     13  0.7s
+Test Summary:                         | Pass  Total  Time
+Automatic mixed parameter compilation |   33     33  1.6s
+Test Summary:                            | Pass  Total  Time
+Mixed physical slots and fixed variables |   22     22  1.9s
+Test Summary:                                 | Pass  Total  Time
+Mixed nested and external instruction layouts |   14     14  2.0s
+Test Summary:                               | Pass  Total  Time
+Mixed parameter metadata and initialization |   50     50  3.0s
+Test Summary:                       | Pass  Total  Time
+Legacy integer defaults and sources |   27     27  3.1s
+Test Summary:                                    | Pass  Total  Time
+Initial parameter placeholders and RNG isolation |    7      7  0.6s
+Test Summary:                                                          | Pass  Total  Time
+Mixed parameters share independent coordinates across gradient methods |   16     16  0.5s
+Test Summary:                                        | Pass  Total  Time
+Mixed shot gradients propagate occurrence covariance |   16     16  0.9s
+Test Summary:                                                 | Pass  Total  Time
+Compiled mixed contexts preserve identities in prepared plans |   40     40  2.6s
+Test Summary:                                       | Pass  Total  Time
+Mixed prepared feedback and frozen noise boundaries |   12     12  1.7s
+Test Summary:                           | Pass  Total  Time
+Replaceable numerical gradient protocol |   36     36  0.1s
+Test Summary:                 | Pass  Total  Time
+CPU adjoint scalar objectives |  310    310  3.1s
+Test Summary:                                          | Pass  Total  Time
+Pure-state batch shape, ownership, and input contracts |   76     76  1.0s
+Test Summary:                                           | Pass  Total  Time
+Shared batch operator action and expectation dimensions |   29     29  0.4s
+Test Summary:                       | Pass  Total  Time
+Per-sample reduced density matrices |   15     15  0.3s
+Test Summary:              | Pass  Total  Time
+Independent batch collapse |  101    101  0.6s
+Test Summary:                       | Pass  Total  Time
+Batch measurement removes one qubit |   45     45  0.5s
+Test Summary:               | Pass  Total  Time
+Atomic batch post-selection |  205    205  0.4s
+Test Summary:                          | Pass  Total  Time
+Batch simulation records and promotion |   65     65  2.4s
+Test Summary:                                          | Pass  Total  Time
+Empty batch and scalar-register measurement boundaries |   20     20  0.2s
+Test Summary:                                         | Pass  Total  Time
+Batch simulation validates external backend contracts |   46     46  1.2s
+Test Summary:                            | Pass  Total  Time
+Shared-parameter batch scalar objectives |  171    171  2.4s
+Test Summary:                                  | Pass  Total  Time
+Batch density shape, conversion, and ownership |   71     71  1.2s
+Test Summary:                                    | Pass  Total  Time
+Batch density algebra, reset, and random samples |   45     45  2.1s
+Test Summary:                          | Pass  Total  Time
+Batch density gates and noisy circuits |   53     53  3.3s
+Test Summary:                                       | Pass  Total   Time
+Batch density gates through native five-qubit limit |    6      6  16.2s
+Test Summary:                            | Pass  Total  Time
+Batch density native execution preflight |   30     30  0.6s
+Test Summary:                                       | Pass  Total  Time
+Independent batch density observables and operators |   65     65  1.2s
+Test Summary:                                           | Pass  Total  Time
+Batch density partial trace retains independent samples |   27     27  1.9s
+Test Summary:                            | Pass  Total  Time
+Batch density probabilities and sampling |   45     45  0.7s
+Test Summary:                             | Pass  Total  Time
+Independent density measurement and reset |  264    264  0.9s
+Test Summary:                 | Pass  Total  Time
+Atomic density post-selection |  187    187  0.5s
+Test Summary:                                   | Pass  Total  Time
+Mixed batch simulation and recorded transitions |   47     47  2.3s
+Test Summary:                                   | Pass  Total  Time
+Batch mixed-state objectives and fixed channels |  124    124  1.8s
+Test Summary:                                           | Pass  Total   Time
+Batch density observation workspaces preserve contracts |  726    726  10.9s
+Test Summary:                                          | Pass  Total  Time
+Density reverse workspaces remain private to each call |   85     85  4.0s
+Test Summary:                                        | Pass  Total   Time
+Generic dense storage preserves family and ownership |  656    656  11.7s
+Test Summary:                                                  | Pass  Total  Time
+Preserved views retain opt-in aliasing and independent samples |   56     56  1.5s
+Test Summary:                                                      | Pass  Total  Time
+Storage metadata validation precedes allocation and payload access |   32     32  0.1s
+Test Summary:                                       | Pass  Total  Time
+Dense storage selects and guards execution backends |  143    143  2.2s
+Test Summary:               | Pass  Total  Time
+Explicit RNG initialization |    4      4  0.0s
+Test Summary:                                      | Pass  Total  Time
+Readout tolerates accumulated floating-point drift |    5      5  0.1s
+Test Summary:        | Pass  Total  Time
+Terminal readout API |   60     60  0.5s
+Test Summary:                        | Pass  Total  Time
+Single-trajectory simulation results |   35     35  0.7s
+Test Summary:                                          | Pass  Total  Time
+simulation hook preserves default dispatch and records |   13     13  0.3s
+Test Summary:          | Pass  Total  Time
+backend preflight hook |    9      9  0.1s
+Test Summary:                            | Pass  Total  Time
+public backend and instruction protocols |   38     38  0.8s
+Test Summary:                   | Pass  Total  Time
+external implicit-state backend |   32     32  0.4s
+Test Summary:         | Pass  Total  Time
+optional integrations |    9      9  0.4s
+Test Summary:                        | Pass  Total  Time
+circuit differentiation capabilities |   14     14  2.0s
+Test Summary:                                        | Pass  Total  Time
+Gradients through explicit constructor copy controls |  276    276  6.6s
+Test Summary:                                     | Pass  Total  Time
+Storage-preserving constructors retain AD domains |  156    156  5.5s
+Test Summary:                                         | Pass  Total  Time
+CPU pullbacks reject foreign cotangents before access |  182    182  5.5s
+Test Summary:                                       | Pass  Total  Time
+Preserved host views keep selected gradient methods |   20     20  1.8s
+Test Summary:                      | Pass  Total  Time
+Shared circuit parameter gradients |   40     40  3.5s
+Test Summary:                        | Pass  Total  Time
+Named parameters through optional AD |    5      5  0.5s
+Test Summary:                                  | Pass  Total  Time
+Automatic mixed parameters through optional AD |   39     39  2.4s
+Test Summary:                    | Pass  Total  Time
+Named parameter circuit diagrams |    6      6  0.3s
+Test Summary:                         | Pass  Total  Time
+Scalar objective ChainRules interface |  132    132  1.5s
+Test Summary:                           | Pass  Total   Time
+Legacy batch pure-state differentiation |  231    231  11.6s
+Test Summary:                                        | Pass  Total   Time
+Legacy batch density and fixed-noise differentiation |  248    248  13.0s
+Test Summary:                     | Pass  Total  Time
+external immutable trainable gate |   85     85  2.0s
+Test Summary:                        | Pass  Total  Time
+explicit shared parameter identities |  100    100  0.8s
+Test Summary:                        | Pass  Total  Time
+external scalar differentiation core |  121    121  0.3s
+Test Summary:                      | Pass  Total  Time
+external scalar ChainRules adapter |   66     66  0.2s
+Test Summary:                      | Pass  Total  Time
+external method selected by Zygote |   40     40  0.5s

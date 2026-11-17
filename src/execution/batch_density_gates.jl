@@ -57,8 +57,9 @@ function _cpu_apply!(operation::Gate, state::BatchDensityMatrix)
     _check_batch_density_gate(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
-    for b in 1:batch_size(state)
-        _dm_apply_threaded!(operation, vec(view(storage(state), :, :, b)), nqubits(state))
+    data, nq = storage(state), nqubits(state)
+    _run_batch_columns!(data, batch_size(state)) do b
+        _dm_apply_threaded!(operation, vec(view(data, :, :, b)), nq)
     end
     return state
 end
@@ -68,8 +69,9 @@ function _cpu_apply!(operation::QuantumMap, state::BatchDensityMatrix)
     _check_batch_density_channel(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
-    for b in 1:batch_size(state)
-        _qmap_apply_threaded!(operation, vec(view(storage(state), :, :, b)), nqubits(state))
+    data, nq = storage(state), nqubits(state)
+    _run_batch_columns!(data, batch_size(state)) do b
+        _qmap_apply_threaded!(operation, vec(view(data, :, :, b)), nq)
     end
     return state
 end
@@ -84,8 +86,9 @@ function apply_dagger!(operation::QuantumMap, state::BatchDensityMatrix)
     _check_batch_density_channel(operation, state)
     T = _batch_density_execution_type(operation, state)
     state = T == eltype(state) ? state : convert(BatchDensityMatrix{T}, state)
-    for b in 1:batch_size(state)
-        _qmap_apply_dagger_threaded!(operation, vec(view(storage(state), :, :, b)), nqubits(state))
+    data, nq = storage(state), nqubits(state)
+    _run_batch_columns!(data, batch_size(state)) do b
+        _qmap_apply_dagger_threaded!(operation, vec(view(data, :, :, b)), nq)
     end
     return state
 end

@@ -1,0 +1,28 @@
+┌ Warning: PrecompileTools does not support this Julia build, so workloads may not be fully precompiled
+│   exception =
+│    could not load symbol "jl_tag_newly_inferred_enable":
+│    /home/ubuntu/.local/opt/julia-1.10.13/bin/julia: undefined symbol: jl_tag_newly_inferred_enable
+└ @ PrecompileTools ~/moss-gpu/depot/packages/PrecompileTools/nfDyG/src/workloads.jl:25
+┌ Warning: PrecompileTools does not support this Julia build, so workloads may not be fully precompiled
+│   exception =
+│    could not load symbol "jl_tag_newly_inferred_enable":
+│    /home/ubuntu/.local/opt/julia-1.10.13/bin/julia: undefined symbol: jl_tag_newly_inferred_enable
+└ @ PrecompileTools ~/moss-gpu/depot/packages/PrecompileTools/nfDyG/src/workloads.jl:25
+┌ Warning: PrecompileTools does not support this Julia build, so workloads may not be fully precompiled
+│   exception =
+│    could not load symbol "jl_tag_newly_inferred_enable":
+│    /home/ubuntu/.local/opt/julia-1.10.13/bin/julia: undefined symbol: jl_tag_newly_inferred_enable
+└ @ PrecompileTools ~/moss-gpu/depot/packages/PrecompileTools/nfDyG/src/workloads.jl:25
+┌ Warning: PrecompileTools does not support this Julia build, so workloads may not be fully precompiled
+│   exception =
+│    could not load symbol "jl_tag_newly_inferred_enable":
+│    /home/ubuntu/.local/opt/julia-1.10.13/bin/julia: undefined symbol: jl_tag_newly_inferred_enable
+└ @ PrecompileTools ~/moss-gpu/depot/packages/PrecompileTools/nfDyG/src/workloads.jl:25
+Test Summary:          | Pass  Total  Time
+Bounded CPU scheduling |  148    148  1.4s
+Test Summary:                                                    | Pass  Total  Time
+Scheduled gate kernels preserve complex amplitudes and ownership |   85     85  7.8s
+Test Summary:                                          | Pass  Total  Time
+Many small batch states share a bounded outer task set |   11     11  0.6s
+Test Summary:                                                         | Pass  Total  Time
+Many small density matrices preserve promotion, channels and adjoints |   19     19  7.3s

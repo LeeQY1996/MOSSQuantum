@@ -19,7 +19,8 @@ function apply_threaded!(gt::SWAPGate, v::AbstractVector)
         end
     end
     total_itr = div(L, 4)
-    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, v)
+    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, v;
+                 min_work=_CPU_SWAP_MIN_WORK)
 end
 
 function _apply_iswap_util!(gt, v::AbstractVector, coef::Number)
@@ -40,7 +41,8 @@ function _apply_iswap_util!(gt, v::AbstractVector, coef::Number)
         end
     end
     total_itr = div(L, 4)
-    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, convert(eltype(v), coef), v)
+    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, convert(eltype(v), coef), v;
+                 min_work=_CPU_SWAP_MIN_WORK)
 end
 
 apply_threaded!(gt::iSWAPGate, v::AbstractVector) = (length(v) >= 32) ? _apply_iswap_util!(

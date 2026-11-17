@@ -35,7 +35,8 @@ function _apply_onebody_gate_H!(key::Int, U::AbstractMatrix, v::AbstractVector)
     #     # println("1*****************************")
     #     f(0, total_itr-1, sizek, mask0, mask1, U, v)
     # end
-    parallel_run(total_itr, Threads.nthreads(), f, sizek, mask0, mask1, U, v)
+    parallel_run(total_itr, Threads.nthreads(), f, sizek, mask0, mask1, U, v;
+                 min_work=_CPU_DENSE_GATE_MIN_WORK)
 end
 
 """
@@ -94,7 +95,7 @@ function _apply_onebody_gate_L!(key::Int, U::AbstractMatrix, v::AbstractVector)
     #     # println("1*****************************")
     #     f(0, total_itr-1, U, v)
     # end
-    parallel_run(total_itr, Threads.nthreads(), f, U, v)
+    parallel_run(total_itr, Threads.nthreads(), f, U, v; min_work=_CPU_DENSE_GATE_MIN_WORK)
 end
 
 function _apply_gate_threaded2!(q0::Int, U::AbstractMatrix, v::AbstractVector)

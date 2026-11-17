@@ -21,7 +21,8 @@ function apply_threaded!(gt::CZGate, v::AbstractVector)
     end
 
     total_itr = div(L, 4)
-    parallel_run(total_itr, Threads.nthreads(), f, pos1+pos2+1, mask0, mask1, mask2, v)
+    parallel_run(total_itr, Threads.nthreads(), f, pos1+pos2+1, mask0, mask1, mask2, v;
+                 min_work=_CPU_PHASE_MIN_WORK)
 end
 
 """
@@ -64,7 +65,8 @@ function apply_threaded!(gt::CNOTGate, v::AbstractVector)
     end
 
     total_itr = div(L, 4)
-    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, v)
+    parallel_run(total_itr, Threads.nthreads(), f, pos1, pos2, mask0, mask1, mask2, v;
+                 min_work=_CPU_SWAP_MIN_WORK)
 end
 
 """
@@ -91,5 +93,6 @@ function apply_threaded!(gt::CPHASEGate, v::AbstractVector)
     exp_phi = convert(eltype(v), exp(im * parameters(gt)[1] ))
 
     total_itr = div(L, 4)
-    parallel_run(total_itr, Threads.nthreads(), f, pos1+pos2+1, mask0, mask1, mask2, exp_phi, v)
+    parallel_run(total_itr, Threads.nthreads(), f, pos1+pos2+1, mask0, mask1, mask2, exp_phi, v;
+                 min_work=_CPU_PHASE_MIN_WORK)
 end

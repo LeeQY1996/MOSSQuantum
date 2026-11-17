@@ -1,0 +1,6166 @@
+{
+  "metadata": {
+    "software": {
+      "scalar": "ComplexF64",
+      "julia_version": "1.13.3",
+      "mossquantum_version": "0.1.2",
+      "blas_threads": 1
+    },
+    "cpu_affinity": [
+      10,
+      68,
+      71,
+      79,
+      84,
+      86,
+      90,
+      123,
+      124,
+      125,
+      127,
+      131,
+      135,
+      148,
+      180,
+      188
+    ],
+    "measurement": "CF64 CPU scheduling only; resets/GC/reference checks outside circuit timing"
+  },
+  "core_source_sha256": {
+    "before": {
+      "src/MOSSQuantum.jl": "613c45833651e9f913ea0aa0c8344fd53f0f0213f28744bfea1b5a2c94ecbc10",
+      "src/api/backend_protocols.jl": "49e773d64210b27a3711b897a4e23a9849f87f8e748b47a784723d07fc86eea6",
+      "src/api/execution_capability.jl": "75a72d1988a9a0f80bbf28ced3cc71246fb5eb9a994258feb01a38cadc006aab",
+      "src/api/exports.jl": "51d9ae14fc98df60fc532b32cd92100c3c5688fb2afb7283e337318879821d1b",
+      "src/api/gradient_methods.jl": "9f33308327bdcec49395e192d4819c754125cf67345f42bca22c76ad725fd529",
+      "src/api/objectives.jl": "e2b67926ba6dd58955be41bee1b11973d2d0cdd1964a2c46692faa400de32820",
+      "src/api/parameter_binding.jl": "2cc859df74261beeb1eee6a028073a4167ce714934d8989f7766414179578061",
+      "src/api/parameter_initialization.jl": "c02de6b7e56d5e8bd805fa189cdf87d2ec313b56ecaa44c5538babfdd3d75cbc",
+      "src/api/parameter_map.jl": "81e55fe1dd1a4a49db2f187f475eafc7d4ff49165d09fb18ba0a7d8d3af57e8a",
+      "src/api/state_protocols.jl": "f22620cf6816f930a273dcc684a8a08ce3ba976b87ea227d78e1714792b6718e",
+      "src/api/symbolic_parameters.jl": "d2360fa03b4be7f45fd5fdd2b3e5c06f15be8170bf1c644892e224d11aa3e296",
+      "src/backends/cpu/expectations/batch.jl": "9ff0072b2d5f6c31c613ea65a4360dfd7fbf01ea42a82f908b65a17da93473dd",
+      "src/backends/cpu/expectations/density_matrix_serial.jl": "e472cb717e98fc6c0f78c1c49e7f4c920d2f6a3f35652e5e52f267306decd44e",
+      "src/backends/cpu/expectations/high_qubit_terms.jl": "19b2d37e571caa0ce0adad858a123939abd628cac9eea76df46b763f6f8223ca",
+      "src/backends/cpu/expectations/high_qubit_terms_2.jl": "0657e60f2b217f915bd93d33153ea31c4cc0830d5b4607e98340b34848547692",
+      "src/backends/cpu/expectations/serial.jl": "6a3c7c4522e339e13777ace99a299dc6836c28a9f0a3f06bd934397e75c248e0",
+      "src/backends/cpu/expectations/state_vector.jl": "dc013ac0ecfc87c58ab4db8e43279d4feb0eac58532f4345e99b7d8cd5ec269e",
+      "src/backends/cpu/expectations/threaded.jl": "38af9db7ea174c9f08c1a2e8111891938ab491631e31284f3426f7557d40acee",
+      "src/backends/cpu/expectations/threaded_2.jl": "e6db13b191e28172aa895cd27e4323ab1dcf6986381274f4ce0f532095fca4ba",
+      "src/backends/cpu/gates/batch.jl": "2b3b308fd4268fcfb07cda8060369ce872f4d905c07fb16c8b1770d58d719809",
+      "src/backends/cpu/gates/batch_threaded_long_range.jl": "efa2089e8f559e662c2feb9054ab24184557014d4009713af0f5c89e7cd46621",
+      "src/backends/cpu/gates/batch_threaded_short_range.jl": "e7426a4ea10c70ec63f05b4aa11d22fb5b8532722f43bf30a750aa4c54f46697",
+      "src/backends/cpu/gates/channels.jl": "bd305d8c0135a5d8efc6d5d6d7aa7a453473d6da126f5107576ffe259b544155",
+      "src/backends/cpu/gates/generic.jl": "95de8c5b88a5c876a8c142e15fa99eda2647c7169e23b428ee788ea7be70df98",
+      "src/backends/cpu/gates/serial_short_range.jl": "1023a018daf477cc1746ee74d5c0fe937e97efb1cf3b3418b8242d03620fe5ec",
+      "src/backends/cpu/gates/specific.jl": "343b497171f14647c0ab5b5248454754474ef39fb6fc2f0a7e7776bce34dc2a4",
+      "src/backends/cpu/gates/specific/cz_gate.jl": "111f61aabcc4f12e261066b24e35f104dfc782a6908613ca0dc7edc58f7eab12",
+      "src/backends/cpu/gates/specific/fredkin_gate.jl": "f5032f7b674a2d7c4b19b6042a9947dbbed22e0ec901206787dc907fbbae4f0c",
+      "src/backends/cpu/gates/specific/phase_gate.jl": "a6eadcee8e45fa24084b7978f8dd91ba0c023290e997ecd21f5c28478b569521",
+      "src/backends/cpu/gates/specific/swap_gates.jl": "59eaa3e3eda2a25b7bc5cab9ba973638388b0fbe3b6393e49d14778f06ed606b",
+      "src/backends/cpu/gates/threaded_long_range.jl": "6219e57cc6548af65fb68b41847f0deada383eeeda4df1621410ea90d8e2736f",
+      "src/backends/cpu/gates/threaded_short_range.jl": "112fba3a7a947fbdcd1f31ed28512221a2955731ec6834454b6395b2d8c40e6e",
+      "src/backends/cpu/operators/density_matrix.jl": "b8264dcb8e1d42c1b8746dc048b63ff65c3ec860928bd7d265edec201e716ef2",
+      "src/backends/cpu/operators/generic.jl": "e5b3a6c2ce7b36d632ba71cd2816c3906e7120776f8e1bfa68f13dcc1f34aef2",
+      "src/backends/cpu/operators/long_range_threaded.jl": "828a52167fced7e4efdf5ba2e7df4e3e1ff062ad422e6222e83cfecbd938b968",
+      "src/backends/cpu/operators/short_range_serial.jl": "ac26f669040437b50ca4b37b266b6d097f170d871972515d40345bffb26991ca",
+      "src/backends/cpu/operators/short_range_threaded.jl": "855ca3dea2f2a98be4f2f507c62db66c65a59f32e8aacd9f4bf1bd5cfabbc6e3",
+      "src/backends/cpu/operators/utils.jl": "174b019005f2fb9bed7e7c17f0be740e9cc160128c545436940dfbb9201a86c5",
+      "src/differentiation/batch.jl": "f633468c63ca04a37a7c4598fcadbccb06a19afb68597a44f0504158a8fd72b7",
+      "src/differentiation/circuit.jl": "e52b40bc44bf5ec57a55c622cb7d51f1d600ea5590d7ab443c8224a52c39af46",
+      "src/differentiation/expectation.jl": "bf4941d5ee30ecff4c62d1219fca173e585162df41873debb21dd913e5d0f2fc",
+      "src/differentiation/objectives.jl": "6252c2aa3a35e94c97c4cc9cb07b06fe3a5f0628c59194df5d344d8bd49a31e1",
+      "src/differentiation/sampled_gradients.jl": "d71c30be6c809dbaf73b118c4da2632fc8c3c9e7fb360be52374793ecf4e9157",
+      "src/execution/batch_density_gates.jl": "a1af25398bf7a5677766ede898ac8b356fb1957d863c393d517089cfe8bcaaf8",
+      "src/execution/batch_density_measurement.jl": "65fe9e4b188514a8bf7b2d2f9597b9aa34c47d74b95cb3fb649fece336ecd803",
+      "src/execution/batch_gates.jl": "9ae381bbd8c3dd43e19e3ede356382777c5d5ecf0364feb2797c07aec3237089",
+      "src/execution/batch_operators.jl": "bebd5cb3b393088b3458297e60250e123e30ef14da18bda46354ae877f4a4b10",
+      "src/execution/channels.jl": "79c78ad0dd8ab4fb3779c919215f02e0cfac253a94c01d18d5670f71f2147c29",
+      "src/execution/classical_execution.jl": "d340b4871b5abe97659e19175103964e4d8497eff4a79d2b5f05c51029b11310",
+      "src/execution/execution_plans.jl": "a6ed68458b09a8a18679cfa88627937b81da14d50af0507d4b9cd6239bfc5024",
+      "src/execution/experiments.jl": "53441f96cd92f61942b56df171ba52713076a27b23d9171ea0dd72b4c83b5f55",
+      "src/execution/gates.jl": "44aed9818fb3b9dad8facc182b5be83f99d7171dc5c3b8274e4b7954b2a36281",
+      "src/execution/measurement.jl": "7f27bf6fc83eb82a7465f26d5fc051cd82e7a2dbb1d9e962aafb06f1c278228f",
+      "src/execution/noise_models.jl": "3e7ada647b69401fd5ca647bd4af96c739fa318b10c561bc3c45c3e5e4f681d1",
+      "src/execution/noisy_execution.jl": "6e0b86e534b95a568556163cfcb7c3109f19baac1ccf076c10b316835e7710db",
+      "src/execution/operators.jl": "cd72043a9e52307696fdf0c50a774a7fb0c8fc4e5c7f1cea2f582bd78a1efb3f",
+      "src/execution/post_selection.jl": "fc1132aaa73299b4dd4119b39fe52494119bbabe2d452b46bac18ee163905c11",
+      "src/execution/probabilities.jl": "86f5d1818542c5c6abf6abed024e165d4e22cb8962757ef83ee03798ebc01974",
+      "src/execution/sampling.jl": "4ac66071d66af380ec9f427a384d4cdfba7cc47f6a6d8e6a53c9aa776a6209b0",
+      "src/execution/shot_budgets.jl": "a22e545ef660c99e7131fdde6e95ac81d45ba14ecfdd087c0763baa06610a6eb",
+      "src/execution/shot_execution.jl": "9c6e886b9ef9c6634bb0af71b19a5164d98876ac0e2d21ac0e9c77e3ae5cdab1",
+      "src/execution/simulation.jl": "aab86aefdecfc788bb65fb46a8e08209c2ccf172362d66b3760d647316585337",
+      "src/observables/batch_density_expectation.jl": "7e20a1ff228c44c9769b6cc76ab6a2f1ab80c0e9730db6811d10abc78a80f91b",
+      "src/observables/batch_expectation.jl": "e908c09017980ce0ef14ec5881bad5593e3df4dc0f12240c930715b60bede722",
+      "src/observables/circuit_estimation.jl": "c51f81e3b32f074bcfd2de2364861020bd17db4df1c6ab4ee55fdc641147c464",
+      "src/observables/density_matrix_expectation.jl": "05fc13640bde28a111c9b63d6166457dbb68953971ce027850cbecb62d1322f0",
+      "src/observables/estimation_plans.jl": "c9dcdcda194fbabec809ca22b2f80027e05fbe5390029bfd7b18d677fa88db77",
+      "src/observables/expectation.jl": "f670c9ee9db3d31cb8f49fb45fe2bcc43c1c70cffa923e2b3f566775f336277e",
+      "src/observables/partial_trace.jl": "cfd36b08d68560d0694cee7f3c2ba0ac85a2482ef183f2001490d938ddcc479b",
+      "src/observables/shot_estimation.jl": "44be2a5f5f62f13b704e2b1db9a2331efee3d113d90bdd59316f8ab7829b92f8",
+      "src/optimization/Optimization.jl": "9a2ce78d5762e6e88dbf1a9fbbd55a8d690d3f13be508acb8c9e31c90f0858e9",
+      "src/quantum_circuits/QuantumCircuits.jl": "5a8d6cc302499d1535530ad8f885616e23857f1cc088746c07eb55984ce1b061",
+      "src/quantum_circuits/channels/abstract_maps.jl": "a65941f03b277617fb460886d04db1c59fc796590b7ec0656b4e2fd1ff4722ba",
+      "src/quantum_circuits/channels/one_qubit.jl": "81f632ecf3e975322687984566bc37ac4af4b9d90d9b18e8eb040b5d04638835",
+      "src/quantum_circuits/channels/quantum_map.jl": "70d321b5a17fb523d6ffb1c626918094b233090ce2e035d6340577bb5696af89",
+      "src/quantum_circuits/circuits/circuit.jl": "e4f565a7f669ea8977ac5057c9033f0e89d17ed9c4e1da7bf84fc715762164e3",
+      "src/quantum_circuits/circuits/classical_control.jl": "64275641a6d6e96a27ddc1dc751dd971419277b9405b0fe7b4eef43b58d3d308",
+      "src/quantum_circuits/gates/Gates.jl": "b7da7df3dcf7933f3a1857bf20948eed3fab4567ea5108af3b509fa5fae374c5",
+      "src/quantum_circuits/gates/abstract_gates.jl": "20db6921bb7f530b6c468b8ca02be6668a010109d366689792439ce2b35a7e6f",
+      "src/quantum_circuits/gates/differentiation.jl": "54ea11cdc707e7cc23570ed12a16fb46e1956549204c345c0a6c3087546744f8",
+      "src/quantum_circuits/gates/one_qubit.jl": "fa3f8993ecb4a48955000651ce4c917dfd225210065eb973504ea31b5f031664",
+      "src/quantum_circuits/gates/parametric_gates.jl": "749baad05f6a406adf161d26bc6ef70dea3008d1e4b8884ad208163ec955bb0a",
+      "src/quantum_circuits/gates/quantum_gate.jl": "d8858bb11ae134501adb78478c566c849f9a0d5fd8ebc120b42e6b77fa6981d5",
+      "src/quantum_circuits/gates/three_qubit.jl": "c472f888199386edf3e9e38fc1d736c61dfd7be392c8e8d8f1aabe3954a026b8",
+      "src/quantum_circuits/gates/two_qubit.jl": "79b77cede70d50d7c5f31a95e9b5cf6b6472b8219203edcbf6d63aff811a106e",
+      "src/quantum_circuits/instructions.jl": "371cab44775e87d039b157656e6971556b1e49498a0fd0a4e22cdf112e5e30b9",
+      "src/quantum_circuits/operators/qubits_operator.jl": "6aaa3004e10c2ad75d767035d17293e704f03fe1dbde62e9b3eccd5c76f1b499",
+      "src/quantum_circuits/operators/qubits_term.jl": "d0795a7545de034c03db4b48c62f28cea3eaa538e653a5bbdd0e0059ecfcc104",
+      "src/quantum_circuits/parameters/expressions.jl": "3b3e584f58945282e5ed0bb6c1cd5d41a23f838ef54c5e4d25613ab116c83480",
+      "src/quantum_circuits/parameters/instructions.jl": "2ebf059539ecba80d2570561b89ab2d932716c549095113a0d266d9ba60fe262",
+      "src/quantum_circuits/plotting/QuantumCircuitsPlotting.jl": "dc37cd8d82caef495249c8c695ae7b5a8b94613d9803ee722a9ec282493a877c",
+      "src/quantum_circuits/plotting/api.jl": "c09b3db3142062d37db4d28c6788c0e87415163d082147f0ab03baddee1c307e",
+      "src/quantum_circuits/plotting/circuit.jl": "4954a5aed8594235e23143353b8d2b743e171c42fc2bcb7cac99a09f76938101",
+      "src/quantum_circuits/plotting/drawing.jl": "08d48ddcd736f21bd0021d57fd5d1783a1e99eacf91f536b34f66aee0e52da12",
+      "src/quantum_circuits/plotting/gates.jl": "90ba01afa47fcd7bc8c5ddd93ffe71c547bcc2ab1233df68fa3103376c88749b",
+      "src/quantum_circuits/plotting/instructions.jl": "d03f7994c2276b8efd0708a40f0ec7de47cd892414062dba50bad804cc09160d",
+      "src/quantum_circuits/plotting/layout.jl": "6e28c335f30729368bd1f688181b52cc3d1347d2ff324195e55634cbac1a139b",
+      "src/quantum_circuits/plotting/styles.jl": "6aac890c8bd1cf18293a6390f7d1e01c42b59c6db1b613db95f35745d3067ca3",
+      "src/quantum_circuits/utils/tensor_ops.jl": "8fb753c90b9365d658f1964bca7ddf7c315021f941f42ed9a80840f2c98a6dbc",
+      "src/states/array_storage.jl": "143803fb89d65cbd6716d1e054e382b6a5749d9f568851578bdaa5be1315658d",
+      "src/states/batch_density_matrix.jl": "06d7932ccbd852f681200a4556ac3cf67bd2ba36e61a0805e2ee810041db3bda",
+      "src/states/batch_state_vector.jl": "02cfad6529c8586d0023adc491222d4e6a39c65fba237949884180769584de7f",
+      "src/states/density_matrix.jl": "52e60f707216b78cd7e37112a89c63dd1c4e818f8e417018b75c2be7e75336d9",
+      "src/states/state_vector.jl": "825b8cbf1f6361d2a7eb6af4a4010591c39722eb3703a18cdf7e9f5a5d744461",
+      "src/utilities/Utilities.jl": "5ba29d84e582944526b203bee34bda6bcc2000ca99271d88b8cf28b361f41f1f",
+      "src/utilities/algorithms/gate_fusion.jl": "c2c9938fa790bd9d0dcbc00ffb3cbe33cfc96205ece2a62f7b5b496465b8492e",
+      "src/utilities/algorithms/variational_circuit.jl": "09b0550c98e038b276a0431cc29a836ad81d22b0e6b3a9f0932ac8984a948e57",
+      "src/utilities/evolution/krylov.jl": "8e51a1a819844ce5da313a74daaa529b734e009e618a20646475a18a9926dff7",
+      "src/utilities/evolution/trotter.jl": "09f4d8a152808a9f2657dc3e5ae491259a0b949da7f593356a33e80855614335",
+      "src/utilities/models/spin_hamiltonians.jl": "afdc2053d6ac7333c7a61df674ca148c4ccadd07224f61bb99550a71cec6a5ed",
+      "src/utils/distance.jl": "32921507e9f1981617cd11dbed4a682a3f4b1c9eb098dde59c7dafc5810cc625",
+      "src/utils/index_ops.jl": "7a84f2430f17ad717f3b6659628e0ccdbaa164267e22a876f45bc49a1189ad3c",
+      "src/utils/parallel_for.jl": "3feba196c0d994eac98d273c159cfd8ec2d9e5f51511ec322d369616969e5a99",
+      "src/utils/tensor_ops.jl": "8bab19e675eea0af1cf606cfdb41e384057b954794043c9576346153101cf338"
+    },
+    "candidate": {
+      "src/MOSSQuantum.jl": "613c45833651e9f913ea0aa0c8344fd53f0f0213f28744bfea1b5a2c94ecbc10",
+      "src/api/backend_protocols.jl": "49e773d64210b27a3711b897a4e23a9849f87f8e748b47a784723d07fc86eea6",
+      "src/api/execution_capability.jl": "75a72d1988a9a0f80bbf28ced3cc71246fb5eb9a994258feb01a38cadc006aab",
+      "src/api/exports.jl": "51d9ae14fc98df60fc532b32cd92100c3c5688fb2afb7283e337318879821d1b",
+      "src/api/gradient_methods.jl": "9f33308327bdcec49395e192d4819c754125cf67345f42bca22c76ad725fd529",
+      "src/api/objectives.jl": "e2b67926ba6dd58955be41bee1b11973d2d0cdd1964a2c46692faa400de32820",
+      "src/api/parameter_binding.jl": "2cc859df74261beeb1eee6a028073a4167ce714934d8989f7766414179578061",
+      "src/api/parameter_initialization.jl": "c02de6b7e56d5e8bd805fa189cdf87d2ec313b56ecaa44c5538babfdd3d75cbc",
+      "src/api/parameter_map.jl": "81e55fe1dd1a4a49db2f187f475eafc7d4ff49165d09fb18ba0a7d8d3af57e8a",
+      "src/api/state_protocols.jl": "f22620cf6816f930a273dcc684a8a08ce3ba976b87ea227d78e1714792b6718e",
+      "src/api/symbolic_parameters.jl": "d2360fa03b4be7f45fd5fdd2b3e5c06f15be8170bf1c644892e224d11aa3e296",
+      "src/backends/cpu/expectations/batch.jl": "9ff0072b2d5f6c31c613ea65a4360dfd7fbf01ea42a82f908b65a17da93473dd",
+      "src/backends/cpu/expectations/density_matrix_serial.jl": "e472cb717e98fc6c0f78c1c49e7f4c920d2f6a3f35652e5e52f267306decd44e",
+      "src/backends/cpu/expectations/high_qubit_terms.jl": "19b2d37e571caa0ce0adad858a123939abd628cac9eea76df46b763f6f8223ca",
+      "src/backends/cpu/expectations/high_qubit_terms_2.jl": "0657e60f2b217f915bd93d33153ea31c4cc0830d5b4607e98340b34848547692",
+      "src/backends/cpu/expectations/serial.jl": "6a3c7c4522e339e13777ace99a299dc6836c28a9f0a3f06bd934397e75c248e0",
+      "src/backends/cpu/expectations/state_vector.jl": "dc013ac0ecfc87c58ab4db8e43279d4feb0eac58532f4345e99b7d8cd5ec269e",
+      "src/backends/cpu/expectations/threaded.jl": "38af9db7ea174c9f08c1a2e8111891938ab491631e31284f3426f7557d40acee",
+      "src/backends/cpu/expectations/threaded_2.jl": "e6db13b191e28172aa895cd27e4323ab1dcf6986381274f4ce0f532095fca4ba",
+      "src/backends/cpu/gates/batch.jl": "54ed0f3dc3090185052868ca105490344ec62382dc3fa80302b83b6a441fa83d",
+      "src/backends/cpu/gates/batch_threaded_long_range.jl": "efa2089e8f559e662c2feb9054ab24184557014d4009713af0f5c89e7cd46621",
+      "src/backends/cpu/gates/batch_threaded_short_range.jl": "e7426a4ea10c70ec63f05b4aa11d22fb5b8532722f43bf30a750aa4c54f46697",
+      "src/backends/cpu/gates/channels.jl": "bd305d8c0135a5d8efc6d5d6d7aa7a453473d6da126f5107576ffe259b544155",
+      "src/backends/cpu/gates/generic.jl": "95de8c5b88a5c876a8c142e15fa99eda2647c7169e23b428ee788ea7be70df98",
+      "src/backends/cpu/gates/serial_short_range.jl": "1023a018daf477cc1746ee74d5c0fe937e97efb1cf3b3418b8242d03620fe5ec",
+      "src/backends/cpu/gates/specific.jl": "343b497171f14647c0ab5b5248454754474ef39fb6fc2f0a7e7776bce34dc2a4",
+      "src/backends/cpu/gates/specific/cz_gate.jl": "82105c065e8d498c05135cce1655962c71152e8527a1ffac6efcba4f0a26dc85",
+      "src/backends/cpu/gates/specific/fredkin_gate.jl": "f5032f7b674a2d7c4b19b6042a9947dbbed22e0ec901206787dc907fbbae4f0c",
+      "src/backends/cpu/gates/specific/phase_gate.jl": "0e19b6b02c2aab3e28f83e9ba8ebdfab1238e9c2fc646f17482a179f510c75f3",
+      "src/backends/cpu/gates/specific/swap_gates.jl": "12fcd0bfd5b18dbfde13c9a13e0c66eae35b9713d9933df7730b18f7e060037d",
+      "src/backends/cpu/gates/threaded_long_range.jl": "6219e57cc6548af65fb68b41847f0deada383eeeda4df1621410ea90d8e2736f",
+      "src/backends/cpu/gates/threaded_short_range.jl": "62bda9a8d063ed83143fb374ac8b87ecaca189b449e3dad4949aaa92d85c90af",
+      "src/backends/cpu/operators/density_matrix.jl": "b8264dcb8e1d42c1b8746dc048b63ff65c3ec860928bd7d265edec201e716ef2",
+      "src/backends/cpu/operators/generic.jl": "e5b3a6c2ce7b36d632ba71cd2816c3906e7120776f8e1bfa68f13dcc1f34aef2",
+      "src/backends/cpu/operators/long_range_threaded.jl": "828a52167fced7e4efdf5ba2e7df4e3e1ff062ad422e6222e83cfecbd938b968",
+      "src/backends/cpu/operators/short_range_serial.jl": "ac26f669040437b50ca4b37b266b6d097f170d871972515d40345bffb26991ca",
+      "src/backends/cpu/operators/short_range_threaded.jl": "855ca3dea2f2a98be4f2f507c62db66c65a59f32e8aacd9f4bf1bd5cfabbc6e3",
+      "src/backends/cpu/operators/utils.jl": "174b019005f2fb9bed7e7c17f0be740e9cc160128c545436940dfbb9201a86c5",
+      "src/differentiation/batch.jl": "f633468c63ca04a37a7c4598fcadbccb06a19afb68597a44f0504158a8fd72b7",
+      "src/differentiation/circuit.jl": "e52b40bc44bf5ec57a55c622cb7d51f1d600ea5590d7ab443c8224a52c39af46",
+      "src/differentiation/expectation.jl": "bf4941d5ee30ecff4c62d1219fca173e585162df41873debb21dd913e5d0f2fc",
+      "src/differentiation/objectives.jl": "6252c2aa3a35e94c97c4cc9cb07b06fe3a5f0628c59194df5d344d8bd49a31e1",
+      "src/differentiation/sampled_gradients.jl": "d71c30be6c809dbaf73b118c4da2632fc8c3c9e7fb360be52374793ecf4e9157",
+      "src/execution/batch_density_gates.jl": "3b99ed2841c70fee31af82205ace04d6e5346d3bdc8fc213ba6e272b11e1cef7",
+      "src/execution/batch_density_measurement.jl": "65fe9e4b188514a8bf7b2d2f9597b9aa34c47d74b95cb3fb649fece336ecd803",
+      "src/execution/batch_gates.jl": "9ae381bbd8c3dd43e19e3ede356382777c5d5ecf0364feb2797c07aec3237089",
+      "src/execution/batch_operators.jl": "bebd5cb3b393088b3458297e60250e123e30ef14da18bda46354ae877f4a4b10",
+      "src/execution/channels.jl": "79c78ad0dd8ab4fb3779c919215f02e0cfac253a94c01d18d5670f71f2147c29",
+      "src/execution/classical_execution.jl": "d340b4871b5abe97659e19175103964e4d8497eff4a79d2b5f05c51029b11310",
+      "src/execution/execution_plans.jl": "a6ed68458b09a8a18679cfa88627937b81da14d50af0507d4b9cd6239bfc5024",
+      "src/execution/experiments.jl": "53441f96cd92f61942b56df171ba52713076a27b23d9171ea0dd72b4c83b5f55",
+      "src/execution/gates.jl": "44aed9818fb3b9dad8facc182b5be83f99d7171dc5c3b8274e4b7954b2a36281",
+      "src/execution/measurement.jl": "7f27bf6fc83eb82a7465f26d5fc051cd82e7a2dbb1d9e962aafb06f1c278228f",
+      "src/execution/noise_models.jl": "3e7ada647b69401fd5ca647bd4af96c739fa318b10c561bc3c45c3e5e4f681d1",
+      "src/execution/noisy_execution.jl": "6e0b86e534b95a568556163cfcb7c3109f19baac1ccf076c10b316835e7710db",
+      "src/execution/operators.jl": "cd72043a9e52307696fdf0c50a774a7fb0c8fc4e5c7f1cea2f582bd78a1efb3f",
+      "src/execution/post_selection.jl": "fc1132aaa73299b4dd4119b39fe52494119bbabe2d452b46bac18ee163905c11",
+      "src/execution/probabilities.jl": "86f5d1818542c5c6abf6abed024e165d4e22cb8962757ef83ee03798ebc01974",
+      "src/execution/sampling.jl": "4ac66071d66af380ec9f427a384d4cdfba7cc47f6a6d8e6a53c9aa776a6209b0",
+      "src/execution/shot_budgets.jl": "a22e545ef660c99e7131fdde6e95ac81d45ba14ecfdd087c0763baa06610a6eb",
+      "src/execution/shot_execution.jl": "9c6e886b9ef9c6634bb0af71b19a5164d98876ac0e2d21ac0e9c77e3ae5cdab1",
+      "src/execution/simulation.jl": "aab86aefdecfc788bb65fb46a8e08209c2ccf172362d66b3760d647316585337",
+      "src/observables/batch_density_expectation.jl": "7e20a1ff228c44c9769b6cc76ab6a2f1ab80c0e9730db6811d10abc78a80f91b",
+      "src/observables/batch_expectation.jl": "e908c09017980ce0ef14ec5881bad5593e3df4dc0f12240c930715b60bede722",
+      "src/observables/circuit_estimation.jl": "c51f81e3b32f074bcfd2de2364861020bd17db4df1c6ab4ee55fdc641147c464",
+      "src/observables/density_matrix_expectation.jl": "05fc13640bde28a111c9b63d6166457dbb68953971ce027850cbecb62d1322f0",
+      "src/observables/estimation_plans.jl": "c9dcdcda194fbabec809ca22b2f80027e05fbe5390029bfd7b18d677fa88db77",
+      "src/observables/expectation.jl": "f670c9ee9db3d31cb8f49fb45fe2bcc43c1c70cffa923e2b3f566775f336277e",
+      "src/observables/partial_trace.jl": "cfd36b08d68560d0694cee7f3c2ba0ac85a2482ef183f2001490d938ddcc479b",
+      "src/observables/shot_estimation.jl": "44be2a5f5f62f13b704e2b1db9a2331efee3d113d90bdd59316f8ab7829b92f8",
+      "src/optimization/Optimization.jl": "9a2ce78d5762e6e88dbf1a9fbbd55a8d690d3f13be508acb8c9e31c90f0858e9",
+      "src/quantum_circuits/QuantumCircuits.jl": "5a8d6cc302499d1535530ad8f885616e23857f1cc088746c07eb55984ce1b061",
+      "src/quantum_circuits/channels/abstract_maps.jl": "a65941f03b277617fb460886d04db1c59fc796590b7ec0656b4e2fd1ff4722ba",
+      "src/quantum_circuits/channels/one_qubit.jl": "81f632ecf3e975322687984566bc37ac4af4b9d90d9b18e8eb040b5d04638835",
+      "src/quantum_circuits/channels/quantum_map.jl": "70d321b5a17fb523d6ffb1c626918094b233090ce2e035d6340577bb5696af89",
+      "src/quantum_circuits/circuits/circuit.jl": "e4f565a7f669ea8977ac5057c9033f0e89d17ed9c4e1da7bf84fc715762164e3",
+      "src/quantum_circuits/circuits/classical_control.jl": "64275641a6d6e96a27ddc1dc751dd971419277b9405b0fe7b4eef43b58d3d308",
+      "src/quantum_circuits/gates/Gates.jl": "b7da7df3dcf7933f3a1857bf20948eed3fab4567ea5108af3b509fa5fae374c5",
+      "src/quantum_circuits/gates/abstract_gates.jl": "20db6921bb7f530b6c468b8ca02be6668a010109d366689792439ce2b35a7e6f",
+      "src/quantum_circuits/gates/differentiation.jl": "54ea11cdc707e7cc23570ed12a16fb46e1956549204c345c0a6c3087546744f8",
+      "src/quantum_circuits/gates/one_qubit.jl": "fa3f8993ecb4a48955000651ce4c917dfd225210065eb973504ea31b5f031664",
+      "src/quantum_circuits/gates/parametric_gates.jl": "749baad05f6a406adf161d26bc6ef70dea3008d1e4b8884ad208163ec955bb0a",
+      "src/quantum_circuits/gates/quantum_gate.jl": "d8858bb11ae134501adb78478c566c849f9a0d5fd8ebc120b42e6b77fa6981d5",
+      "src/quantum_circuits/gates/three_qubit.jl": "c472f888199386edf3e9e38fc1d736c61dfd7be392c8e8d8f1aabe3954a026b8",
+      "src/quantum_circuits/gates/two_qubit.jl": "79b77cede70d50d7c5f31a95e9b5cf6b6472b8219203edcbf6d63aff811a106e",
+      "src/quantum_circuits/instructions.jl": "371cab44775e87d039b157656e6971556b1e49498a0fd0a4e22cdf112e5e30b9",
+      "src/quantum_circuits/operators/qubits_operator.jl": "6aaa3004e10c2ad75d767035d17293e704f03fe1dbde62e9b3eccd5c76f1b499",
+      "src/quantum_circuits/operators/qubits_term.jl": "d0795a7545de034c03db4b48c62f28cea3eaa538e653a5bbdd0e0059ecfcc104",
+      "src/quantum_circuits/parameters/expressions.jl": "3b3e584f58945282e5ed0bb6c1cd5d41a23f838ef54c5e4d25613ab116c83480",
+      "src/quantum_circuits/parameters/instructions.jl": "2ebf059539ecba80d2570561b89ab2d932716c549095113a0d266d9ba60fe262",
+      "src/quantum_circuits/plotting/QuantumCircuitsPlotting.jl": "dc37cd8d82caef495249c8c695ae7b5a8b94613d9803ee722a9ec282493a877c",
+      "src/quantum_circuits/plotting/api.jl": "c09b3db3142062d37db4d28c6788c0e87415163d082147f0ab03baddee1c307e",
+      "src/quantum_circuits/plotting/circuit.jl": "4954a5aed8594235e23143353b8d2b743e171c42fc2bcb7cac99a09f76938101",
+      "src/quantum_circuits/plotting/drawing.jl": "08d48ddcd736f21bd0021d57fd5d1783a1e99eacf91f536b34f66aee0e52da12",
+      "src/quantum_circuits/plotting/gates.jl": "90ba01afa47fcd7bc8c5ddd93ffe71c547bcc2ab1233df68fa3103376c88749b",
+      "src/quantum_circuits/plotting/instructions.jl": "d03f7994c2276b8efd0708a40f0ec7de47cd892414062dba50bad804cc09160d",
+      "src/quantum_circuits/plotting/layout.jl": "6e28c335f30729368bd1f688181b52cc3d1347d2ff324195e55634cbac1a139b",
+      "src/quantum_circuits/plotting/styles.jl": "6aac890c8bd1cf18293a6390f7d1e01c42b59c6db1b613db95f35745d3067ca3",
+      "src/quantum_circuits/utils/tensor_ops.jl": "8fb753c90b9365d658f1964bca7ddf7c315021f941f42ed9a80840f2c98a6dbc",
+      "src/states/array_storage.jl": "143803fb89d65cbd6716d1e054e382b6a5749d9f568851578bdaa5be1315658d",
+      "src/states/batch_density_matrix.jl": "06d7932ccbd852f681200a4556ac3cf67bd2ba36e61a0805e2ee810041db3bda",
+      "src/states/batch_state_vector.jl": "02cfad6529c8586d0023adc491222d4e6a39c65fba237949884180769584de7f",
+      "src/states/density_matrix.jl": "52e60f707216b78cd7e37112a89c63dd1c4e818f8e417018b75c2be7e75336d9",
+      "src/states/state_vector.jl": "825b8cbf1f6361d2a7eb6af4a4010591c39722eb3703a18cdf7e9f5a5d744461",
+      "src/utilities/Utilities.jl": "5ba29d84e582944526b203bee34bda6bcc2000ca99271d88b8cf28b361f41f1f",
+      "src/utilities/algorithms/gate_fusion.jl": "c2c9938fa790bd9d0dcbc00ffb3cbe33cfc96205ece2a62f7b5b496465b8492e",
+      "src/utilities/algorithms/variational_circuit.jl": "09b0550c98e038b276a0431cc29a836ad81d22b0e6b3a9f0932ac8984a948e57",
+      "src/utilities/evolution/krylov.jl": "8e51a1a819844ce5da313a74daaa529b734e009e618a20646475a18a9926dff7",
+      "src/utilities/evolution/trotter.jl": "09f4d8a152808a9f2657dc3e5ae491259a0b949da7f593356a33e80855614335",
+      "src/utilities/models/spin_hamiltonians.jl": "afdc2053d6ac7333c7a61df674ca148c4ccadd07224f61bb99550a71cec6a5ed",
+      "src/utils/distance.jl": "32921507e9f1981617cd11dbed4a682a3f4b1c9eb098dde59c7dafc5810cc625",
+      "src/utils/index_ops.jl": "7a84f2430f17ad717f3b6659628e0ccdbaa164267e22a876f45bc49a1189ad3c",
+      "src/utils/parallel_for.jl": "7c7529c008df8e975680331678d64f498589e09e442ba383de1076d39019a18d",
+      "src/utils/tensor_ops.jl": "8bab19e675eea0af1cf606cfdb41e384057b954794043c9576346153101cf338"
+    },
+    "after": {
+      "src/MOSSQuantum.jl": "613c45833651e9f913ea0aa0c8344fd53f0f0213f28744bfea1b5a2c94ecbc10",
+      "src/api/backend_protocols.jl": "49e773d64210b27a3711b897a4e23a9849f87f8e748b47a784723d07fc86eea6",
+      "src/api/execution_capability.jl": "75a72d1988a9a0f80bbf28ced3cc71246fb5eb9a994258feb01a38cadc006aab",
+      "src/api/exports.jl": "51d9ae14fc98df60fc532b32cd92100c3c5688fb2afb7283e337318879821d1b",
+      "src/api/gradient_methods.jl": "9f33308327bdcec49395e192d4819c754125cf67345f42bca22c76ad725fd529",
+      "src/api/objectives.jl": "e2b67926ba6dd58955be41bee1b11973d2d0cdd1964a2c46692faa400de32820",
+      "src/api/parameter_binding.jl": "2cc859df74261beeb1eee6a028073a4167ce714934d8989f7766414179578061",
+      "src/api/parameter_initialization.jl": "c02de6b7e56d5e8bd805fa189cdf87d2ec313b56ecaa44c5538babfdd3d75cbc",
+      "src/api/parameter_map.jl": "81e55fe1dd1a4a49db2f187f475eafc7d4ff49165d09fb18ba0a7d8d3af57e8a",
+      "src/api/state_protocols.jl": "f22620cf6816f930a273dcc684a8a08ce3ba976b87ea227d78e1714792b6718e",
+      "src/api/symbolic_parameters.jl": "d2360fa03b4be7f45fd5fdd2b3e5c06f15be8170bf1c644892e224d11aa3e296",
+      "src/backends/cpu/expectations/batch.jl": "9ff0072b2d5f6c31c613ea65a4360dfd7fbf01ea42a82f908b65a17da93473dd",
+      "src/backends/cpu/expectations/density_matrix_serial.jl": "e472cb717e98fc6c0f78c1c49e7f4c920d2f6a3f35652e5e52f267306decd44e",
+      "src/backends/cpu/expectations/high_qubit_terms.jl": "19b2d37e571caa0ce0adad858a123939abd628cac9eea76df46b763f6f8223ca",
+      "src/backends/cpu/expectations/high_qubit_terms_2.jl": "0657e60f2b217f915bd93d33153ea31c4cc0830d5b4607e98340b34848547692",
+      "src/backends/cpu/expectations/serial.jl": "6a3c7c4522e339e13777ace99a299dc6836c28a9f0a3f06bd934397e75c248e0",
+      "src/backends/cpu/expectations/state_vector.jl": "dc013ac0ecfc87c58ab4db8e43279d4feb0eac58532f4345e99b7d8cd5ec269e",
+      "src/backends/cpu/expectations/threaded.jl": "38af9db7ea174c9f08c1a2e8111891938ab491631e31284f3426f7557d40acee",
+      "src/backends/cpu/expectations/threaded_2.jl": "e6db13b191e28172aa895cd27e4323ab1dcf6986381274f4ce0f532095fca4ba",
+      "src/backends/cpu/gates/batch.jl": "54ed0f3dc3090185052868ca105490344ec62382dc3fa80302b83b6a441fa83d",
+      "src/backends/cpu/gates/batch_threaded_long_range.jl": "efa2089e8f559e662c2feb9054ab24184557014d4009713af0f5c89e7cd46621",
+      "src/backends/cpu/gates/batch_threaded_short_range.jl": "e7426a4ea10c70ec63f05b4aa11d22fb5b8532722f43bf30a750aa4c54f46697",
+      "src/backends/cpu/gates/channels.jl": "bd305d8c0135a5d8efc6d5d6d7aa7a453473d6da126f5107576ffe259b544155",
+      "src/backends/cpu/gates/generic.jl": "95de8c5b88a5c876a8c142e15fa99eda2647c7169e23b428ee788ea7be70df98",
+      "src/backends/cpu/gates/serial_short_range.jl": "1023a018daf477cc1746ee74d5c0fe937e97efb1cf3b3418b8242d03620fe5ec",
+      "src/backends/cpu/gates/specific.jl": "343b497171f14647c0ab5b5248454754474ef39fb6fc2f0a7e7776bce34dc2a4",
+      "src/backends/cpu/gates/specific/cz_gate.jl": "fb7778c011d642c2b97d33086c498b2b8794010f2efa842f5bf32d5a822f3544",
+      "src/backends/cpu/gates/specific/fredkin_gate.jl": "f5032f7b674a2d7c4b19b6042a9947dbbed22e0ec901206787dc907fbbae4f0c",
+      "src/backends/cpu/gates/specific/phase_gate.jl": "27877ca4540a17a0c3c1f98a2c40f3ec80bfe6c7a9e90927ec87cab7833798d6",
+      "src/backends/cpu/gates/specific/swap_gates.jl": "0940ba8e9aa659d6d77831bbe1e954fd676baac8653a081dc3760d160ee5ea71",
+      "src/backends/cpu/gates/threaded_long_range.jl": "6219e57cc6548af65fb68b41847f0deada383eeeda4df1621410ea90d8e2736f",
+      "src/backends/cpu/gates/threaded_short_range.jl": "246ed9dd58196bd3df615997597658871e3c4a07f447205cace718bcc1a4717c",
+      "src/backends/cpu/operators/density_matrix.jl": "b8264dcb8e1d42c1b8746dc048b63ff65c3ec860928bd7d265edec201e716ef2",
+      "src/backends/cpu/operators/generic.jl": "e5b3a6c2ce7b36d632ba71cd2816c3906e7120776f8e1bfa68f13dcc1f34aef2",
+      "src/backends/cpu/operators/long_range_threaded.jl": "828a52167fced7e4efdf5ba2e7df4e3e1ff062ad422e6222e83cfecbd938b968",
+      "src/backends/cpu/operators/short_range_serial.jl": "ac26f669040437b50ca4b37b266b6d097f170d871972515d40345bffb26991ca",
+      "src/backends/cpu/operators/short_range_threaded.jl": "855ca3dea2f2a98be4f2f507c62db66c65a59f32e8aacd9f4bf1bd5cfabbc6e3",
+      "src/backends/cpu/operators/utils.jl": "174b019005f2fb9bed7e7c17f0be740e9cc160128c545436940dfbb9201a86c5",
+      "src/differentiation/batch.jl": "f633468c63ca04a37a7c4598fcadbccb06a19afb68597a44f0504158a8fd72b7",
+      "src/differentiation/circuit.jl": "e52b40bc44bf5ec57a55c622cb7d51f1d600ea5590d7ab443c8224a52c39af46",
+      "src/differentiation/expectation.jl": "bf4941d5ee30ecff4c62d1219fca173e585162df41873debb21dd913e5d0f2fc",
+      "src/differentiation/objectives.jl": "6252c2aa3a35e94c97c4cc9cb07b06fe3a5f0628c59194df5d344d8bd49a31e1",
+      "src/differentiation/sampled_gradients.jl": "d71c30be6c809dbaf73b118c4da2632fc8c3c9e7fb360be52374793ecf4e9157",
+      "src/execution/batch_density_gates.jl": "3b99ed2841c70fee31af82205ace04d6e5346d3bdc8fc213ba6e272b11e1cef7",
+      "src/execution/batch_density_measurement.jl": "65fe9e4b188514a8bf7b2d2f9597b9aa34c47d74b95cb3fb649fece336ecd803",
+      "src/execution/batch_gates.jl": "9ae381bbd8c3dd43e19e3ede356382777c5d5ecf0364feb2797c07aec3237089",
+      "src/execution/batch_operators.jl": "bebd5cb3b393088b3458297e60250e123e30ef14da18bda46354ae877f4a4b10",
+      "src/execution/channels.jl": "79c78ad0dd8ab4fb3779c919215f02e0cfac253a94c01d18d5670f71f2147c29",
+      "src/execution/classical_execution.jl": "d340b4871b5abe97659e19175103964e4d8497eff4a79d2b5f05c51029b11310",
+      "src/execution/execution_plans.jl": "a6ed68458b09a8a18679cfa88627937b81da14d50af0507d4b9cd6239bfc5024",
+      "src/execution/experiments.jl": "53441f96cd92f61942b56df171ba52713076a27b23d9171ea0dd72b4c83b5f55",
+      "src/execution/gates.jl": "44aed9818fb3b9dad8facc182b5be83f99d7171dc5c3b8274e4b7954b2a36281",
+      "src/execution/measurement.jl": "7f27bf6fc83eb82a7465f26d5fc051cd82e7a2dbb1d9e962aafb06f1c278228f",
+      "src/execution/noise_models.jl": "3e7ada647b69401fd5ca647bd4af96c739fa318b10c561bc3c45c3e5e4f681d1",
+      "src/execution/noisy_execution.jl": "6e0b86e534b95a568556163cfcb7c3109f19baac1ccf076c10b316835e7710db",
+      "src/execution/operators.jl": "cd72043a9e52307696fdf0c50a774a7fb0c8fc4e5c7f1cea2f582bd78a1efb3f",
+      "src/execution/post_selection.jl": "fc1132aaa73299b4dd4119b39fe52494119bbabe2d452b46bac18ee163905c11",
+      "src/execution/probabilities.jl": "86f5d1818542c5c6abf6abed024e165d4e22cb8962757ef83ee03798ebc01974",
+      "src/execution/sampling.jl": "4ac66071d66af380ec9f427a384d4cdfba7cc47f6a6d8e6a53c9aa776a6209b0",
+      "src/execution/shot_budgets.jl": "a22e545ef660c99e7131fdde6e95ac81d45ba14ecfdd087c0763baa06610a6eb",
+      "src/execution/shot_execution.jl": "9c6e886b9ef9c6634bb0af71b19a5164d98876ac0e2d21ac0e9c77e3ae5cdab1",
+      "src/execution/simulation.jl": "aab86aefdecfc788bb65fb46a8e08209c2ccf172362d66b3760d647316585337",
+      "src/observables/batch_density_expectation.jl": "7e20a1ff228c44c9769b6cc76ab6a2f1ab80c0e9730db6811d10abc78a80f91b",
+      "src/observables/batch_expectation.jl": "e908c09017980ce0ef14ec5881bad5593e3df4dc0f12240c930715b60bede722",
+      "src/observables/circuit_estimation.jl": "c51f81e3b32f074bcfd2de2364861020bd17db4df1c6ab4ee55fdc641147c464",
+      "src/observables/density_matrix_expectation.jl": "05fc13640bde28a111c9b63d6166457dbb68953971ce027850cbecb62d1322f0",
+      "src/observables/estimation_plans.jl": "c9dcdcda194fbabec809ca22b2f80027e05fbe5390029bfd7b18d677fa88db77",
+      "src/observables/expectation.jl": "f670c9ee9db3d31cb8f49fb45fe2bcc43c1c70cffa923e2b3f566775f336277e",
+      "src/observables/partial_trace.jl": "cfd36b08d68560d0694cee7f3c2ba0ac85a2482ef183f2001490d938ddcc479b",
+      "src/observables/shot_estimation.jl": "44be2a5f5f62f13b704e2b1db9a2331efee3d113d90bdd59316f8ab7829b92f8",
+      "src/optimization/Optimization.jl": "9a2ce78d5762e6e88dbf1a9fbbd55a8d690d3f13be508acb8c9e31c90f0858e9",
+      "src/quantum_circuits/QuantumCircuits.jl": "5a8d6cc302499d1535530ad8f885616e23857f1cc088746c07eb55984ce1b061",
+      "src/quantum_circuits/channels/abstract_maps.jl": "a65941f03b277617fb460886d04db1c59fc796590b7ec0656b4e2fd1ff4722ba",
+      "src/quantum_circuits/channels/one_qubit.jl": "81f632ecf3e975322687984566bc37ac4af4b9d90d9b18e8eb040b5d04638835",
+      "src/quantum_circuits/channels/quantum_map.jl": "70d321b5a17fb523d6ffb1c626918094b233090ce2e035d6340577bb5696af89",
+      "src/quantum_circuits/circuits/circuit.jl": "e4f565a7f669ea8977ac5057c9033f0e89d17ed9c4e1da7bf84fc715762164e3",
+      "src/quantum_circuits/circuits/classical_control.jl": "64275641a6d6e96a27ddc1dc751dd971419277b9405b0fe7b4eef43b58d3d308",
+      "src/quantum_circuits/gates/Gates.jl": "b7da7df3dcf7933f3a1857bf20948eed3fab4567ea5108af3b509fa5fae374c5",
+      "src/quantum_circuits/gates/abstract_gates.jl": "20db6921bb7f530b6c468b8ca02be6668a010109d366689792439ce2b35a7e6f",
+      "src/quantum_circuits/gates/differentiation.jl": "54ea11cdc707e7cc23570ed12a16fb46e1956549204c345c0a6c3087546744f8",
+      "src/quantum_circuits/gates/one_qubit.jl": "fa3f8993ecb4a48955000651ce4c917dfd225210065eb973504ea31b5f031664",
+      "src/quantum_circuits/gates/parametric_gates.jl": "749baad05f6a406adf161d26bc6ef70dea3008d1e4b8884ad208163ec955bb0a",
+      "src/quantum_circuits/gates/quantum_gate.jl": "d8858bb11ae134501adb78478c566c849f9a0d5fd8ebc120b42e6b77fa6981d5",
+      "src/quantum_circuits/gates/three_qubit.jl": "c472f888199386edf3e9e38fc1d736c61dfd7be392c8e8d8f1aabe3954a026b8",
+      "src/quantum_circuits/gates/two_qubit.jl": "79b77cede70d50d7c5f31a95e9b5cf6b6472b8219203edcbf6d63aff811a106e",
+      "src/quantum_circuits/instructions.jl": "371cab44775e87d039b157656e6971556b1e49498a0fd0a4e22cdf112e5e30b9",
+      "src/quantum_circuits/operators/qubits_operator.jl": "6aaa3004e10c2ad75d767035d17293e704f03fe1dbde62e9b3eccd5c76f1b499",
+      "src/quantum_circuits/operators/qubits_term.jl": "d0795a7545de034c03db4b48c62f28cea3eaa538e653a5bbdd0e0059ecfcc104",
+      "src/quantum_circuits/parameters/expressions.jl": "3b3e584f58945282e5ed0bb6c1cd5d41a23f838ef54c5e4d25613ab116c83480",
+      "src/quantum_circuits/parameters/instructions.jl": "2ebf059539ecba80d2570561b89ab2d932716c549095113a0d266d9ba60fe262",
+      "src/quantum_circuits/plotting/QuantumCircuitsPlotting.jl": "dc37cd8d82caef495249c8c695ae7b5a8b94613d9803ee722a9ec282493a877c",
+      "src/quantum_circuits/plotting/api.jl": "c09b3db3142062d37db4d28c6788c0e87415163d082147f0ab03baddee1c307e",
+      "src/quantum_circuits/plotting/circuit.jl": "4954a5aed8594235e23143353b8d2b743e171c42fc2bcb7cac99a09f76938101",
+      "src/quantum_circuits/plotting/drawing.jl": "08d48ddcd736f21bd0021d57fd5d1783a1e99eacf91f536b34f66aee0e52da12",
+      "src/quantum_circuits/plotting/gates.jl": "90ba01afa47fcd7bc8c5ddd93ffe71c547bcc2ab1233df68fa3103376c88749b",
+      "src/quantum_circuits/plotting/instructions.jl": "d03f7994c2276b8efd0708a40f0ec7de47cd892414062dba50bad804cc09160d",
+      "src/quantum_circuits/plotting/layout.jl": "6e28c335f30729368bd1f688181b52cc3d1347d2ff324195e55634cbac1a139b",
+      "src/quantum_circuits/plotting/styles.jl": "6aac890c8bd1cf18293a6390f7d1e01c42b59c6db1b613db95f35745d3067ca3",
+      "src/quantum_circuits/utils/tensor_ops.jl": "8fb753c90b9365d658f1964bca7ddf7c315021f941f42ed9a80840f2c98a6dbc",
+      "src/states/array_storage.jl": "143803fb89d65cbd6716d1e054e382b6a5749d9f568851578bdaa5be1315658d",
+      "src/states/batch_density_matrix.jl": "06d7932ccbd852f681200a4556ac3cf67bd2ba36e61a0805e2ee810041db3bda",
+      "src/states/batch_state_vector.jl": "02cfad6529c8586d0023adc491222d4e6a39c65fba237949884180769584de7f",
+      "src/states/density_matrix.jl": "52e60f707216b78cd7e37112a89c63dd1c4e818f8e417018b75c2be7e75336d9",
+      "src/states/state_vector.jl": "825b8cbf1f6361d2a7eb6af4a4010591c39722eb3703a18cdf7e9f5a5d744461",
+      "src/utilities/Utilities.jl": "5ba29d84e582944526b203bee34bda6bcc2000ca99271d88b8cf28b361f41f1f",
+      "src/utilities/algorithms/gate_fusion.jl": "c2c9938fa790bd9d0dcbc00ffb3cbe33cfc96205ece2a62f7b5b496465b8492e",
+      "src/utilities/algorithms/variational_circuit.jl": "09b0550c98e038b276a0431cc29a836ad81d22b0e6b3a9f0932ac8984a948e57",
+      "src/utilities/evolution/krylov.jl": "8e51a1a819844ce5da313a74daaa529b734e009e618a20646475a18a9926dff7",
+      "src/utilities/evolution/trotter.jl": "09f4d8a152808a9f2657dc3e5ae491259a0b949da7f593356a33e80855614335",
+      "src/utilities/models/spin_hamiltonians.jl": "afdc2053d6ac7333c7a61df674ca148c4ccadd07224f61bb99550a71cec6a5ed",
+      "src/utils/distance.jl": "32921507e9f1981617cd11dbed4a682a3f4b1c9eb098dde59c7dafc5810cc625",
+      "src/utils/index_ops.jl": "7a84f2430f17ad717f3b6659628e0ccdbaa164267e22a876f45bc49a1189ad3c",
+      "src/utils/parallel_for.jl": "b497ff69d8a10c4e49dd740868c3f9020fff69f8496414aea97d4fd50d58dd6d",
+      "src/utils/tensor_ops.jl": "8bab19e675eea0af1cf606cfdb41e384057b954794043c9576346153101cf338"
+    }
+  },
+  "diagnostic_source_sha256": {
+    "cpu_gap_diagnostics.jl": "f6bc05ce4b80f6f707280638487113d58ac719deaf1b2f16ae1a5f718a6aea81",
+    "cpu_schedule_calibration.jl": "ec37456b273e6600590ceb9c4b1b255c0c6308e4da57e97afdd60d9990795e5e",
+    "cpu_thread_scan.jl": "4f7556b65d240a277bce682d541d0466e3377a51ef2443d8a675165b1608c777"
+  },
+  "raw_file_sha256": {
+    "before/calibration-1.toml": "ce734d777bee538b2495f15e2f2d3ed4373a12f0c596a42da3ebf1f4ee98b694",
+    "before/calibration-8.toml": "cd12765192ab489a6852c77d8dec4248e7547762497e9341025495bb36433dd4",
+    "before/calibration-16.toml": "3292615616f92ab0d8db9fb59d537978cf56916876abafba3d2010406da74679",
+    "before/calibration-25-16.toml": "b0ae40c7c4517d0001ab084761d453c23b8b782660102fbaebaadbfd83cf7cb5",
+    "candidate/calibration-1.toml": "917ad03452f0f27960c931ae24ff47cfa9b2d4441beee45916297b08d2da47be",
+    "candidate/calibration-8.toml": "b075b88decfe77412cefb7e4f4d71885a87c663d4af8a15e2cfaf5821f329314",
+    "candidate/calibration-16.toml": "0ea896f22961748dd04692382be13fd90ac91d91c3b3313e26be93fa3528a5bc",
+    "candidate/calibration-25-16.toml": "300dd5cf3a0b12a9f04f9a50199d5157205f1cbb81c80573203018702d2412d4",
+    "after/calibration-1.toml": "2dcf29d213e6944ea76713fe232d5a13383d6d47148f8c3cea7b4471e2ca14da",
+    "after/calibration-2.toml": "0df67fcf76946298437ba0cc9a7792680e19f90291bce10c07088bb71ea05185",
+    "after/calibration-4.toml": "eb12789c08c7df8168bd9f35a54ed60d3d10fc07f57829b6d82edd9deded5b7d",
+    "after/calibration-8.toml": "7bd3ae03e775c2c1072cf94cc58250f3734a42e576c44f82025b63b846659ae1",
+    "after/calibration-16.toml": "bf86eb9601ad5efc6f16dd02830a462248dc152ec2d3fa27421adc252b3bff45",
+    "after/calibration-25-16.toml": "909f2d8bc34003713d6bcb2009c4ccdd263b8ea8f51ad0a1dab3e35d1df74fa1",
+    "task-sweep.toml": "19d60b503a9453af6118c8c40c830a8b7a08b22f44b39bac641dec9fc660a3ec",
+    "paired-16.toml": "cd9850b3b35bc924895f979724ca03b4ecd7e974053e944c4745f1ca90a066a1",
+    "paired-shared-16.toml": "2de979d79fc20d484e8fad6c848107df4ca152f617a45222e2ba31f2db9e254d",
+    "before/moss-16.toml": "f5be248063d2f61c3c246235c2502dcd325f435b1e461a0dd8bce64a74f12586"
+  },
+  "task_sweep_driver_sha256": "5d06b17fc77ad557cdb812455fb9dd2bc958929fa258a23e4259eb58b6fa2abd",
+  "calibration_samples": 476,
+  "calibration_full_reference_checks": 50,
+  "task_sweep_samples": 130,
+  "paired_samples": 112,
+  "auxiliary_diagnostic_samples": 84,
+  "tests": {
+    "scheduling-1.log": {
+      "assertions_passed": 261,
+      "testsets": 4,
+      "sha256": "ef746ccfaede1bcecb7f01c88cf614a4c3ba1ffc4ff0eba513fc507bc0eeafe3"
+    },
+    "scheduling-4.log": {
+      "assertions_passed": 263,
+      "testsets": 4,
+      "sha256": "462d1c3b26d096750e31e7e274756acbb18997923eccb9a7c26437552c503bbc"
+    },
+    "scheduling-julia-1.13.3-16.log": {
+      "assertions_passed": 263,
+      "testsets": 4,
+      "sha256": "6fe2021fac4dd6c9a9c42a807bada0342dfac9538a40753e58c394e69db54c2f"
+    },
+    "scheduling-julia-1.10.13-16.log": {
+      "assertions_passed": 263,
+      "testsets": 4,
+      "sha256": "309c2db60f0e7bddb5ae07ff59732d2c7211ecf5b2fc4315d8bc9dd2f764aeec"
+    },
+    "core-tests-4.log": {
+      "assertions_passed": 13391,
+      "testsets": 164,
+      "sha256": "962bb405902a9adf0809b9801d84f7348ee8918abffa788657f80453dacbe37b"
+    }
+  },
+  "test_source_sha256": {
+    "test/unit/parallel_scheduling.jl": "59199e67701a251ba764d5d1b8c4605c582c2ba8323ab30e42f71cc191920949",
+    "test/runtests.jl": "21efe42962564d66f206fbd3146e80ab817386638b38286e8b7b1e0cecab509d"
+  },
+  "observations": [
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.01833875,
+        0.018303654,
+        0.018242387,
+        0.018261064,
+        0.018325478
+      ],
+      "median_seconds": 0.018303654,
+      "minimum_seconds": 0.018242387,
+      "maximum_seconds": 0.01833875,
+      "repetitions": 5,
+      "allocated_bytes": [
+        516848,
+        516848,
+        516848,
+        516848,
+        516848
+      ],
+      "median_allocated_bytes": 516848,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.018303654,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.017645102,
+        0.017632795,
+        0.017594359,
+        0.017644521,
+        0.017593881
+      ],
+      "median_seconds": 0.017632795,
+      "minimum_seconds": 0.017593881,
+      "maximum_seconds": 0.017645102,
+      "repetitions": 5,
+      "allocated_bytes": [
+        218560,
+        218560,
+        218560,
+        218560,
+        218560
+      ],
+      "median_allocated_bytes": 218560,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.017632795,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.01487074,
+        0.014869792,
+        0.014855007,
+        0.014845932,
+        0.014845881
+      ],
+      "median_seconds": 0.014855007,
+      "minimum_seconds": 0.014845881,
+      "maximum_seconds": 0.01487074,
+      "repetitions": 5,
+      "allocated_bytes": [
+        164800,
+        164800,
+        164800,
+        164800,
+        164800
+      ],
+      "median_allocated_bytes": 164800,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.014855007,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002313637,
+        0.002316044,
+        0.00230923,
+        0.002310576,
+        0.002312481
+      ],
+      "median_seconds": 0.002312481,
+      "minimum_seconds": 0.00230923,
+      "maximum_seconds": 0.002316044,
+      "repetitions": 5,
+      "allocated_bytes": [
+        53760,
+        53760,
+        53760,
+        53760,
+        53760
+      ],
+      "median_allocated_bytes": 53760,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.002312481,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.799608259,
+        0.800161967,
+        0.804547342,
+        0.797209865,
+        0.796188325
+      ],
+      "median_seconds": 0.799608259,
+      "minimum_seconds": 0.796188325,
+      "maximum_seconds": 0.804547342,
+      "repetitions": 5,
+      "allocated_bytes": [
+        692784,
+        692784,
+        692784,
+        692784,
+        692784
+      ],
+      "median_allocated_bytes": 692784,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.799608259,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.796073191,
+        0.795609599,
+        0.796202361,
+        0.795867667,
+        0.799714216
+      ],
+      "median_seconds": 0.796073191,
+      "minimum_seconds": 0.795609599,
+      "maximum_seconds": 0.799714216,
+      "repetitions": 5,
+      "allocated_bytes": [
+        292800,
+        292800,
+        292800,
+        292800,
+        292800
+      ],
+      "median_allocated_bytes": 292800,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.796073191,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.638597804,
+        0.638544188,
+        0.640305448,
+        0.640538016,
+        0.640818752
+      ],
+      "median_seconds": 0.640305448,
+      "minimum_seconds": 0.638544188,
+      "maximum_seconds": 0.640818752,
+      "repetitions": 5,
+      "allocated_bytes": [
+        219840,
+        219840,
+        219840,
+        219840,
+        219840
+      ],
+      "median_allocated_bytes": 219840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.640305448,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.15850104,
+        0.158242805,
+        0.158309272,
+        0.158667616,
+        0.159035187
+      ],
+      "median_seconds": 0.15850104,
+      "minimum_seconds": 0.158242805,
+      "maximum_seconds": 0.159035187,
+      "repetitions": 5,
+      "allocated_bytes": [
+        72960,
+        72960,
+        72960,
+        72960,
+        72960
+      ],
+      "median_allocated_bytes": 72960,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:07:53.424Z",
+      "finished_at_utc": "2026-11-17T07:08:13.689Z",
+      "before_median_seconds": 0.15850104,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.021230305,
+        0.020763904,
+        0.017847429,
+        0.017006646,
+        0.017373939
+      ],
+      "median_seconds": 0.017847429,
+      "minimum_seconds": 0.017006646,
+      "maximum_seconds": 0.021230305,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2292528,
+        2292528,
+        2292528,
+        2292528,
+        2292528
+      ],
+      "median_allocated_bytes": 2292528,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.017847429,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.016167157,
+        0.016292006,
+        0.016807051,
+        0.016040112,
+        0.016621054
+      ],
+      "median_seconds": 0.016292006,
+      "minimum_seconds": 0.016040112,
+      "maximum_seconds": 0.016807051,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1994240,
+        1994240,
+        1994240,
+        1994240,
+        1994240
+      ],
+      "median_allocated_bytes": 1994240,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.016292006,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.013124499,
+        0.010162211,
+        0.009634267,
+        0.010324435,
+        0.010262403
+      ],
+      "median_seconds": 0.010262403,
+      "minimum_seconds": 0.009634267,
+      "maximum_seconds": 0.013124499,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1089280,
+        1089280,
+        1089280,
+        1089280,
+        1089280
+      ],
+      "median_allocated_bytes": 1089280,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.010262403,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.007389431,
+        0.007447346,
+        0.007206558,
+        0.006749621,
+        0.005214058
+      ],
+      "median_seconds": 0.007206558,
+      "minimum_seconds": 0.005214058,
+      "maximum_seconds": 0.007447346,
+      "repetitions": 5,
+      "allocated_bytes": [
+        904960,
+        904960,
+        904960,
+        904960,
+        904960
+      ],
+      "median_allocated_bytes": 904960,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.007206558,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.198896813,
+        0.319480669,
+        0.284765444,
+        0.213796497,
+        0.211542091
+      ],
+      "median_seconds": 0.213796497,
+      "minimum_seconds": 0.198896813,
+      "maximum_seconds": 0.319480669,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3081264,
+        3081264,
+        3081264,
+        3081264,
+        3081264
+      ],
+      "median_allocated_bytes": 3081264,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.213796497,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.214899901,
+        0.242031367,
+        0.21612438,
+        0.212271273,
+        0.218036224
+      ],
+      "median_seconds": 0.21612438,
+      "minimum_seconds": 0.212271273,
+      "maximum_seconds": 0.242031367,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2681280,
+        2681280,
+        2681280,
+        2681280,
+        2681280
+      ],
+      "median_allocated_bytes": 2681280,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.21612438,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.122515678,
+        0.121938212,
+        0.125264219,
+        0.126478722,
+        0.122282819
+      ],
+      "median_seconds": 0.122515678,
+      "minimum_seconds": 0.121938212,
+      "maximum_seconds": 0.126478722,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1453120,
+        1453120,
+        1453120,
+        1453120,
+        1453120
+      ],
+      "median_allocated_bytes": 1453120,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.122515678,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.090790857,
+        0.091970489,
+        0.091143175,
+        0.091370758,
+        0.092526611
+      ],
+      "median_seconds": 0.091370758,
+      "minimum_seconds": 0.090790857,
+      "maximum_seconds": 0.092526611,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1228160,
+        1228160,
+        1228160,
+        1228160,
+        1228160
+      ],
+      "median_allocated_bytes": 1228160,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:18.344Z",
+      "finished_at_utc": "2026-11-17T07:08:27.531Z",
+      "before_median_seconds": 0.091370758,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.023367481,
+        0.023621901,
+        0.023220346,
+        0.023444233,
+        0.029488708
+      ],
+      "median_seconds": 0.023444233,
+      "minimum_seconds": 0.023220346,
+      "maximum_seconds": 0.029488708,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3962928,
+        3962928,
+        3962928,
+        3962928,
+        3962928
+      ],
+      "median_allocated_bytes": 3962928,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.023444233,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.031949026,
+        0.02571424,
+        0.02727452,
+        0.023166201,
+        0.039339629
+      ],
+      "median_seconds": 0.02727452,
+      "minimum_seconds": 0.023166201,
+      "maximum_seconds": 0.039339629,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3664640,
+        3664640,
+        3664640,
+        3664640,
+        3664640
+      ],
+      "median_allocated_bytes": 3664640,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.02727452,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.012763492,
+        0.014083829,
+        0.013065057,
+        0.013142714,
+        0.012436063
+      ],
+      "median_seconds": 0.013065057,
+      "minimum_seconds": 0.012436063,
+      "maximum_seconds": 0.014083829,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1953280,
+        1953280,
+        1953280,
+        1953280,
+        1953280
+      ],
+      "median_allocated_bytes": 1953280,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.013065057,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.013980876,
+        0.010324492,
+        0.01074352,
+        0.011420609,
+        0.01221224
+      ],
+      "median_seconds": 0.011420609,
+      "minimum_seconds": 0.010324492,
+      "maximum_seconds": 0.013980876,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1711360,
+        1711360,
+        1711360,
+        1711360,
+        1711360
+      ],
+      "median_allocated_bytes": 1711360,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.011420609,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.223613781,
+        0.233367131,
+        0.204210428,
+        0.216158035,
+        0.200413134
+      ],
+      "median_seconds": 0.216158035,
+      "minimum_seconds": 0.200413134,
+      "maximum_seconds": 0.233367131,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5327664,
+        5327664,
+        5327664,
+        5327664,
+        5327664
+      ],
+      "median_allocated_bytes": 5327664,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.216158035,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.224381955,
+        0.273510588,
+        0.250413951,
+        0.222156754,
+        0.247055734
+      ],
+      "median_seconds": 0.247055734,
+      "minimum_seconds": 0.222156754,
+      "maximum_seconds": 0.273510588,
+      "repetitions": 5,
+      "allocated_bytes": [
+        4927680,
+        4927680,
+        4927680,
+        4927680,
+        4927680
+      ],
+      "median_allocated_bytes": 4927680,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.247055734,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.127916535,
+        0.117186056,
+        0.121324603,
+        0.123219721,
+        0.127452214
+      ],
+      "median_seconds": 0.123219721,
+      "minimum_seconds": 0.117186056,
+      "maximum_seconds": 0.127916535,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2605120,
+        2605120,
+        2605120,
+        2605120,
+        2605120
+      ],
+      "median_allocated_bytes": 2605120,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.123219721,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.096591425,
+        0.101008949,
+        0.103159804,
+        0.093332205,
+        0.088822878
+      ],
+      "median_seconds": 0.096591425,
+      "minimum_seconds": 0.088822878,
+      "maximum_seconds": 0.103159804,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2322560,
+        2322560,
+        2322560,
+        2322560,
+        2322560
+      ],
+      "median_allocated_bytes": 2322560,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:32.329Z",
+      "finished_at_utc": "2026-11-17T07:08:41.753Z",
+      "before_median_seconds": 0.096591425,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "public",
+      "samples": [
+        3.246907866,
+        3.826938849,
+        4.079661475
+      ],
+      "median_seconds": 3.826938849,
+      "minimum_seconds": 3.246907866,
+      "maximum_seconds": 4.079661475,
+      "repetitions": 3,
+      "allocated_bytes": [
+        4396704,
+        4396704,
+        4396704
+      ],
+      "median_allocated_bytes": 4396704,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:46.383Z",
+      "finished_at_utc": "2026-11-17T07:09:49.430Z",
+      "before_median_seconds": 3.826938849,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "raw",
+      "samples": [
+        4.337327609,
+        3.547316343,
+        4.157121334
+      ],
+      "median_seconds": 4.157121334,
+      "minimum_seconds": 3.547316343,
+      "maximum_seconds": 4.337327609,
+      "repetitions": 3,
+      "allocated_bytes": [
+        4144608,
+        4144608,
+        4144608
+      ],
+      "median_allocated_bytes": 4144608,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:08:46.383Z",
+      "finished_at_utc": "2026-11-17T07:09:49.430Z",
+      "before_median_seconds": 4.157121334,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "rotations",
+      "samples": [
+        3.267310242,
+        3.033965184,
+        2.438444601
+      ],
+      "median_seconds": 3.033965184,
+      "minimum_seconds": 2.438444601,
+      "maximum_seconds": 3.267310242,
+      "repetitions": 3,
+      "allocated_bytes": [
+        2677728,
+        2677728,
+        2677728
+      ],
+      "median_allocated_bytes": 2677728,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:46.383Z",
+      "finished_at_utc": "2026-11-17T07:09:49.430Z",
+      "before_median_seconds": 3.033965184,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "before",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "cnots",
+      "samples": [
+        1.452826989,
+        1.388754834,
+        1.376257469
+      ],
+      "median_seconds": 1.388754834,
+      "minimum_seconds": 1.376257469,
+      "maximum_seconds": 1.452826989,
+      "repetitions": 3,
+      "allocated_bytes": [
+        1466880,
+        1466880,
+        1466880
+      ],
+      "median_allocated_bytes": 1466880,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "before/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:08:46.383Z",
+      "finished_at_utc": "2026-11-17T07:09:49.430Z",
+      "before_median_seconds": 1.388754834,
+      "before_over_current": 1.0
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.022453718,
+        0.02240206,
+        0.022383829,
+        0.022383472,
+        0.022348666
+      ],
+      "median_seconds": 0.022383829,
+      "minimum_seconds": 0.022348666,
+      "maximum_seconds": 0.022453718,
+      "repetitions": 5,
+      "allocated_bytes": [
+        683568,
+        683568,
+        683568,
+        683568,
+        683568
+      ],
+      "median_allocated_bytes": 683568,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.018303654,
+      "before_over_current": 0.817717737211091
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.017971321,
+        0.018082158,
+        0.017902409,
+        0.017949893,
+        0.018008141
+      ],
+      "median_seconds": 0.017971321,
+      "minimum_seconds": 0.017902409,
+      "maximum_seconds": 0.018082158,
+      "repetitions": 5,
+      "allocated_bytes": [
+        385280,
+        385280,
+        385280,
+        385280,
+        385280
+      ],
+      "median_allocated_bytes": 385280,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.017632795,
+      "before_over_current": 0.981162987406435
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.015124288,
+        0.015104895,
+        0.015116811,
+        0.015094845,
+        0.015129306
+      ],
+      "median_seconds": 0.015116811,
+      "minimum_seconds": 0.015094845,
+      "maximum_seconds": 0.015129306,
+      "repetitions": 5,
+      "allocated_bytes": [
+        277760,
+        277760,
+        277760,
+        277760,
+        277760
+      ],
+      "median_allocated_bytes": 277760,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.014855007,
+      "before_over_current": 0.9826812678943991
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.00242541,
+        0.002432113,
+        0.002493486,
+        0.002420866,
+        0.002421646
+      ],
+      "median_seconds": 0.00242541,
+      "minimum_seconds": 0.002420866,
+      "maximum_seconds": 0.002493486,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.002312481,
+      "before_over_current": 0.9534392123393571
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.964759779,
+        0.965509292,
+        0.966818547,
+        0.965369891,
+        0.964036788
+      ],
+      "median_seconds": 0.965369891,
+      "minimum_seconds": 0.964036788,
+      "maximum_seconds": 0.966818547,
+      "repetitions": 5,
+      "allocated_bytes": [
+        928304,
+        928304,
+        928304,
+        928304,
+        928304
+      ],
+      "median_allocated_bytes": 928304,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.799608259,
+      "before_over_current": 0.8282921048756844
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.814232538,
+        0.815932827,
+        0.817707315,
+        0.813047409,
+        0.811540503
+      ],
+      "median_seconds": 0.814232538,
+      "minimum_seconds": 0.811540503,
+      "maximum_seconds": 0.817707315,
+      "repetitions": 5,
+      "allocated_bytes": [
+        528320,
+        528320,
+        528320,
+        528320,
+        528320
+      ],
+      "median_allocated_bytes": 528320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.796073191,
+      "before_over_current": 0.9776975911026538
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.652640873,
+        0.654031688,
+        0.654366508,
+        0.653009869,
+        0.653382625
+      ],
+      "median_seconds": 0.653382625,
+      "minimum_seconds": 0.652640873,
+      "maximum_seconds": 0.654366508,
+      "repetitions": 5,
+      "allocated_bytes": [
+        376000,
+        376000,
+        376000,
+        376000,
+        376000
+      ],
+      "median_allocated_bytes": 376000,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.640305448,
+      "before_over_current": 0.9799854227834724
+    },
+    {
+      "stage": "candidate",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.162597709,
+        0.163301596,
+        0.162751957,
+        0.162787964,
+        0.162745167
+      ],
+      "median_seconds": 0.162751957,
+      "minimum_seconds": 0.162597709,
+      "maximum_seconds": 0.163301596,
+      "repetitions": 5,
+      "allocated_bytes": [
+        152320,
+        152320,
+        152320,
+        152320,
+        152320
+      ],
+      "median_allocated_bytes": 152320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:11.946Z",
+      "finished_at_utc": "2026-11-17T07:13:33.381Z",
+      "before_median_seconds": 0.15850104,
+      "before_over_current": 0.9738810083862771
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.02056987,
+        0.020459336,
+        0.02081793,
+        0.020415545,
+        0.020490988
+      ],
+      "median_seconds": 0.020490988,
+      "minimum_seconds": 0.020415545,
+      "maximum_seconds": 0.02081793,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1212208,
+        1212208,
+        1212208,
+        1212208,
+        1212208
+      ],
+      "median_allocated_bytes": 1212208,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.017847429,
+      "before_over_current": 0.8709891880274392
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.020257199,
+        0.019491986,
+        0.019968143,
+        0.020865872,
+        0.019834751
+      ],
+      "median_seconds": 0.019968143,
+      "minimum_seconds": 0.019491986,
+      "maximum_seconds": 0.020865872,
+      "repetitions": 5,
+      "allocated_bytes": [
+        913920,
+        913920,
+        913920,
+        913920,
+        913920
+      ],
+      "median_allocated_bytes": 913920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.016292006,
+      "before_over_current": 0.8158999061655358
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.014895449,
+        0.014672316,
+        0.017934693,
+        0.015606048,
+        0.015046763
+      ],
+      "median_seconds": 0.015046763,
+      "minimum_seconds": 0.014672316,
+      "maximum_seconds": 0.017934693,
+      "repetitions": 5,
+      "allocated_bytes": [
+        806400,
+        806400,
+        806400,
+        806400,
+        806400
+      ],
+      "median_allocated_bytes": 806400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.010262403,
+      "before_over_current": 0.6820339364685947
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002426276,
+        0.002425024,
+        0.00242061,
+        0.002427944,
+        0.002441016
+      ],
+      "median_seconds": 0.002426276,
+      "minimum_seconds": 0.00242061,
+      "maximum_seconds": 0.002441016,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.007206558,
+      "before_over_current": 2.9702136113121504
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.233960821,
+        0.232799612,
+        0.232481694,
+        0.233444878,
+        0.231567816
+      ],
+      "median_seconds": 0.232799612,
+      "minimum_seconds": 0.231567816,
+      "maximum_seconds": 0.233960821,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5844784,
+        5844784,
+        5844784,
+        5844784,
+        5844784
+      ],
+      "median_allocated_bytes": 5844784,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.213796497,
+      "before_over_current": 0.9183713630931654
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.234415956,
+        0.23092772,
+        0.237069728,
+        0.2321842,
+        0.232408025
+      ],
+      "median_seconds": 0.232408025,
+      "minimum_seconds": 0.23092772,
+      "maximum_seconds": 0.237069728,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5444800,
+        5444800,
+        5444800,
+        5444800,
+        5444800
+      ],
+      "median_allocated_bytes": 5444800,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.21612438,
+      "before_over_current": 0.9299351001326224
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.127357929,
+        0.127567598,
+        0.129947312,
+        0.126536208,
+        0.126603315
+      ],
+      "median_seconds": 0.127357929,
+      "minimum_seconds": 0.126536208,
+      "maximum_seconds": 0.129947312,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2954880,
+        2954880,
+        2954880,
+        2954880,
+        2954880
+      ],
+      "median_allocated_bytes": 2954880,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.122515678,
+      "before_over_current": 0.961979194872115
+    },
+    {
+      "stage": "candidate",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.105363948,
+        0.109515806,
+        0.105552133,
+        0.105168135,
+        0.105729556
+      ],
+      "median_seconds": 0.105552133,
+      "minimum_seconds": 0.105168135,
+      "maximum_seconds": 0.109515806,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2489920,
+        2489920,
+        2489920,
+        2489920,
+        2489920
+      ],
+      "median_allocated_bytes": 2489920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:57.912Z",
+      "finished_at_utc": "2026-11-17T07:13:07.094Z",
+      "before_median_seconds": 0.091370758,
+      "before_over_current": 0.8656457752492789
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.023007154,
+        0.024571077,
+        0.022231468,
+        0.022879368,
+        0.02289032
+      ],
+      "median_seconds": 0.02289032,
+      "minimum_seconds": 0.022231468,
+      "maximum_seconds": 0.024571077,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1212208,
+        1212208,
+        1212208,
+        1212208,
+        1212208
+      ],
+      "median_allocated_bytes": 1212208,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.023444233,
+      "before_over_current": 1.0241985695263325
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.022478385,
+        0.022710695,
+        0.022608374,
+        0.022827266,
+        0.022439566
+      ],
+      "median_seconds": 0.022608374,
+      "minimum_seconds": 0.022439566,
+      "maximum_seconds": 0.022827266,
+      "repetitions": 5,
+      "allocated_bytes": [
+        913920,
+        913920,
+        913920,
+        913920,
+        913920
+      ],
+      "median_allocated_bytes": 913920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.02727452,
+      "before_over_current": 1.2063901632200529
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.018381668,
+        0.018322507,
+        0.018457319,
+        0.016958466,
+        0.017343866
+      ],
+      "median_seconds": 0.018322507,
+      "minimum_seconds": 0.016958466,
+      "maximum_seconds": 0.018457319,
+      "repetitions": 5,
+      "allocated_bytes": [
+        806400,
+        806400,
+        806400,
+        806400,
+        806400
+      ],
+      "median_allocated_bytes": 806400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.013065057,
+      "before_over_current": 0.7130605544317707
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002900083,
+        0.002899228,
+        0.002894546,
+        0.003036896,
+        0.002875936
+      ],
+      "median_seconds": 0.002899228,
+      "minimum_seconds": 0.002875936,
+      "maximum_seconds": 0.003036896,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.011420609,
+      "before_over_current": 3.9391896739407875
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.269147729,
+        0.27462063,
+        0.274603404,
+        0.287820433,
+        0.268366894
+      ],
+      "median_seconds": 0.274603404,
+      "minimum_seconds": 0.268366894,
+      "maximum_seconds": 0.287820433,
+      "repetitions": 5,
+      "allocated_bytes": [
+        8416304,
+        8416304,
+        8416304,
+        8416304,
+        8416304
+      ],
+      "median_allocated_bytes": 8416304,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.216158035,
+      "before_over_current": 0.7871644409768497
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.264903279,
+        0.27503214,
+        0.27508597,
+        0.292099192,
+        0.275215273
+      ],
+      "median_seconds": 0.27508597,
+      "minimum_seconds": 0.264903279,
+      "maximum_seconds": 0.292099192,
+      "repetitions": 5,
+      "allocated_bytes": [
+        8016320,
+        8016320,
+        8016320,
+        8016320,
+        8016320
+      ],
+      "median_allocated_bytes": 8016320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.247055734,
+      "before_over_current": 0.8981037237195338
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.129964875,
+        0.119330094,
+        0.111341166,
+        0.114812626,
+        0.115959166
+      ],
+      "median_seconds": 0.115959166,
+      "minimum_seconds": 0.111341166,
+      "maximum_seconds": 0.129964875,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5526400,
+        5526400,
+        5526400,
+        5526400,
+        5526400
+      ],
+      "median_allocated_bytes": 5526400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.123219721,
+      "before_over_current": 1.062613032246196
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.145794201,
+        0.1447226,
+        0.147003177,
+        0.147122858,
+        0.143605104
+      ],
+      "median_seconds": 0.145794201,
+      "minimum_seconds": 0.143605104,
+      "maximum_seconds": 0.147122858,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2489920,
+        2489920,
+        2489920,
+        2489920,
+        2489920
+      ],
+      "median_allocated_bytes": 2489920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:12:42.895Z",
+      "finished_at_utc": "2026-11-17T07:12:53.250Z",
+      "before_median_seconds": 0.096591425,
+      "before_over_current": 0.662518977692398
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "public",
+      "samples": [
+        4.139226113,
+        4.059178808,
+        4.231625019
+      ],
+      "median_seconds": 4.139226113,
+      "minimum_seconds": 4.059178808,
+      "maximum_seconds": 4.231625019,
+      "repetitions": 3,
+      "allocated_bytes": [
+        6737984,
+        6737984,
+        6737984
+      ],
+      "median_allocated_bytes": 6737984,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:38.245Z",
+      "finished_at_utc": "2026-11-17T07:14:40.653Z",
+      "before_median_seconds": 3.826938849,
+      "before_over_current": 0.9245541906929885
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "raw",
+      "samples": [
+        4.19324839,
+        4.832094932,
+        4.279594023
+      ],
+      "median_seconds": 4.279594023,
+      "minimum_seconds": 4.19324839,
+      "maximum_seconds": 4.832094932,
+      "repetitions": 3,
+      "allocated_bytes": [
+        6485888,
+        6485888,
+        6485888
+      ],
+      "median_allocated_bytes": 6485888,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:13:38.245Z",
+      "finished_at_utc": "2026-11-17T07:14:40.653Z",
+      "before_median_seconds": 4.157121334,
+      "before_over_current": 0.971382171219562
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "rotations",
+      "samples": [
+        3.463973074,
+        2.612959067,
+        2.586279427
+      ],
+      "median_seconds": 2.612959067,
+      "minimum_seconds": 2.586279427,
+      "maximum_seconds": 3.463973074,
+      "repetitions": 3,
+      "allocated_bytes": [
+        3456768,
+        3456768,
+        3456768
+      ],
+      "median_allocated_bytes": 3456768,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:38.245Z",
+      "finished_at_utc": "2026-11-17T07:14:40.653Z",
+      "before_median_seconds": 3.033965184,
+      "before_over_current": 1.161122354466642
+    },
+    {
+      "stage": "candidate",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "cnots",
+      "samples": [
+        1.573783039,
+        1.530658869,
+        1.619372932
+      ],
+      "median_seconds": 1.573783039,
+      "minimum_seconds": 1.530658869,
+      "maximum_seconds": 1.619372932,
+      "repetitions": 3,
+      "allocated_bytes": [
+        3029120,
+        3029120,
+        3029120
+      ],
+      "median_allocated_bytes": 3029120,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "candidate/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:13:38.245Z",
+      "finished_at_utc": "2026-11-17T07:14:40.653Z",
+      "before_median_seconds": 1.388754834,
+      "before_over_current": 0.8824309320822461
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.018637793,
+        0.018642631,
+        0.018543084,
+        0.018549925,
+        0.018914804
+      ],
+      "median_seconds": 0.018637793,
+      "minimum_seconds": 0.018543084,
+      "maximum_seconds": 0.018914804,
+      "repetitions": 5,
+      "allocated_bytes": [
+        683568,
+        683568,
+        683568,
+        683568,
+        683568
+      ],
+      "median_allocated_bytes": 683568,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.018303654,
+      "before_over_current": 0.9820719652804385
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.017813732,
+        0.017853811,
+        0.017829097,
+        0.017848146,
+        0.017847119
+      ],
+      "median_seconds": 0.017847119,
+      "minimum_seconds": 0.017813732,
+      "maximum_seconds": 0.017853811,
+      "repetitions": 5,
+      "allocated_bytes": [
+        385280,
+        385280,
+        385280,
+        385280,
+        385280
+      ],
+      "median_allocated_bytes": 385280,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.017632795,
+      "before_over_current": 0.9879911149805186
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.015093314,
+        0.015119816,
+        0.015289921,
+        0.015075932,
+        0.015088858
+      ],
+      "median_seconds": 0.015093314,
+      "minimum_seconds": 0.015075932,
+      "maximum_seconds": 0.015289921,
+      "repetitions": 5,
+      "allocated_bytes": [
+        277760,
+        277760,
+        277760,
+        277760,
+        277760
+      ],
+      "median_allocated_bytes": 277760,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.014855007,
+      "before_over_current": 0.9842110884329313
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.00242796,
+        0.002426498,
+        0.002420308,
+        0.002421467,
+        0.002426116
+      ],
+      "median_seconds": 0.002426116,
+      "minimum_seconds": 0.002420308,
+      "maximum_seconds": 0.00242796,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.002312481,
+      "before_over_current": 0.9531617614326767
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.805996568,
+        0.805336805,
+        0.807279429,
+        0.807467489,
+        0.806593088
+      ],
+      "median_seconds": 0.806593088,
+      "minimum_seconds": 0.805336805,
+      "maximum_seconds": 0.807467489,
+      "repetitions": 5,
+      "allocated_bytes": [
+        928304,
+        928304,
+        928304,
+        928304,
+        928304
+      ],
+      "median_allocated_bytes": 928304,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.799608259,
+      "before_over_current": 0.9913403311980774
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.797252945,
+        0.798676322,
+        0.797671185,
+        0.803276883,
+        0.799031285
+      ],
+      "median_seconds": 0.798676322,
+      "minimum_seconds": 0.797252945,
+      "maximum_seconds": 0.803276883,
+      "repetitions": 5,
+      "allocated_bytes": [
+        528320,
+        528320,
+        528320,
+        528320,
+        528320
+      ],
+      "median_allocated_bytes": 528320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.796073191,
+      "before_over_current": 0.9967406934094635
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.649353644,
+        0.649818289,
+        0.649007192,
+        0.650657074,
+        0.649843824
+      ],
+      "median_seconds": 0.649818289,
+      "minimum_seconds": 0.649007192,
+      "maximum_seconds": 0.650657074,
+      "repetitions": 5,
+      "allocated_bytes": [
+        376000,
+        376000,
+        376000,
+        376000,
+        376000
+      ],
+      "median_allocated_bytes": 376000,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.640305448,
+      "before_over_current": 0.9853607675237346
+    },
+    {
+      "stage": "after",
+      "threads": 1,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.158378037,
+        0.15865712,
+        0.158389102,
+        0.158382104,
+        0.158362193
+      ],
+      "median_seconds": 0.158382104,
+      "minimum_seconds": 0.158362193,
+      "maximum_seconds": 0.15865712,
+      "repetitions": 5,
+      "allocated_bytes": [
+        152320,
+        152320,
+        152320,
+        152320,
+        152320
+      ],
+      "median_allocated_bytes": 152320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-1.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:51.254Z",
+      "finished_at_utc": "2026-11-17T07:20:11.476Z",
+      "before_median_seconds": 0.15850104,
+      "before_over_current": 1.0007509434272954
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.018961894,
+        0.019045272,
+        0.019606064,
+        0.019410876,
+        0.018926546
+      ],
+      "median_seconds": 0.019045272,
+      "minimum_seconds": 0.018926546,
+      "maximum_seconds": 0.019606064,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1212208,
+        1212208,
+        1212208,
+        1212208,
+        1212208
+      ],
+      "median_allocated_bytes": 1212208,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.017962969,
+        0.018398649,
+        0.018326157,
+        0.018022398,
+        0.01961991
+      ],
+      "median_seconds": 0.018326157,
+      "minimum_seconds": 0.017962969,
+      "maximum_seconds": 0.01961991,
+      "repetitions": 5,
+      "allocated_bytes": [
+        913920,
+        913920,
+        913920,
+        913920,
+        913920
+      ],
+      "median_allocated_bytes": 913920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.013930461,
+        0.014649345,
+        0.013828676,
+        0.015281145,
+        0.013796591
+      ],
+      "median_seconds": 0.013930461,
+      "minimum_seconds": 0.013796591,
+      "maximum_seconds": 0.015281145,
+      "repetitions": 5,
+      "allocated_bytes": [
+        806400,
+        806400,
+        806400,
+        806400,
+        806400
+      ],
+      "median_allocated_bytes": 806400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002432474,
+        0.002434226,
+        0.002438845,
+        0.002430967,
+        0.002434379
+      ],
+      "median_seconds": 0.002434226,
+      "minimum_seconds": 0.002430967,
+      "maximum_seconds": 0.002438845,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.45907869,
+        0.457620178,
+        0.457152354,
+        0.457026252,
+        0.420666525
+      ],
+      "median_seconds": 0.457152354,
+      "minimum_seconds": 0.420666525,
+      "maximum_seconds": 0.45907869,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2290864,
+        2290864,
+        2290864,
+        2290864,
+        2290864
+      ],
+      "median_allocated_bytes": 2290864,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.422385675,
+        0.419433898,
+        0.418894267,
+        0.418970844,
+        0.418650719
+      ],
+      "median_seconds": 0.418970844,
+      "minimum_seconds": 0.418650719,
+      "maximum_seconds": 0.422385675,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1890880,
+        1890880,
+        1890880,
+        1890880,
+        1890880
+      ],
+      "median_allocated_bytes": 1890880,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.336249735,
+        0.333978749,
+        0.33384467,
+        0.333449671,
+        0.333191859
+      ],
+      "median_seconds": 0.33384467,
+      "minimum_seconds": 0.333191859,
+      "maximum_seconds": 0.336249735,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1079040,
+        1079040,
+        1079040,
+        1079040,
+        1079040
+      ],
+      "median_allocated_bytes": 1079040,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 2,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.087975836,
+        0.087116002,
+        0.087612827,
+        0.087521456,
+        0.088701025
+      ],
+      "median_seconds": 0.087612827,
+      "minimum_seconds": 0.087116002,
+      "maximum_seconds": 0.088701025,
+      "repetitions": 5,
+      "allocated_bytes": [
+        811840,
+        811840,
+        811840,
+        811840,
+        811840
+      ],
+      "median_allocated_bytes": 811840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-2.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:16.195Z",
+      "finished_at_utc": "2026-11-17T07:20:28.944Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.014929733,
+        0.015082164,
+        0.014928799,
+        0.014691994,
+        0.01654575
+      ],
+      "median_seconds": 0.014929733,
+      "minimum_seconds": 0.014691994,
+      "maximum_seconds": 0.01654575,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1699888,
+        1699888,
+        1699888,
+        1699888,
+        1699888
+      ],
+      "median_allocated_bytes": 1699888,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.014888076,
+        0.014222611,
+        0.014310164,
+        0.014132516,
+        0.014283288
+      ],
+      "median_seconds": 0.014283288,
+      "minimum_seconds": 0.014132516,
+      "maximum_seconds": 0.014888076,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1401600,
+        1401600,
+        1401600,
+        1401600,
+        1401600
+      ],
+      "median_allocated_bytes": 1401600,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.009710201,
+        0.009856121,
+        0.010047239,
+        0.010511638,
+        0.009725525
+      ],
+      "median_seconds": 0.009856121,
+      "minimum_seconds": 0.009710201,
+      "maximum_seconds": 0.010511638,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1294080,
+        1294080,
+        1294080,
+        1294080,
+        1294080
+      ],
+      "median_allocated_bytes": 1294080,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002426048,
+        0.002431406,
+        0.002430035,
+        0.002431753,
+        0.002427945
+      ],
+      "median_seconds": 0.002430035,
+      "minimum_seconds": 0.002426048,
+      "maximum_seconds": 0.002431753,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-1/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.240673905,
+        0.239338719,
+        0.239818502,
+        0.240398513,
+        0.237600216
+      ],
+      "median_seconds": 0.239818502,
+      "minimum_seconds": 0.237600216,
+      "maximum_seconds": 0.240673905,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3525424,
+        3525424,
+        3525424,
+        3525424,
+        3525424
+      ],
+      "median_allocated_bytes": 3525424,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.23529362,
+        0.239952448,
+        0.235586268,
+        0.23682454,
+        0.237764913
+      ],
+      "median_seconds": 0.23682454,
+      "minimum_seconds": 0.23529362,
+      "maximum_seconds": 0.239952448,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3125440,
+        3125440,
+        3125440,
+        3125440,
+        3125440
+      ],
+      "median_allocated_bytes": 3125440,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.184195694,
+        0.183784864,
+        0.183740845,
+        0.184598948,
+        0.185069784
+      ],
+      "median_seconds": 0.184195694,
+      "minimum_seconds": 0.183740845,
+      "maximum_seconds": 0.185069784,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1729920,
+        1729920,
+        1729920,
+        1729920,
+        1729920
+      ],
+      "median_allocated_bytes": 1729920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 4,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.053430064,
+        0.053923784,
+        0.053631848,
+        0.054386709,
+        0.055307264
+      ],
+      "median_seconds": 0.053923784,
+      "minimum_seconds": 0.053430064,
+      "maximum_seconds": 0.055307264,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1395520,
+        1395520,
+        1395520,
+        1395520,
+        1395520
+      ],
+      "median_allocated_bytes": 1395520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-4.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-1/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:33.665Z",
+      "finished_at_utc": "2026-11-17T07:20:42.970Z",
+      "before_median_seconds": null,
+      "before_over_current": null
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.016108176,
+        0.016033867,
+        0.0160041,
+        0.015181351,
+        0.015616586
+      ],
+      "median_seconds": 0.0160041,
+      "minimum_seconds": 0.015181351,
+      "maximum_seconds": 0.016108176,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2617648,
+        2617648,
+        2617648,
+        2617648,
+        2617648
+      ],
+      "median_allocated_bytes": 2617648,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.017847429,
+      "before_over_current": 1.1151785479970757
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.01477937,
+        0.014864622,
+        0.01523009,
+        0.014996768,
+        0.014032419
+      ],
+      "median_seconds": 0.014864622,
+      "minimum_seconds": 0.014032419,
+      "maximum_seconds": 0.01523009,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2319360,
+        2319360,
+        2319360,
+        2319360,
+        2319360
+      ],
+      "median_allocated_bytes": 2319360,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.016292006,
+      "before_over_current": 1.0960255834288959
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.01155296,
+        0.010864447,
+        0.011803876,
+        0.010960739,
+        0.01013702
+      ],
+      "median_seconds": 0.010960739,
+      "minimum_seconds": 0.01013702,
+      "maximum_seconds": 0.011803876,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2211840,
+        2211840,
+        2211840,
+        2211840,
+        2211840
+      ],
+      "median_allocated_bytes": 2211840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.010262403,
+      "before_over_current": 0.9362875076215207
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002431811,
+        0.002423166,
+        0.002429096,
+        0.002420095,
+        0.002426264
+      ],
+      "median_seconds": 0.002426264,
+      "minimum_seconds": 0.002420095,
+      "maximum_seconds": 0.002431811,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-8/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.007206558,
+      "before_over_current": 2.97022830161928
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.248654934,
+        0.218185574,
+        0.215916775,
+        0.215017659,
+        0.217586064
+      ],
+      "median_seconds": 0.217586064,
+      "minimum_seconds": 0.215017659,
+      "maximum_seconds": 0.248654934,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5844784,
+        5844784,
+        5844784,
+        5844784,
+        5844784
+      ],
+      "median_allocated_bytes": 5844784,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.213796497,
+      "before_over_current": 0.9825835950596542
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.240073512,
+        0.287528065,
+        0.258595568,
+        0.275087407,
+        0.295793483
+      ],
+      "median_seconds": 0.275087407,
+      "minimum_seconds": 0.240073512,
+      "maximum_seconds": 0.295793483,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5444800,
+        5444800,
+        5444800,
+        5444800,
+        5444800
+      ],
+      "median_allocated_bytes": 5444800,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.21612438,
+      "before_over_current": 0.7856571202476019
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.123991875,
+        0.173931038,
+        0.260438824,
+        0.244516117,
+        0.277384804
+      ],
+      "median_seconds": 0.244516117,
+      "minimum_seconds": 0.123991875,
+      "maximum_seconds": 0.277384804,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2954880,
+        2954880,
+        2954880,
+        2954880,
+        2954880
+      ],
+      "median_allocated_bytes": 2954880,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.122515678,
+      "before_over_current": 0.5010535890360144
+    },
+    {
+      "stage": "after",
+      "threads": 8,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.108335384,
+        0.112399946,
+        0.140341605,
+        0.152723258,
+        0.161786817
+      ],
+      "median_seconds": 0.140341605,
+      "minimum_seconds": 0.108335384,
+      "maximum_seconds": 0.161786817,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2489920,
+        2489920,
+        2489920,
+        2489920,
+        2489920
+      ],
+      "median_allocated_bytes": 2489920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-8.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-8/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:36.192Z",
+      "finished_at_utc": "2026-11-17T07:19:46.502Z",
+      "before_median_seconds": 0.091370758,
+      "before_over_current": 0.6510596625996973
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.016318124,
+        0.016196311,
+        0.016031956,
+        0.016060148,
+        0.016498481
+      ],
+      "median_seconds": 0.016196311,
+      "minimum_seconds": 0.016031956,
+      "maximum_seconds": 0.016498481,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2617648,
+        2617648,
+        2617648,
+        2617648,
+        2617648
+      ],
+      "median_allocated_bytes": 2617648,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.023444233,
+      "before_over_current": 1.4475044965486275
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.016038112,
+        0.016595515,
+        0.015204625,
+        0.015285631,
+        0.01663243
+      ],
+      "median_seconds": 0.016038112,
+      "minimum_seconds": 0.015204625,
+      "maximum_seconds": 0.01663243,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2319360,
+        2319360,
+        2319360,
+        2319360,
+        2319360
+      ],
+      "median_allocated_bytes": 2319360,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000016,
+        "amplitudes_checked": 32768,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000016,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.02727452,
+      "before_over_current": 1.700606654947914
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.012239686,
+        0.012005805,
+        0.012702019,
+        0.012135112,
+        0.01486771
+      ],
+      "median_seconds": 0.012239686,
+      "minimum_seconds": 0.012005805,
+      "maximum_seconds": 0.01486771,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2211840,
+        2211840,
+        2211840,
+        2211840,
+        2211840
+      ],
+      "median_allocated_bytes": 2211840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.013065057,
+      "before_over_current": 1.0674340011663699
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.002756055,
+        0.003744961,
+        0.002679985,
+        0.002886755,
+        0.002667042
+      ],
+      "median_seconds": 0.002756055,
+      "minimum_seconds": 0.002667042,
+      "maximum_seconds": 0.003744961,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368",
+      "reference_metadata": "baseline-16/n15-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.011420609,
+      "before_over_current": 4.143824778533085
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "samples": [
+        0.257306782,
+        0.249350857,
+        0.2245223,
+        0.229610262,
+        0.23005131
+      ],
+      "median_seconds": 0.23005131,
+      "minimum_seconds": 0.2245223,
+      "maximum_seconds": 0.257306782,
+      "repetitions": 5,
+      "allocated_bytes": [
+        10720624,
+        10720624,
+        10720624,
+        10720624,
+        10720624
+      ],
+      "median_allocated_bytes": 10720624,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.216158035,
+      "before_over_current": 0.9396079292050108
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "raw",
+      "samples": [
+        0.248534338,
+        0.230927736,
+        0.257587452,
+        0.251265658,
+        0.207966328
+      ],
+      "median_seconds": 0.248534338,
+      "minimum_seconds": 0.207966328,
+      "maximum_seconds": 0.257587452,
+      "repetitions": 5,
+      "allocated_bytes": [
+        10320640,
+        10320640,
+        10320640,
+        10320640,
+        10320640
+      ],
+      "median_allocated_bytes": 10320640,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": {
+        "actual_norm_squared": 0.9999999999999847,
+        "amplitudes_checked": 1048576,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 0.9999999999999847,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.247055734,
+      "before_over_current": 0.9940507053797935
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "samples": [
+        0.131161908,
+        0.150101579,
+        0.119532948,
+        0.11938527,
+        0.153921454
+      ],
+      "median_seconds": 0.131161908,
+      "minimum_seconds": 0.11938527,
+      "maximum_seconds": 0.153921454,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5526400,
+        5526400,
+        5526400,
+        5526400,
+        5526400
+      ],
+      "median_allocated_bytes": 5526400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.123219721,
+      "before_over_current": 0.939447457565195
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "samples": [
+        0.091199044,
+        0.092208973,
+        0.081726309,
+        0.081704692,
+        0.095849144
+      ],
+      "median_seconds": 0.091199044,
+      "minimum_seconds": 0.081704692,
+      "maximum_seconds": 0.095849144,
+      "repetitions": 5,
+      "allocated_bytes": [
+        4794240,
+        4794240,
+        4794240,
+        4794240,
+        4794240
+      ],
+      "median_allocated_bytes": 4794240,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-16.toml",
+      "reference_sha256": "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107",
+      "reference_metadata": "baseline-16/n20-d20.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:19:21.469Z",
+      "finished_at_utc": "2026-11-17T07:19:30.814Z",
+      "before_median_seconds": 0.096591425,
+      "before_over_current": 1.0591276044516431
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "public",
+      "samples": [
+        3.926082008,
+        5.225663884,
+        4.468364271
+      ],
+      "median_seconds": 4.468364271,
+      "minimum_seconds": 3.926082008,
+      "maximum_seconds": 5.225663884,
+      "repetitions": 3,
+      "allocated_bytes": [
+        6755744,
+        6755744,
+        6755744
+      ],
+      "median_allocated_bytes": 6755744,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:47.789Z",
+      "finished_at_utc": "2026-11-17T07:21:55.852Z",
+      "before_median_seconds": 3.826938849,
+      "before_over_current": 0.8564518505881679
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "raw",
+      "samples": [
+        5.212686278,
+        4.002618351,
+        5.364890893
+      ],
+      "median_seconds": 5.212686278,
+      "minimum_seconds": 4.002618351,
+      "maximum_seconds": 5.364890893,
+      "repetitions": 3,
+      "allocated_bytes": [
+        6503648,
+        6503648,
+        6503648
+      ],
+      "median_allocated_bytes": 6503648,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": {
+        "actual_norm_squared": 1.0000000000000924,
+        "amplitudes_checked": 33554432,
+        "maximum_amplitude_error": 0.0,
+        "reference_norm_squared": 1.0000000000000924,
+        "relative_l2_error": 0.0
+      },
+      "started_at_utc": "2026-11-17T07:20:47.789Z",
+      "finished_at_utc": "2026-11-17T07:21:55.852Z",
+      "before_median_seconds": 4.157121334,
+      "before_over_current": 0.797500772594932
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "rotations",
+      "samples": [
+        3.131353405,
+        2.653915611,
+        2.464886405
+      ],
+      "median_seconds": 2.653915611,
+      "minimum_seconds": 2.464886405,
+      "maximum_seconds": 3.131353405,
+      "repetitions": 3,
+      "allocated_bytes": [
+        3474528,
+        3474528,
+        3474528
+      ],
+      "median_allocated_bytes": 3474528,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:47.789Z",
+      "finished_at_utc": "2026-11-17T07:21:55.852Z",
+      "before_median_seconds": 3.033965184,
+      "before_over_current": 1.1432033375231538
+    },
+    {
+      "stage": "after",
+      "threads": 16,
+      "qubits": 25,
+      "depth": 10,
+      "group": "cnots",
+      "samples": [
+        1.559195649,
+        2.287487487,
+        2.235356674
+      ],
+      "median_seconds": 2.235356674,
+      "minimum_seconds": 1.559195649,
+      "maximum_seconds": 2.287487487,
+      "repetitions": 3,
+      "allocated_bytes": [
+        3029120,
+        3029120,
+        3029120
+      ],
+      "median_allocated_bytes": 3029120,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0,
+      "raw_file": "after/calibration-25-16.toml",
+      "reference_sha256": "70995c152a670420b48f2e2f766a3e1990230c7c99e21b122784b1b66db9a6cf",
+      "reference_metadata": "baseline-16/n25-d10.toml",
+      "correctness": null,
+      "started_at_utc": "2026-11-17T07:20:47.789Z",
+      "finished_at_utc": "2026-11-17T07:21:55.852Z",
+      "before_median_seconds": 1.388754834,
+      "before_over_current": 0.6212676706822492
+    }
+  ],
+  "task_sweep": [
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 1,
+      "samples": [
+        0.015052171,
+        0.015050258,
+        0.015044208,
+        0.015041544,
+        0.015049488
+      ],
+      "median_seconds": 0.015049488,
+      "minimum_seconds": 0.015041544,
+      "maximum_seconds": 0.015052171,
+      "repetitions": 5,
+      "allocated_bytes": [
+        277760,
+        277760,
+        277760,
+        277760,
+        277760
+      ],
+      "median_allocated_bytes": 277760,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 2,
+      "samples": [
+        0.017900746,
+        0.017682598,
+        0.018202982,
+        0.017436695,
+        0.01855796
+      ],
+      "median_seconds": 0.017900746,
+      "minimum_seconds": 0.017436695,
+      "maximum_seconds": 0.01855796,
+      "repetitions": 5,
+      "allocated_bytes": [
+        806400,
+        806400,
+        806400,
+        806400,
+        806400
+      ],
+      "median_allocated_bytes": 806400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 4,
+      "samples": [
+        0.013602116,
+        0.013780508,
+        0.0182673,
+        0.0145954,
+        0.014408078
+      ],
+      "median_seconds": 0.014408078,
+      "minimum_seconds": 0.013602116,
+      "maximum_seconds": 0.0182673,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1294080,
+        1294080,
+        1294080,
+        1294080,
+        1294080
+      ],
+      "median_allocated_bytes": 1294080,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 8,
+      "samples": [
+        0.012262101,
+        0.012711718,
+        0.012973553,
+        0.01235416,
+        0.012416355
+      ],
+      "median_seconds": 0.012416355,
+      "minimum_seconds": 0.012262101,
+      "maximum_seconds": 0.012973553,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2211840,
+        2211840,
+        2211840,
+        2211840,
+        2211840
+      ],
+      "median_allocated_bytes": 2211840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 16,
+      "samples": [
+        0.014896131,
+        0.016456828,
+        0.015250734,
+        0.015727635,
+        0.016025941
+      ],
+      "median_seconds": 0.015727635,
+      "minimum_seconds": 0.014896131,
+      "maximum_seconds": 0.016456828,
+      "repetitions": 5,
+      "allocated_bytes": [
+        4138560,
+        4138560,
+        4138560,
+        4138560,
+        4138560
+      ],
+      "median_allocated_bytes": 4138560,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 1,
+      "samples": [
+        0.002911995,
+        0.002903729,
+        0.002895479,
+        0.002904656,
+        0.002901829
+      ],
+      "median_seconds": 0.002903729,
+      "minimum_seconds": 0.002895479,
+      "maximum_seconds": 0.002911995,
+      "repetitions": 5,
+      "allocated_bytes": [
+        107520,
+        107520,
+        107520,
+        107520,
+        107520
+      ],
+      "median_allocated_bytes": 107520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 2,
+      "samples": [
+        0.014105112,
+        0.015816813,
+        0.015582189,
+        0.015413817,
+        0.015259911
+      ],
+      "median_seconds": 0.015413817,
+      "minimum_seconds": 0.014105112,
+      "maximum_seconds": 0.015816813,
+      "repetitions": 5,
+      "allocated_bytes": [
+        595840,
+        595840,
+        595840,
+        595840,
+        595840
+      ],
+      "median_allocated_bytes": 595840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 4,
+      "samples": [
+        0.01149039,
+        0.012051994,
+        0.012357925,
+        0.011993539,
+        0.012084801
+      ],
+      "median_seconds": 0.012051994,
+      "minimum_seconds": 0.01149039,
+      "maximum_seconds": 0.012357925,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1025920,
+        1025920,
+        1025920,
+        1025920,
+        1025920
+      ],
+      "median_allocated_bytes": 1025920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 8,
+      "samples": [
+        0.009745475,
+        0.009759395,
+        0.010888589,
+        0.009599331,
+        0.00989978
+      ],
+      "median_seconds": 0.009759395,
+      "minimum_seconds": 0.009599331,
+      "maximum_seconds": 0.010888589,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1832320,
+        1832320,
+        1832320,
+        1832320,
+        1832320
+      ],
+      "median_allocated_bytes": 1832320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 16,
+      "samples": [
+        0.013576413,
+        0.012974419,
+        0.012560169,
+        0.012989183,
+        0.012565504
+      ],
+      "median_seconds": 0.012974419,
+      "minimum_seconds": 0.012560169,
+      "maximum_seconds": 0.013576413,
+      "repetitions": 5,
+      "allocated_bytes": [
+        3530240,
+        3530240,
+        3530240,
+        3530240,
+        3530240
+      ],
+      "median_allocated_bytes": 3530240,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 1,
+      "samples": [
+        0.647342809,
+        0.650655285,
+        0.647247078,
+        0.647135479,
+        0.647739093
+      ],
+      "median_seconds": 0.647342809,
+      "minimum_seconds": 0.647135479,
+      "maximum_seconds": 0.650655285,
+      "repetitions": 5,
+      "allocated_bytes": [
+        376000,
+        376000,
+        376000,
+        376000,
+        376000
+      ],
+      "median_allocated_bytes": 376000,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 2,
+      "samples": [
+        0.341938891,
+        0.363754203,
+        0.359147239,
+        0.342505229,
+        0.387244618
+      ],
+      "median_seconds": 0.359147239,
+      "minimum_seconds": 0.341938891,
+      "maximum_seconds": 0.387244618,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1079040,
+        1079040,
+        1079040,
+        1079040,
+        1079040
+      ],
+      "median_allocated_bytes": 1079040,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 4,
+      "samples": [
+        0.361751233,
+        0.377714617,
+        0.387035607,
+        0.402783379,
+        0.365754183
+      ],
+      "median_seconds": 0.377714617,
+      "minimum_seconds": 0.361751233,
+      "maximum_seconds": 0.402783379,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1729920,
+        1729920,
+        1729920,
+        1729920,
+        1729920
+      ],
+      "median_allocated_bytes": 1729920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 8,
+      "samples": [
+        0.248246793,
+        0.258296409,
+        0.258420884,
+        0.226997149,
+        0.23554603
+      ],
+      "median_seconds": 0.248246793,
+      "minimum_seconds": 0.226997149,
+      "maximum_seconds": 0.258420884,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2954880,
+        2954880,
+        2954880,
+        2954880,
+        2954880
+      ],
+      "median_allocated_bytes": 2954880,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "rotations",
+      "tasks": 16,
+      "samples": [
+        0.169700922,
+        0.146202138,
+        0.154921761,
+        0.164273469,
+        0.153427535
+      ],
+      "median_seconds": 0.154921761,
+      "minimum_seconds": 0.146202138,
+      "maximum_seconds": 0.169700922,
+      "repetitions": 5,
+      "allocated_bytes": [
+        5526400,
+        5526400,
+        5526400,
+        5526400,
+        5526400
+      ],
+      "median_allocated_bytes": 5526400,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 1,
+      "samples": [
+        0.158143938,
+        0.158126451,
+        0.158210452,
+        0.158401896,
+        0.158313733
+      ],
+      "median_seconds": 0.158210452,
+      "minimum_seconds": 0.158126451,
+      "maximum_seconds": 0.158401896,
+      "repetitions": 5,
+      "allocated_bytes": [
+        152320,
+        152320,
+        152320,
+        152320,
+        152320
+      ],
+      "median_allocated_bytes": 152320,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 2,
+      "samples": [
+        0.098125117,
+        0.287496184,
+        0.173384216,
+        0.39474718,
+        0.169638575
+      ],
+      "median_seconds": 0.173384216,
+      "minimum_seconds": 0.098125117,
+      "maximum_seconds": 0.39474718,
+      "repetitions": 5,
+      "allocated_bytes": [
+        811840,
+        811840,
+        811840,
+        811840,
+        811840
+      ],
+      "median_allocated_bytes": 811840,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 4,
+      "samples": [
+        0.275730526,
+        0.258322487,
+        0.242706877,
+        0.248549793,
+        0.248603336
+      ],
+      "median_seconds": 0.248603336,
+      "minimum_seconds": 0.242706877,
+      "maximum_seconds": 0.275730526,
+      "repetitions": 5,
+      "allocated_bytes": [
+        1395520,
+        1395520,
+        1395520,
+        1395520,
+        1395520
+      ],
+      "median_allocated_bytes": 1395520,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 8,
+      "samples": [
+        0.167743851,
+        0.174201055,
+        0.168293169,
+        0.152039787,
+        0.156971632
+      ],
+      "median_seconds": 0.167743851,
+      "minimum_seconds": 0.152039787,
+      "maximum_seconds": 0.174201055,
+      "repetitions": 5,
+      "allocated_bytes": [
+        2489920,
+        2489920,
+        2489920,
+        2489920,
+        2489920
+      ],
+      "median_allocated_bytes": 2489920,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 20,
+      "depth": 20,
+      "group": "cnots",
+      "tasks": 16,
+      "samples": [
+        0.112052445,
+        0.098841428,
+        0.108209263,
+        0.109564816,
+        0.111228027
+      ],
+      "median_seconds": 0.109564816,
+      "minimum_seconds": 0.098841428,
+      "maximum_seconds": 0.112052445,
+      "repetitions": 5,
+      "allocated_bytes": [
+        4794240,
+        4794240,
+        4794240,
+        4794240,
+        4794240
+      ],
+      "median_allocated_bytes": 4794240,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "rotations",
+      "tasks": 4,
+      "samples": [
+        1.464463299,
+        1.438792347,
+        1.125655422,
+        1.010972842,
+        1.039894603
+      ],
+      "median_seconds": 1.125655422,
+      "minimum_seconds": 1.010972842,
+      "maximum_seconds": 1.464463299,
+      "repetitions": 5,
+      "allocated_bytes": [
+        216416,
+        216416,
+        216416,
+        216416,
+        216416
+      ],
+      "median_allocated_bytes": 216416,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "rotations",
+      "tasks": 8,
+      "samples": [
+        0.665075121,
+        0.896017697,
+        0.724189986,
+        0.674622216,
+        0.625346931
+      ],
+      "median_seconds": 0.674622216,
+      "minimum_seconds": 0.625346931,
+      "maximum_seconds": 0.896017697,
+      "repetitions": 5,
+      "allocated_bytes": [
+        369632,
+        369632,
+        369632,
+        369632,
+        369632
+      ],
+      "median_allocated_bytes": 369632,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "rotations",
+      "tasks": 16,
+      "samples": [
+        0.536482785,
+        0.976460687,
+        0.643019245,
+        0.576353342,
+        0.657710265
+      ],
+      "median_seconds": 0.643019245,
+      "minimum_seconds": 0.536482785,
+      "maximum_seconds": 0.976460687,
+      "repetitions": 5,
+      "allocated_bytes": [
+        691264,
+        691264,
+        691264,
+        691264,
+        691264
+      ],
+      "median_allocated_bytes": 691264,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "cnots",
+      "tasks": 4,
+      "samples": [
+        0.629254193,
+        0.738675695,
+        0.673008096,
+        0.878540231,
+        0.758288516
+      ],
+      "median_seconds": 0.738675695,
+      "minimum_seconds": 0.629254193,
+      "maximum_seconds": 0.878540231,
+      "repetitions": 5,
+      "allocated_bytes": [
+        176512,
+        176512,
+        176512,
+        176512,
+        176512
+      ],
+      "median_allocated_bytes": 176512,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "cnots",
+      "tasks": 8,
+      "samples": [
+        0.519473934,
+        0.663062257,
+        0.620795431,
+        0.478502178,
+        0.414831633
+      ],
+      "median_seconds": 0.519473934,
+      "minimum_seconds": 0.414831633,
+      "maximum_seconds": 0.663062257,
+      "repetitions": 5,
+      "allocated_bytes": [
+        314752,
+        314752,
+        314752,
+        314752,
+        314752
+      ],
+      "median_allocated_bytes": 314752,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    },
+    {
+      "qubits": 25,
+      "depth": 2,
+      "group": "cnots",
+      "tasks": 16,
+      "samples": [
+        0.329019693,
+        0.310642043,
+        0.300774763,
+        0.463478057,
+        0.320494831
+      ],
+      "median_seconds": 0.320494831,
+      "minimum_seconds": 0.300774763,
+      "maximum_seconds": 0.463478057,
+      "repetitions": 5,
+      "allocated_bytes": [
+        605824,
+        605824,
+        605824,
+        605824,
+        605824
+      ],
+      "median_allocated_bytes": 605824,
+      "gc_seconds": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median_gc_seconds": 0.0
+    }
+  ],
+  "paired": [
+    {
+      "experiment": "separate_buffers",
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-16.toml",
+      "driver": "paired_separate_buffers.jl",
+      "driver_sha256": "43af23cca94a5a6c5545677ace4c8320dd1cf3b376f7f1721d1488adf0ea444c",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.028754208,
+          0.028388947,
+          0.027875164,
+          0.027657493,
+          0.033904336,
+          0.025710056,
+          0.026667326
+        ],
+        "median_seconds": 0.027875164,
+        "minimum_seconds": 0.025710056,
+        "maximum_seconds": 0.033904336,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.018757869,
+          0.019446158,
+          0.017733325,
+          0.019193237,
+          0.017204824,
+          0.018505523,
+          0.016723544
+        ],
+        "median_seconds": 0.018505523,
+        "minimum_seconds": 0.016723544,
+        "maximum_seconds": 0.019446158,
+        "repetitions": 7
+      },
+      "before_over_after": 1.5063159252510725,
+      "paired_before_over_after_samples": [
+        1.5329144264734975,
+        1.4598743361027922,
+        1.5719084830397005,
+        1.4410020050291674,
+        1.9706296327123136,
+        1.389317989013334,
+        1.5945977718598403
+      ],
+      "paired_ratio_median": 1.5329144264734975,
+      "after_slower_pairs": 0
+    },
+    {
+      "experiment": "separate_buffers",
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots_raw",
+      "threads": 16,
+      "raw_file": "paired-16.toml",
+      "driver": "paired_separate_buffers.jl",
+      "driver_sha256": "43af23cca94a5a6c5545677ace4c8320dd1cf3b376f7f1721d1488adf0ea444c",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.017100275,
+          0.01105884,
+          0.012244546,
+          0.012780107,
+          0.010585748,
+          0.011932976,
+          0.010501341
+        ],
+        "median_seconds": 0.011932976,
+        "minimum_seconds": 0.010501341,
+        "maximum_seconds": 0.017100275,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.002456184,
+          0.002447265,
+          0.00244337,
+          0.002451422,
+          0.00244414,
+          0.002464387,
+          0.00245189
+        ],
+        "median_seconds": 0.002451422,
+        "minimum_seconds": 0.00244337,
+        "maximum_seconds": 0.002464387,
+        "repetitions": 7
+      },
+      "before_over_after": 4.867777151383972,
+      "paired_before_over_after_samples": [
+        6.962131094413122,
+        4.51885676459231,
+        5.011335164138056,
+        5.213344336470833,
+        4.3310726881438875,
+        4.842168052339182,
+        4.282957636761846
+      ],
+      "paired_ratio_median": 4.842168052339182,
+      "after_slower_pairs": 0
+    },
+    {
+      "experiment": "separate_buffers",
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-16.toml",
+      "driver": "paired_separate_buffers.jl",
+      "driver_sha256": "43af23cca94a5a6c5545677ace4c8320dd1cf3b376f7f1721d1488adf0ea444c",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.234233616,
+          0.20739242,
+          0.200019919,
+          0.211071322,
+          0.194813745,
+          0.193024848,
+          0.18742066
+        ],
+        "median_seconds": 0.200019919,
+        "minimum_seconds": 0.18742066,
+        "maximum_seconds": 0.234233616,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.22083565,
+          0.202716759,
+          0.216859276,
+          0.20324609,
+          0.196937917,
+          0.198916198,
+          0.206732849
+        ],
+        "median_seconds": 0.20324609,
+        "minimum_seconds": 0.196937917,
+        "maximum_seconds": 0.22083565,
+        "repetitions": 7
+      },
+      "before_over_after": 0.9841267745913341,
+      "paired_before_over_after_samples": [
+        1.0606693982606523,
+        1.0230649948384385,
+        0.9223489199512037,
+        1.0385012671092468,
+        0.9892140018927895,
+        0.9703827538469241,
+        0.9065838395135744
+      ],
+      "paired_ratio_median": 0.9892140018927895,
+      "after_slower_pairs": 4
+    },
+    {
+      "experiment": "separate_buffers",
+      "qubits": 25,
+      "depth": 10,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-16.toml",
+      "driver": "paired_separate_buffers.jl",
+      "driver_sha256": "43af23cca94a5a6c5545677ace4c8320dd1cf3b376f7f1721d1488adf0ea444c",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          4.054626252,
+          5.857585703,
+          4.308576217,
+          5.206437578,
+          5.138779543,
+          4.153792524,
+          3.720450275
+        ],
+        "median_seconds": 4.308576217,
+        "minimum_seconds": 3.720450275,
+        "maximum_seconds": 5.857585703,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          5.234403364,
+          4.600609301,
+          5.954959454,
+          5.307882066,
+          4.550717488,
+          4.556638978,
+          4.929904694
+        ],
+        "median_seconds": 4.929904694,
+        "minimum_seconds": 4.550717488,
+        "maximum_seconds": 5.954959454,
+        "repetitions": 7
+      },
+      "before_over_after": 0.8739674465195654,
+      "paired_before_over_after_samples": [
+        0.7746109671039101,
+        1.2732195497945848,
+        0.7235273808801318,
+        0.9808879536623826,
+        1.1292240303975556,
+        0.9115913163309644,
+        0.7546698173552967
+      ],
+      "paired_ratio_median": 0.9115913163309644,
+      "after_slower_pairs": 5
+    },
+    {
+      "experiment": "shared_buffer",
+      "qubits": 15,
+      "depth": 20,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-shared-16.toml",
+      "driver": "paired_shared_buffer.jl",
+      "driver_sha256": "81453d59755f043d1aeae2b7967537a7a99f0787c9595cf35823bc72028a78b1",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.026870496,
+          0.023801422,
+          0.024488401,
+          0.024195254,
+          0.027720716,
+          0.025844194,
+          0.02438547
+        ],
+        "median_seconds": 0.024488401,
+        "minimum_seconds": 0.023801422,
+        "maximum_seconds": 0.027720716,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.015977338,
+          0.015885699,
+          0.016488914,
+          0.016848727,
+          0.016065714,
+          0.017162857,
+          0.015999227
+        ],
+        "median_seconds": 0.016065714,
+        "minimum_seconds": 0.015885699,
+        "maximum_seconds": 0.017162857,
+        "repetitions": 7
+      },
+      "before_over_after": 1.524264716775115,
+      "paired_before_over_after_samples": [
+        1.6817880425387508,
+        1.4982923949396245,
+        1.4851433514663246,
+        1.43602860916436,
+        1.7254580779914297,
+        1.5058212044766206,
+        1.524165511246262
+      ],
+      "paired_ratio_median": 1.5058212044766206,
+      "after_slower_pairs": 0
+    },
+    {
+      "experiment": "shared_buffer",
+      "qubits": 15,
+      "depth": 20,
+      "group": "cnots_raw",
+      "threads": 16,
+      "raw_file": "paired-shared-16.toml",
+      "driver": "paired_shared_buffer.jl",
+      "driver_sha256": "81453d59755f043d1aeae2b7967537a7a99f0787c9595cf35823bc72028a78b1",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.011264658,
+          0.010602495,
+          0.010719363,
+          0.01370875,
+          0.010902647,
+          0.011689271,
+          0.011409602
+        ],
+        "median_seconds": 0.011264658,
+        "minimum_seconds": 0.010602495,
+        "maximum_seconds": 0.01370875,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.002594464,
+          0.002471588,
+          0.002474611,
+          0.002478684,
+          0.002472879,
+          0.002467259,
+          0.002469689
+        ],
+        "median_seconds": 0.002472879,
+        "minimum_seconds": 0.002467259,
+        "maximum_seconds": 0.002594464,
+        "repetitions": 7
+      },
+      "before_over_after": 4.555280707224252,
+      "paired_before_over_after_samples": [
+        4.341805475042244,
+        4.2897501525335135,
+        4.33173658405301,
+        5.530656590351977,
+        4.40888818255968,
+        4.737755946984082,
+        4.619853754865491
+      ],
+      "paired_ratio_median": 4.40888818255968,
+      "after_slower_pairs": 0
+    },
+    {
+      "experiment": "shared_buffer",
+      "qubits": 20,
+      "depth": 20,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-shared-16.toml",
+      "driver": "paired_shared_buffer.jl",
+      "driver_sha256": "81453d59755f043d1aeae2b7967537a7a99f0787c9595cf35823bc72028a78b1",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          0.229603899,
+          0.241195702,
+          0.235823662,
+          0.244359657,
+          0.255945867,
+          0.243794173,
+          0.220079438
+        ],
+        "median_seconds": 0.241195702,
+        "minimum_seconds": 0.220079438,
+        "maximum_seconds": 0.255945867,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          0.221771688,
+          0.271059586,
+          0.251738872,
+          0.221803622,
+          0.296436084,
+          0.259054665,
+          0.2638561
+        ],
+        "median_seconds": 0.259054665,
+        "minimum_seconds": 0.221771688,
+        "maximum_seconds": 0.296436084,
+        "repetitions": 7
+      },
+      "before_over_after": 0.9310610252859179,
+      "paired_before_over_after_samples": [
+        1.0353165504155788,
+        0.8898253906430743,
+        0.9367788936465878,
+        1.1016937180584003,
+        0.8634099585528191,
+        0.9410916147755918,
+        0.8340888764747149
+      ],
+      "paired_ratio_median": 0.9367788936465878,
+      "after_slower_pairs": 5
+    },
+    {
+      "experiment": "shared_buffer",
+      "qubits": 25,
+      "depth": 10,
+      "group": "public",
+      "threads": 16,
+      "raw_file": "paired-shared-16.toml",
+      "driver": "paired_shared_buffer.jl",
+      "driver_sha256": "81453d59755f043d1aeae2b7967537a7a99f0787c9595cf35823bc72028a78b1",
+      "l2_error": 0.0,
+      "before": {
+        "samples": [
+          4.827769722,
+          4.787972863,
+          4.642876678,
+          5.696438646,
+          5.570267689,
+          3.719998534,
+          4.156651904
+        ],
+        "median_seconds": 4.787972863,
+        "minimum_seconds": 3.719998534,
+        "maximum_seconds": 5.696438646,
+        "repetitions": 7
+      },
+      "after": {
+        "samples": [
+          4.759468917,
+          4.696637564,
+          4.433930459,
+          4.881263932,
+          4.271843402,
+          4.316458413,
+          5.523338826
+        ],
+        "median_seconds": 4.696637564,
+        "minimum_seconds": 4.271843402,
+        "maximum_seconds": 5.523338826,
+        "repetitions": 7
+      },
+      "before_over_after": 1.0194469549236862,
+      "paired_before_over_after_samples": [
+        1.014350509729361,
+        1.0194469549236862,
+        1.0471243789076305,
+        1.1670007451668358,
+        1.303949411252318,
+        0.8618172997558311,
+        0.7525614551172205
+      ],
+      "paired_ratio_median": 1.0194469549236862,
+      "after_slower_pairs": 2
+    }
+  ],
+  "limitations": [
+    "Sequential phases have substantial 20/25-qubit noise; they do not establish a universal latency gain.",
+    "The shared-buffer paired run is the primary timing evidence. Separate buffers can differ in memory placement.",
+    "Seven paired repetitions alternate first execution, with a four/three first-position split; ranges are not confidence intervals.",
+    "Public/raw calibration checks every saved old amplitude. Rotation/CNOT subcircuits only check normalization and are not additive time decompositions.",
+    "Large reference binaries remain on the server. This report verifies their metadata/SHA linkage and the saved comparisons, not their binary contents locally.",
+    "Paired and task-sweep raw files lack embedded core source hashes; archived drivers and the separately verified frozen source snapshots provide provenance.",
+    "No new MindQuantum timings or universal CPU/GPU speedup claims are inferred from this scheduler experiment."
+  ]
+}

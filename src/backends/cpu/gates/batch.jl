@@ -63,9 +63,20 @@ function _apply_gate_batch_column!(positions, mat, state_vec)
 end
 
 function _apply_gate_batch_threaded_over_batch!(positions, mat, data, nq, bs)
-    # Simple threading over batch, applying serial gate to each state
-    Threads.@threads for i in 1:bs
+    _run_batch_columns!(data, bs) do i
         state_vec = view(data, :, i)
         _apply_gate_batch_column!(positions, mat, state_vec)
     end
+end
+
+function _run_batch_columns!(f::F, data, bs::Int) where {F}
+    # A scalar one-qubit kernel handles 16 amplitudes per scheduling iteration.
+    max_tasks = bs <= 4 ? 1 : max(1, min(bs, div(length(data), 16 * MIN_SIZE)))
+    function run(first, last)
+        for column in first:last
+            f(column + 1)
+        end
+    end
+    parallel_run(bs, Threads.nthreads(), run; min_work=1, max_tasks=max_tasks)
+    return data
 end

@@ -1,0 +1,239 @@
+affinity_after = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+affinity_before = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+complete = true
+measurement = "fixed actual task counts; diagnostic override only"
+
+[[cases]]
+allocated_bytes = [277760, 277760, 277760, 277760, 277760]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.015049488
+qubits = 15
+seconds = [0.015052171, 0.015050258, 0.015044208, 0.015041544, 0.015049488]
+tasks = 1
+[[cases]]
+allocated_bytes = [806400, 806400, 806400, 806400, 806400]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.017900746
+qubits = 15
+seconds = [0.017900746, 0.017682598, 0.018202982, 0.017436695, 0.01855796]
+tasks = 2
+[[cases]]
+allocated_bytes = [1294080, 1294080, 1294080, 1294080, 1294080]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.014408078
+qubits = 15
+seconds = [0.013602116, 0.013780508, 0.0182673, 0.0145954, 0.014408078]
+tasks = 4
+[[cases]]
+allocated_bytes = [2211840, 2211840, 2211840, 2211840, 2211840]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.012416355
+qubits = 15
+seconds = [0.012262101, 0.012711718, 0.012973553, 0.01235416, 0.012416355]
+tasks = 8
+[[cases]]
+allocated_bytes = [4138560, 4138560, 4138560, 4138560, 4138560]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.015727635
+qubits = 15
+seconds = [0.014896131, 0.016456828, 0.015250734, 0.015727635, 0.016025941]
+tasks = 16
+[[cases]]
+allocated_bytes = [107520, 107520, 107520, 107520, 107520]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.002903729
+qubits = 15
+seconds = [0.002911995, 0.002903729, 0.002895479, 0.002904656, 0.002901829]
+tasks = 1
+[[cases]]
+allocated_bytes = [595840, 595840, 595840, 595840, 595840]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.015413817
+qubits = 15
+seconds = [0.014105112, 0.015816813, 0.015582189, 0.015413817, 0.015259911]
+tasks = 2
+[[cases]]
+allocated_bytes = [1025920, 1025920, 1025920, 1025920, 1025920]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.012051994
+qubits = 15
+seconds = [0.01149039, 0.012051994, 0.012357925, 0.011993539, 0.012084801]
+tasks = 4
+[[cases]]
+allocated_bytes = [1832320, 1832320, 1832320, 1832320, 1832320]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.009759395
+qubits = 15
+seconds = [0.009745475, 0.009759395, 0.010888589, 0.009599331, 0.00989978]
+tasks = 8
+[[cases]]
+allocated_bytes = [3530240, 3530240, 3530240, 3530240, 3530240]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.012974419
+qubits = 15
+seconds = [0.013576413, 0.012974419, 0.012560169, 0.012989183, 0.012565504]
+tasks = 16
+[[cases]]
+allocated_bytes = [376000, 376000, 376000, 376000, 376000]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.647342809
+qubits = 20
+seconds = [0.647342809, 0.650655285, 0.647247078, 0.647135479, 0.647739093]
+tasks = 1
+[[cases]]
+allocated_bytes = [1079040, 1079040, 1079040, 1079040, 1079040]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.359147239
+qubits = 20
+seconds = [0.341938891, 0.363754203, 0.359147239, 0.342505229, 0.387244618]
+tasks = 2
+[[cases]]
+allocated_bytes = [1729920, 1729920, 1729920, 1729920, 1729920]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.377714617
+qubits = 20
+seconds = [0.361751233, 0.377714617, 0.387035607, 0.402783379, 0.365754183]
+tasks = 4
+[[cases]]
+allocated_bytes = [2954880, 2954880, 2954880, 2954880, 2954880]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.248246793
+qubits = 20
+seconds = [0.248246793, 0.258296409, 0.258420884, 0.226997149, 0.23554603]
+tasks = 8
+[[cases]]
+allocated_bytes = [5526400, 5526400, 5526400, 5526400, 5526400]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.154921761
+qubits = 20
+seconds = [0.169700922, 0.146202138, 0.154921761, 0.164273469, 0.153427535]
+tasks = 16
+[[cases]]
+allocated_bytes = [152320, 152320, 152320, 152320, 152320]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.158210452
+qubits = 20
+seconds = [0.158143938, 0.158126451, 0.158210452, 0.158401896, 0.158313733]
+tasks = 1
+[[cases]]
+allocated_bytes = [811840, 811840, 811840, 811840, 811840]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.173384216
+qubits = 20
+seconds = [0.098125117, 0.287496184, 0.173384216, 0.39474718, 0.169638575]
+tasks = 2
+[[cases]]
+allocated_bytes = [1395520, 1395520, 1395520, 1395520, 1395520]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.248603336
+qubits = 20
+seconds = [0.275730526, 0.258322487, 0.242706877, 0.248549793, 0.248603336]
+tasks = 4
+[[cases]]
+allocated_bytes = [2489920, 2489920, 2489920, 2489920, 2489920]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.167743851
+qubits = 20
+seconds = [0.167743851, 0.174201055, 0.168293169, 0.152039787, 0.156971632]
+tasks = 8
+[[cases]]
+allocated_bytes = [4794240, 4794240, 4794240, 4794240, 4794240]
+depth = 20
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.109564816
+qubits = 20
+seconds = [0.112052445, 0.098841428, 0.108209263, 0.109564816, 0.111228027]
+tasks = 16
+[[cases]]
+allocated_bytes = [216416, 216416, 216416, 216416, 216416]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 1.125655422
+qubits = 25
+seconds = [1.464463299, 1.438792347, 1.125655422, 1.010972842, 1.039894603]
+tasks = 4
+[[cases]]
+allocated_bytes = [369632, 369632, 369632, 369632, 369632]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.674622216
+qubits = 25
+seconds = [0.665075121, 0.896017697, 0.724189986, 0.674622216, 0.625346931]
+tasks = 8
+[[cases]]
+allocated_bytes = [691264, 691264, 691264, 691264, 691264]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "rotations"
+median_seconds = 0.643019245
+qubits = 25
+seconds = [0.536482785, 0.976460687, 0.643019245, 0.576353342, 0.657710265]
+tasks = 16
+[[cases]]
+allocated_bytes = [176512, 176512, 176512, 176512, 176512]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.738675695
+qubits = 25
+seconds = [0.629254193, 0.738675695, 0.673008096, 0.878540231, 0.758288516]
+tasks = 4
+[[cases]]
+allocated_bytes = [314752, 314752, 314752, 314752, 314752]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.519473934
+qubits = 25
+seconds = [0.519473934, 0.663062257, 0.620795431, 0.478502178, 0.414831633]
+tasks = 8
+[[cases]]
+allocated_bytes = [605824, 605824, 605824, 605824, 605824]
+depth = 2
+gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+kind = "cnots"
+median_seconds = 0.320494831
+qubits = 25
+seconds = [0.329019693, 0.310642043, 0.300774763, 0.463478057, 0.320494831]
+tasks = 16

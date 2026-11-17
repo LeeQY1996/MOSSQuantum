@@ -31,6 +31,8 @@ end
 # 原 VQC 测试
 # ============================================================================
 
+include("unit/parallel_scheduling.jl")
+
 @testset "test quantum gate operations" begin
     include("unit/gate_operations.jl")
     include("unit/high_qubit_gates.jl")

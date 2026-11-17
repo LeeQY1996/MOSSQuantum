@@ -1,0 +1,312 @@
+baseline_directory = "/home/ubuntu/moss-gpu/logs/cpu-scheduling-2026-11-17/baseline-1"
+blas_threads = 1
+complete = true
+finished_at_utc = "2026-11-17T07:13:33.381Z"
+julia_version = "1.13.3"
+mode = "check"
+mossquantum_version = "0.1.2"
+repetitions = 5
+scalar = "ComplexF64"
+started_at_utc = "2026-11-17T07:13:11.946Z"
+threads = 1
+validation_scope = "Public and raw complete circuits are compared with every saved old-public ComplexF64 amplitude. Separate rotation/CNOT groups check normalization, not independent full-state references."
+
+[[cases]]
+depth = 20
+gates = 580
+qubits = 15
+reference_metadata = "n15-d20.toml"
+reference_metadata_sha256 = "6304f27ea8d6966a58dd1ce1131db6f0fb14e343d144451e38556b807732d119"
+reference_sha256 = "ff0478f051fadad448796f532cdde42a800af2042b4169d0e0517c34d0efe368"
+
+    [cases.cnots]
+    allocated_bytes = [107520, 107520, 107520, 107520, 107520]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.002493486
+    median_seconds = 0.00242541
+    minimum_seconds = 0.002420866
+    seconds = [0.00242541, 0.002432113, 0.002493486, 0.002420866, 0.002421646]
+
+        [cases.cnots.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.cnots.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.public]
+    allocated_bytes = [683568, 683568, 683568, 683568, 683568]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.022453718
+    median_seconds = 0.022383829
+    minimum_seconds = 0.022348666
+    seconds = [0.022453718, 0.02240206, 0.022383829, 0.022383472, 0.022348666]
+
+        [cases.public.correctness]
+        actual_norm_squared = 1.0000000000000016
+        amplitudes_checked = 32768
+        maximum_amplitude_error = 0.0
+        reference_norm_squared = 1.0000000000000016
+        relative_l2_error = 0.0
+
+        [cases.public.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.public.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.raw]
+    allocated_bytes = [385280, 385280, 385280, 385280, 385280]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.018082158
+    median_seconds = 0.017971321
+    minimum_seconds = 0.017902409
+    seconds = [0.017971321, 0.018082158, 0.017902409, 0.017949893, 0.018008141]
+
+        [cases.raw.correctness]
+        actual_norm_squared = 1.0000000000000016
+        amplitudes_checked = 32768
+        maximum_amplitude_error = 0.0
+        reference_norm_squared = 1.0000000000000016
+        relative_l2_error = 0.0
+
+        [cases.raw.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.raw.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.rotations]
+    allocated_bytes = [277760, 277760, 277760, 277760, 277760]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.015129306
+    median_seconds = 0.015116811
+    minimum_seconds = 0.015094845
+    seconds = [0.015124288, 0.015104895, 0.015116811, 0.015094845, 0.015129306]
+
+        [cases.rotations.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.rotations.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+[[cases]]
+depth = 20
+gates = 780
+qubits = 20
+reference_metadata = "n20-d20.toml"
+reference_metadata_sha256 = "25bc0a5f2ba3a031c99837be2e287d1153b652596388cce21f81d6e969c71fc2"
+reference_sha256 = "8b327bdf70bf5a39148454732e898db1bbaf764d096921c9d507403fb6845107"
+
+    [cases.cnots]
+    allocated_bytes = [152320, 152320, 152320, 152320, 152320]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.163301596
+    median_seconds = 0.162751957
+    minimum_seconds = 0.162597709
+    seconds = [0.162597709, 0.163301596, 0.162751957, 0.162787964, 0.162745167]
+
+        [cases.cnots.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.cnots.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.public]
+    allocated_bytes = [928304, 928304, 928304, 928304, 928304]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.966818547
+    median_seconds = 0.965369891
+    minimum_seconds = 0.964036788
+    seconds = [0.964759779, 0.965509292, 0.966818547, 0.965369891, 0.964036788]
+
+        [cases.public.correctness]
+        actual_norm_squared = 0.9999999999999847
+        amplitudes_checked = 1048576
+        maximum_amplitude_error = 0.0
+        reference_norm_squared = 0.9999999999999847
+        relative_l2_error = 0.0
+
+        [cases.public.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.public.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.raw]
+    allocated_bytes = [528320, 528320, 528320, 528320, 528320]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.817707315
+    median_seconds = 0.814232538
+    minimum_seconds = 0.811540503
+    seconds = [0.814232538, 0.815932827, 0.817707315, 0.813047409, 0.811540503]
+
+        [cases.raw.correctness]
+        actual_norm_squared = 0.9999999999999847
+        amplitudes_checked = 1048576
+        maximum_amplitude_error = 0.0
+        reference_norm_squared = 0.9999999999999847
+        relative_l2_error = 0.0
+
+        [cases.raw.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.raw.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+    [cases.rotations]
+    allocated_bytes = [376000, 376000, 376000, 376000, 376000]
+    gc_seconds = [0.0, 0.0, 0.0, 0.0, 0.0]
+    maximum_seconds = 0.654366508
+    median_seconds = 0.653382625
+    minimum_seconds = 0.652640873
+    seconds = [0.652640873, 0.654031688, 0.654366508, 0.653009869, 0.653382625]
+
+        [cases.rotations.resource_after]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+        [cases.rotations.resource_before]
+        affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+        cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+[core_source_sha256]
+"src/MOSSQuantum.jl" = "613c45833651e9f913ea0aa0c8344fd53f0f0213f28744bfea1b5a2c94ecbc10"
+"src/api/backend_protocols.jl" = "49e773d64210b27a3711b897a4e23a9849f87f8e748b47a784723d07fc86eea6"
+"src/api/execution_capability.jl" = "75a72d1988a9a0f80bbf28ced3cc71246fb5eb9a994258feb01a38cadc006aab"
+"src/api/exports.jl" = "51d9ae14fc98df60fc532b32cd92100c3c5688fb2afb7283e337318879821d1b"
+"src/api/gradient_methods.jl" = "9f33308327bdcec49395e192d4819c754125cf67345f42bca22c76ad725fd529"
+"src/api/objectives.jl" = "e2b67926ba6dd58955be41bee1b11973d2d0cdd1964a2c46692faa400de32820"
+"src/api/parameter_binding.jl" = "2cc859df74261beeb1eee6a028073a4167ce714934d8989f7766414179578061"
+"src/api/parameter_initialization.jl" = "c02de6b7e56d5e8bd805fa189cdf87d2ec313b56ecaa44c5538babfdd3d75cbc"
+"src/api/parameter_map.jl" = "81e55fe1dd1a4a49db2f187f475eafc7d4ff49165d09fb18ba0a7d8d3af57e8a"
+"src/api/state_protocols.jl" = "f22620cf6816f930a273dcc684a8a08ce3ba976b87ea227d78e1714792b6718e"
+"src/api/symbolic_parameters.jl" = "d2360fa03b4be7f45fd5fdd2b3e5c06f15be8170bf1c644892e224d11aa3e296"
+"src/backends/cpu/expectations/batch.jl" = "9ff0072b2d5f6c31c613ea65a4360dfd7fbf01ea42a82f908b65a17da93473dd"
+"src/backends/cpu/expectations/density_matrix_serial.jl" = "e472cb717e98fc6c0f78c1c49e7f4c920d2f6a3f35652e5e52f267306decd44e"
+"src/backends/cpu/expectations/high_qubit_terms.jl" = "19b2d37e571caa0ce0adad858a123939abd628cac9eea76df46b763f6f8223ca"
+"src/backends/cpu/expectations/high_qubit_terms_2.jl" = "0657e60f2b217f915bd93d33153ea31c4cc0830d5b4607e98340b34848547692"
+"src/backends/cpu/expectations/serial.jl" = "6a3c7c4522e339e13777ace99a299dc6836c28a9f0a3f06bd934397e75c248e0"
+"src/backends/cpu/expectations/state_vector.jl" = "dc013ac0ecfc87c58ab4db8e43279d4feb0eac58532f4345e99b7d8cd5ec269e"
+"src/backends/cpu/expectations/threaded.jl" = "38af9db7ea174c9f08c1a2e8111891938ab491631e31284f3426f7557d40acee"
+"src/backends/cpu/expectations/threaded_2.jl" = "e6db13b191e28172aa895cd27e4323ab1dcf6986381274f4ce0f532095fca4ba"
+"src/backends/cpu/gates/batch.jl" = "54ed0f3dc3090185052868ca105490344ec62382dc3fa80302b83b6a441fa83d"
+"src/backends/cpu/gates/batch_threaded_long_range.jl" = "efa2089e8f559e662c2feb9054ab24184557014d4009713af0f5c89e7cd46621"
+"src/backends/cpu/gates/batch_threaded_short_range.jl" = "e7426a4ea10c70ec63f05b4aa11d22fb5b8532722f43bf30a750aa4c54f46697"
+"src/backends/cpu/gates/channels.jl" = "bd305d8c0135a5d8efc6d5d6d7aa7a453473d6da126f5107576ffe259b544155"
+"src/backends/cpu/gates/generic.jl" = "95de8c5b88a5c876a8c142e15fa99eda2647c7169e23b428ee788ea7be70df98"
+"src/backends/cpu/gates/serial_short_range.jl" = "1023a018daf477cc1746ee74d5c0fe937e97efb1cf3b3418b8242d03620fe5ec"
+"src/backends/cpu/gates/specific.jl" = "343b497171f14647c0ab5b5248454754474ef39fb6fc2f0a7e7776bce34dc2a4"
+"src/backends/cpu/gates/specific/cz_gate.jl" = "82105c065e8d498c05135cce1655962c71152e8527a1ffac6efcba4f0a26dc85"
+"src/backends/cpu/gates/specific/fredkin_gate.jl" = "f5032f7b674a2d7c4b19b6042a9947dbbed22e0ec901206787dc907fbbae4f0c"
+"src/backends/cpu/gates/specific/phase_gate.jl" = "0e19b6b02c2aab3e28f83e9ba8ebdfab1238e9c2fc646f17482a179f510c75f3"
+"src/backends/cpu/gates/specific/swap_gates.jl" = "12fcd0bfd5b18dbfde13c9a13e0c66eae35b9713d9933df7730b18f7e060037d"
+"src/backends/cpu/gates/threaded_long_range.jl" = "6219e57cc6548af65fb68b41847f0deada383eeeda4df1621410ea90d8e2736f"
+"src/backends/cpu/gates/threaded_short_range.jl" = "62bda9a8d063ed83143fb374ac8b87ecaca189b449e3dad4949aaa92d85c90af"
+"src/backends/cpu/operators/density_matrix.jl" = "b8264dcb8e1d42c1b8746dc048b63ff65c3ec860928bd7d265edec201e716ef2"
+"src/backends/cpu/operators/generic.jl" = "e5b3a6c2ce7b36d632ba71cd2816c3906e7120776f8e1bfa68f13dcc1f34aef2"
+"src/backends/cpu/operators/long_range_threaded.jl" = "828a52167fced7e4efdf5ba2e7df4e3e1ff062ad422e6222e83cfecbd938b968"
+"src/backends/cpu/operators/short_range_serial.jl" = "ac26f669040437b50ca4b37b266b6d097f170d871972515d40345bffb26991ca"
+"src/backends/cpu/operators/short_range_threaded.jl" = "855ca3dea2f2a98be4f2f507c62db66c65a59f32e8aacd9f4bf1bd5cfabbc6e3"
+"src/backends/cpu/operators/utils.jl" = "174b019005f2fb9bed7e7c17f0be740e9cc160128c545436940dfbb9201a86c5"
+"src/differentiation/batch.jl" = "f633468c63ca04a37a7c4598fcadbccb06a19afb68597a44f0504158a8fd72b7"
+"src/differentiation/circuit.jl" = "e52b40bc44bf5ec57a55c622cb7d51f1d600ea5590d7ab443c8224a52c39af46"
+"src/differentiation/expectation.jl" = "bf4941d5ee30ecff4c62d1219fca173e585162df41873debb21dd913e5d0f2fc"
+"src/differentiation/objectives.jl" = "6252c2aa3a35e94c97c4cc9cb07b06fe3a5f0628c59194df5d344d8bd49a31e1"
+"src/differentiation/sampled_gradients.jl" = "d71c30be6c809dbaf73b118c4da2632fc8c3c9e7fb360be52374793ecf4e9157"
+"src/execution/batch_density_gates.jl" = "3b99ed2841c70fee31af82205ace04d6e5346d3bdc8fc213ba6e272b11e1cef7"
+"src/execution/batch_density_measurement.jl" = "65fe9e4b188514a8bf7b2d2f9597b9aa34c47d74b95cb3fb649fece336ecd803"
+"src/execution/batch_gates.jl" = "9ae381bbd8c3dd43e19e3ede356382777c5d5ecf0364feb2797c07aec3237089"
+"src/execution/batch_operators.jl" = "bebd5cb3b393088b3458297e60250e123e30ef14da18bda46354ae877f4a4b10"
+"src/execution/channels.jl" = "79c78ad0dd8ab4fb3779c919215f02e0cfac253a94c01d18d5670f71f2147c29"
+"src/execution/classical_execution.jl" = "d340b4871b5abe97659e19175103964e4d8497eff4a79d2b5f05c51029b11310"
+"src/execution/execution_plans.jl" = "a6ed68458b09a8a18679cfa88627937b81da14d50af0507d4b9cd6239bfc5024"
+"src/execution/experiments.jl" = "53441f96cd92f61942b56df171ba52713076a27b23d9171ea0dd72b4c83b5f55"
+"src/execution/gates.jl" = "44aed9818fb3b9dad8facc182b5be83f99d7171dc5c3b8274e4b7954b2a36281"
+"src/execution/measurement.jl" = "7f27bf6fc83eb82a7465f26d5fc051cd82e7a2dbb1d9e962aafb06f1c278228f"
+"src/execution/noise_models.jl" = "3e7ada647b69401fd5ca647bd4af96c739fa318b10c561bc3c45c3e5e4f681d1"
+"src/execution/noisy_execution.jl" = "6e0b86e534b95a568556163cfcb7c3109f19baac1ccf076c10b316835e7710db"
+"src/execution/operators.jl" = "cd72043a9e52307696fdf0c50a774a7fb0c8fc4e5c7f1cea2f582bd78a1efb3f"
+"src/execution/post_selection.jl" = "fc1132aaa73299b4dd4119b39fe52494119bbabe2d452b46bac18ee163905c11"
+"src/execution/probabilities.jl" = "86f5d1818542c5c6abf6abed024e165d4e22cb8962757ef83ee03798ebc01974"
+"src/execution/sampling.jl" = "4ac66071d66af380ec9f427a384d4cdfba7cc47f6a6d8e6a53c9aa776a6209b0"
+"src/execution/shot_budgets.jl" = "a22e545ef660c99e7131fdde6e95ac81d45ba14ecfdd087c0763baa06610a6eb"
+"src/execution/shot_execution.jl" = "9c6e886b9ef9c6634bb0af71b19a5164d98876ac0e2d21ac0e9c77e3ae5cdab1"
+"src/execution/simulation.jl" = "aab86aefdecfc788bb65fb46a8e08209c2ccf172362d66b3760d647316585337"
+"src/observables/batch_density_expectation.jl" = "7e20a1ff228c44c9769b6cc76ab6a2f1ab80c0e9730db6811d10abc78a80f91b"
+"src/observables/batch_expectation.jl" = "e908c09017980ce0ef14ec5881bad5593e3df4dc0f12240c930715b60bede722"
+"src/observables/circuit_estimation.jl" = "c51f81e3b32f074bcfd2de2364861020bd17db4df1c6ab4ee55fdc641147c464"
+"src/observables/density_matrix_expectation.jl" = "05fc13640bde28a111c9b63d6166457dbb68953971ce027850cbecb62d1322f0"
+"src/observables/estimation_plans.jl" = "c9dcdcda194fbabec809ca22b2f80027e05fbe5390029bfd7b18d677fa88db77"
+"src/observables/expectation.jl" = "f670c9ee9db3d31cb8f49fb45fe2bcc43c1c70cffa923e2b3f566775f336277e"
+"src/observables/partial_trace.jl" = "cfd36b08d68560d0694cee7f3c2ba0ac85a2482ef183f2001490d938ddcc479b"
+"src/observables/shot_estimation.jl" = "44be2a5f5f62f13b704e2b1db9a2331efee3d113d90bdd59316f8ab7829b92f8"
+"src/optimization/Optimization.jl" = "9a2ce78d5762e6e88dbf1a9fbbd55a8d690d3f13be508acb8c9e31c90f0858e9"
+"src/quantum_circuits/QuantumCircuits.jl" = "5a8d6cc302499d1535530ad8f885616e23857f1cc088746c07eb55984ce1b061"
+"src/quantum_circuits/channels/abstract_maps.jl" = "a65941f03b277617fb460886d04db1c59fc796590b7ec0656b4e2fd1ff4722ba"
+"src/quantum_circuits/channels/one_qubit.jl" = "81f632ecf3e975322687984566bc37ac4af4b9d90d9b18e8eb040b5d04638835"
+"src/quantum_circuits/channels/quantum_map.jl" = "70d321b5a17fb523d6ffb1c626918094b233090ce2e035d6340577bb5696af89"
+"src/quantum_circuits/circuits/circuit.jl" = "e4f565a7f669ea8977ac5057c9033f0e89d17ed9c4e1da7bf84fc715762164e3"
+"src/quantum_circuits/circuits/classical_control.jl" = "64275641a6d6e96a27ddc1dc751dd971419277b9405b0fe7b4eef43b58d3d308"
+"src/quantum_circuits/gates/Gates.jl" = "b7da7df3dcf7933f3a1857bf20948eed3fab4567ea5108af3b509fa5fae374c5"
+"src/quantum_circuits/gates/abstract_gates.jl" = "20db6921bb7f530b6c468b8ca02be6668a010109d366689792439ce2b35a7e6f"
+"src/quantum_circuits/gates/differentiation.jl" = "54ea11cdc707e7cc23570ed12a16fb46e1956549204c345c0a6c3087546744f8"
+"src/quantum_circuits/gates/one_qubit.jl" = "fa3f8993ecb4a48955000651ce4c917dfd225210065eb973504ea31b5f031664"
+"src/quantum_circuits/gates/parametric_gates.jl" = "749baad05f6a406adf161d26bc6ef70dea3008d1e4b8884ad208163ec955bb0a"
+"src/quantum_circuits/gates/quantum_gate.jl" = "d8858bb11ae134501adb78478c566c849f9a0d5fd8ebc120b42e6b77fa6981d5"
+"src/quantum_circuits/gates/three_qubit.jl" = "c472f888199386edf3e9e38fc1d736c61dfd7be392c8e8d8f1aabe3954a026b8"
+"src/quantum_circuits/gates/two_qubit.jl" = "79b77cede70d50d7c5f31a95e9b5cf6b6472b8219203edcbf6d63aff811a106e"
+"src/quantum_circuits/instructions.jl" = "371cab44775e87d039b157656e6971556b1e49498a0fd0a4e22cdf112e5e30b9"
+"src/quantum_circuits/operators/qubits_operator.jl" = "6aaa3004e10c2ad75d767035d17293e704f03fe1dbde62e9b3eccd5c76f1b499"
+"src/quantum_circuits/operators/qubits_term.jl" = "d0795a7545de034c03db4b48c62f28cea3eaa538e653a5bbdd0e0059ecfcc104"
+"src/quantum_circuits/parameters/expressions.jl" = "3b3e584f58945282e5ed0bb6c1cd5d41a23f838ef54c5e4d25613ab116c83480"
+"src/quantum_circuits/parameters/instructions.jl" = "2ebf059539ecba80d2570561b89ab2d932716c549095113a0d266d9ba60fe262"
+"src/quantum_circuits/plotting/QuantumCircuitsPlotting.jl" = "dc37cd8d82caef495249c8c695ae7b5a8b94613d9803ee722a9ec282493a877c"
+"src/quantum_circuits/plotting/api.jl" = "c09b3db3142062d37db4d28c6788c0e87415163d082147f0ab03baddee1c307e"
+"src/quantum_circuits/plotting/circuit.jl" = "4954a5aed8594235e23143353b8d2b743e171c42fc2bcb7cac99a09f76938101"
+"src/quantum_circuits/plotting/drawing.jl" = "08d48ddcd736f21bd0021d57fd5d1783a1e99eacf91f536b34f66aee0e52da12"
+"src/quantum_circuits/plotting/gates.jl" = "90ba01afa47fcd7bc8c5ddd93ffe71c547bcc2ab1233df68fa3103376c88749b"
+"src/quantum_circuits/plotting/instructions.jl" = "d03f7994c2276b8efd0708a40f0ec7de47cd892414062dba50bad804cc09160d"
+"src/quantum_circuits/plotting/layout.jl" = "6e28c335f30729368bd1f688181b52cc3d1347d2ff324195e55634cbac1a139b"
+"src/quantum_circuits/plotting/styles.jl" = "6aac890c8bd1cf18293a6390f7d1e01c42b59c6db1b613db95f35745d3067ca3"
+"src/quantum_circuits/utils/tensor_ops.jl" = "8fb753c90b9365d658f1964bca7ddf7c315021f941f42ed9a80840f2c98a6dbc"
+"src/states/array_storage.jl" = "143803fb89d65cbd6716d1e054e382b6a5749d9f568851578bdaa5be1315658d"
+"src/states/batch_density_matrix.jl" = "06d7932ccbd852f681200a4556ac3cf67bd2ba36e61a0805e2ee810041db3bda"
+"src/states/batch_state_vector.jl" = "02cfad6529c8586d0023adc491222d4e6a39c65fba237949884180769584de7f"
+"src/states/density_matrix.jl" = "52e60f707216b78cd7e37112a89c63dd1c4e818f8e417018b75c2be7e75336d9"
+"src/states/state_vector.jl" = "825b8cbf1f6361d2a7eb6af4a4010591c39722eb3703a18cdf7e9f5a5d744461"
+"src/utilities/Utilities.jl" = "5ba29d84e582944526b203bee34bda6bcc2000ca99271d88b8cf28b361f41f1f"
+"src/utilities/algorithms/gate_fusion.jl" = "c2c9938fa790bd9d0dcbc00ffb3cbe33cfc96205ece2a62f7b5b496465b8492e"
+"src/utilities/algorithms/variational_circuit.jl" = "09b0550c98e038b276a0431cc29a836ad81d22b0e6b3a9f0932ac8984a948e57"
+"src/utilities/evolution/krylov.jl" = "8e51a1a819844ce5da313a74daaa529b734e009e618a20646475a18a9926dff7"
+"src/utilities/evolution/trotter.jl" = "09f4d8a152808a9f2657dc3e5ae491259a0b949da7f593356a33e80855614335"
+"src/utilities/models/spin_hamiltonians.jl" = "afdc2053d6ac7333c7a61df674ca148c4ccadd07224f61bb99550a71cec6a5ed"
+"src/utils/distance.jl" = "32921507e9f1981617cd11dbed4a682a3f4b1c9eb098dde59c7dafc5810cc625"
+"src/utils/index_ops.jl" = "7a84f2430f17ad717f3b6659628e0ccdbaa164267e22a876f45bc49a1189ad3c"
+"src/utils/parallel_for.jl" = "7c7529c008df8e975680331678d64f498589e09e442ba383de1076d39019a18d"
+"src/utils/tensor_ops.jl" = "8bab19e675eea0af1cf606cfdb41e384057b954794043c9576346153101cf338"
+
+[diagnostic_source_sha256]
+"cpu_gap_diagnostics.jl" = "f6bc05ce4b80f6f707280638487113d58ac719deaf1b2f16ae1a5f718a6aea81"
+"cpu_schedule_calibration.jl" = "ec37456b273e6600590ceb9c4b1b255c0c6308e4da57e97afdd60d9990795e5e"
+"cpu_thread_scan.jl" = "4f7556b65d240a277bce682d541d0466e3377a51ef2443d8a675165b1608c777"
+
+[resource_after]
+affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+
+[resource_before]
+affinity = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+cpuset = "10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"

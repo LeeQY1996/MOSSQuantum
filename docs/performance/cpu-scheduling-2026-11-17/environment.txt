@@ -1,0 +1,6 @@
+Tue Nov 17 07:39:52 UTC 2026
+Linux liqingyu-six6000D-tj 6.8.0-138-generic #138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC  x86_64 x86_64 x86_64 GNU/Linux
+Cpus_allowed_list:	10,68,71,79,84,86,90,123-125,127,131,135,148,180,188
+max 100000
+julia version 1.13.3
+julia version 1.10.13

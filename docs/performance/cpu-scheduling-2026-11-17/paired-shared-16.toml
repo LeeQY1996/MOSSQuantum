@@ -1,0 +1,42 @@
+affinity_after = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+affinity_before = "Cpus_allowed_list:\t10,68,71,79,84,86,90,123-125,127,131,135,148,180,188"
+complete = true
+measurement = "old and new modules in one process, one shared state buffer, alternating order"
+threads = 16
+
+[[cases]]
+after_median_seconds = 0.016065714
+after_seconds = [0.015977338, 0.015885699, 0.016488914, 0.016848727, 0.016065714, 0.017162857, 0.015999227]
+before_median_seconds = 0.024488401
+before_seconds = [0.026870496, 0.023801422, 0.024488401, 0.024195254, 0.027720716, 0.025844194, 0.02438547]
+depth = 20
+kind = "public"
+l2_error = 0.0
+qubits = 15
+[[cases]]
+after_median_seconds = 0.002472879
+after_seconds = [0.002594464, 0.002471588, 0.002474611, 0.002478684, 0.002472879, 0.002467259, 0.002469689]
+before_median_seconds = 0.011264658
+before_seconds = [0.011264658, 0.010602495, 0.010719363, 0.01370875, 0.010902647, 0.011689271, 0.011409602]
+depth = 20
+kind = "cnots_raw"
+l2_error = 0.0
+qubits = 15
+[[cases]]
+after_median_seconds = 0.259054665
+after_seconds = [0.221771688, 0.271059586, 0.251738872, 0.221803622, 0.296436084, 0.259054665, 0.2638561]
+before_median_seconds = 0.241195702
+before_seconds = [0.229603899, 0.241195702, 0.235823662, 0.244359657, 0.255945867, 0.243794173, 0.220079438]
+depth = 20
+kind = "public"
+l2_error = 0.0
+qubits = 20
+[[cases]]
+after_median_seconds = 4.696637564
+after_seconds = [4.759468917, 4.696637564, 4.433930459, 4.881263932, 4.271843402, 4.316458413, 5.523338826]
+before_median_seconds = 4.787972863
+before_seconds = [4.827769722, 4.787972863, 4.642876678, 5.696438646, 5.570267689, 3.719998534, 4.156651904]
+depth = 10
+kind = "public"
+l2_error = 0.0
+qubits = 25
